@@ -1,0 +1,3046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Day Trader Tycoon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-2: #131a2b;
+    --panel: #1b2440;
+    --panel-2: #2c3d66;
+    --panel-dark: #050810;
+    --gold: #f3c74b;
+    --green: #2ecc71;
+    --green-dark: #1f8a4a;
+    --blue: #4a90e2;
+    --blue-dark: #2563ad;
+    --red: #e74c3c;
+    --text: #e8ecf4;
+    --text-dim: #8893a8;
+    --accent: #4a90e2;
+    --shadow: 0 3px 0 rgba(0,0,0,0.45);
+    --shadow-deep: 0 4px 0 rgba(0,0,0,0.5), 0 6px 12px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-weight: 800;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding-bottom: 90px;
+    background:
+      radial-gradient(ellipse at top, rgba(74,144,226,0.08), transparent 60%),
+      linear-gradient(180deg, #0e1326 0%, #0a0e1a 100%);
+    position: relative;
+  }
+  /* Subtle vignette */
+  #app::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.35) 100%);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .cartoon-font { font-family: 'Lilita One', 'Nunito', system-ui, sans-serif; font-weight: 400; }
+
+  /* Main row: tab content + right tab strip */
+  .main-row {
+    display: grid;
+    grid-template-columns: 1fr 56px;
+    gap: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .tab-content { min-width: 0; }
+  .tab-panel { display: none; padding: 4px 0; }
+  .tab-panel.active { display: block; }
+
+  /* Right side tab strip */
+  .tab-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 6px 8px 4px;
+    background: linear-gradient(180deg, #0a0e1a 0%, #050810 100%);
+    border-left: 3px solid #000;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.4);
+    align-self: stretch;
+  }
+  .tab-btn {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel-dark));
+    border: 2px solid #050810;
+    border-radius: 10px;
+    color: var(--text-dim);
+    padding: 8px 2px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 8px;
+    font-weight: 900;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.06s, color 0.15s, background 0.15s;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.1;
+    position: relative;
+  }
+  .tab-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+  .tab-btn .tab-icon {
+    display: block;
+    font-size: 22px;
+    margin-bottom: 1px;
+    line-height: 1;
+    filter: grayscale(0.3);
+  }
+  .tab-btn.active {
+    background: linear-gradient(180deg, var(--gold), #c89a18);
+    color: #0a0e1a;
+    border-color: #6a4f0a;
+    box-shadow: 0 2px 0 #5a3f08, inset 0 1px 0 rgba(255,255,255,0.3);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .tab-btn.active .tab-icon { filter: none; }
+  .tab-btn .tab-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background: var(--red);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--red);
+    display: none;
+  }
+  .tab-btn.has-news .tab-dot { display: block; }
+
+  /* Generic panel section heading */
+  .panel-title {
+    font-family: 'Lilita One', sans-serif;
+    color: var(--gold);
+    font-size: 18px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.4);
+    padding: 12px 14px 4px;
+    letter-spacing: 0.5px;
+  }
+  .panel-sub {
+    color: var(--text-dim);
+    font-size: 11px;
+    padding: 0 14px 8px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  /* Quest cards */
+  .quest-card {
+    margin: 6px 12px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 3px solid var(--panel-dark);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .quest-card.complete {
+    background: linear-gradient(180deg, #1d3a5e, #11243d);
+    border-color: var(--blue-dark);
+  }
+  .quest-card.claimed {
+    opacity: 0.55;
+    background: linear-gradient(180deg, #1f3010, #15240a);
+    border-color: #0d1808;
+  }
+  .quest-icon {
+    width: 40px; height: 40px;
+    background: var(--panel-dark);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    border: 2px solid rgba(0,0,0,0.4);
+  }
+  .quest-card.complete .quest-icon { background: linear-gradient(180deg, var(--blue), var(--blue-dark)); }
+  .quest-card.claimed .quest-icon { background: linear-gradient(180deg, #4d6a30, #355020); }
+  .quest-text { min-width: 0; }
+  .quest-name {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+  }
+  .quest-desc { font-size: 11px; color: var(--text-dim); font-weight: 700; line-height: 1.3; margin-top: 1px; }
+  .quest-progress-bar {
+    height: 5px;
+    background: var(--panel-dark);
+    border-radius: 3px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .quest-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), #7ed750);
+    transition: width 0.3s;
+  }
+  .quest-card.complete .quest-progress-fill { background: linear-gradient(90deg, var(--blue), #6ab1f5); }
+  .quest-progress-text { font-size: 10px; color: var(--text-dim); margin-top: 2px; font-weight: 800; }
+
+  /* Premium / lifestyle "gold" buy buttons */
+  .buy-btn.gold-btn {
+    background: linear-gradient(180deg, #f8d860 0%, #f3c74b 50%, #c89a18 100%);
+    border-color: #6a4f0a;
+    box-shadow: 0 3px 0 #5a3f08, inset 0 1px 0 rgba(255,255,255,0.3);
+    color: #0a0e1a;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .buy-btn.gold-btn:active:not(:disabled) {
+    box-shadow: 0 1px 0 #5a3f08, inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .buy-btn.gold-btn .gold-cost-icon { color: #6a4f0a; }
+
+  /* Unlocks list */
+  .unlock-card {
+    margin: 6px 12px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 3px solid var(--panel-dark);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .unlock-card.done {
+    background: linear-gradient(180deg, #4d6a30, #355020);
+    border-color: #1f3010;
+  }
+  .unlock-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--panel-dark);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    border: 2px solid rgba(0,0,0,0.4);
+  }
+  .unlock-card.done .unlock-icon {
+    background: linear-gradient(180deg, var(--gold), #c89a18);
+  }
+  .unlock-text { flex: 1; min-width: 0; }
+  .unlock-name {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+  }
+  .unlock-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 700;
+    line-height: 1.3;
+    margin-top: 1px;
+  }
+  .unlock-card.done .unlock-desc { color: rgba(255,247,232,0.85); }
+  .unlock-reward {
+    font-family: 'Lilita One', sans-serif;
+    color: var(--gold);
+    font-size: 13px;
+    flex-shrink: 0;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.5);
+  }
+  .unlock-card.done .unlock-reward { color: #fff7e8; }
+
+  /* Manager card */
+  .manager-card {
+    margin: 6px 12px;
+    padding: 12px;
+    background: var(--panel);
+    border: 3px solid var(--panel-dark);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+  .manager-card.unhired { opacity: 0.55; }
+  .manager-portrait {
+    width: 56px;
+    height: 56px;
+    background: radial-gradient(circle at 35% 30%, var(--panel-2), var(--panel-dark));
+    border-radius: 50%;
+    border: 3px solid var(--panel-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3);
+  }
+  .manager-name {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 16px;
+    color: var(--gold);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+    line-height: 1;
+  }
+  .manager-role {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 800;
+    margin-top: 2px;
+  }
+  .manager-bio {
+    font-size: 11px;
+    color: var(--text);
+    font-weight: 700;
+    line-height: 1.3;
+    margin-top: 4px;
+    font-style: italic;
+    opacity: 0.9;
+  }
+  .manager-hire {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+  }
+
+  /* Perks list */
+  .perk-card {
+    margin: 6px 12px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 3px solid var(--panel-dark);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .perk-card.owned {
+    background: linear-gradient(180deg, #4d6a30, #355020);
+    border-color: #1f3010;
+  }
+  .perk-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--panel-dark);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 2px solid rgba(0,0,0,0.4);
+  }
+  .perk-card.owned .perk-icon {
+    background: linear-gradient(180deg, var(--gold), #c89a18);
+  }
+  .perk-name {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+    line-height: 1.1;
+  }
+  .perk-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 700;
+    line-height: 1.3;
+    margin-top: 2px;
+  }
+  .perk-card.owned .perk-desc { color: rgba(255,247,232,0.85); }
+
+  /* News feed */
+  .news-row {
+    margin: 4px 12px;
+    padding: 8px 12px;
+    background: var(--panel);
+    border: 2px solid var(--panel-dark);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .news-row.bad { border-left: 5px solid var(--red); }
+  .news-row.good { border-left: 5px solid var(--green); }
+  .news-row.rug { border-left: 5px solid #8a2520; background: linear-gradient(90deg, rgba(231,76,60,0.18), var(--panel) 60%); }
+  .news-time {
+    font-size: 9px;
+    color: var(--text-dim);
+    font-weight: 800;
+    flex-shrink: 0;
+    width: 38px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .news-headline {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .news-detail {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .news-empty {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 30px 20px;
+    font-weight: 700;
+  }
+
+  /* Ticker tape */
+  .ticker-wrap {
+    background: #0a0e1a;
+    border-bottom: 3px solid #050810;
+    overflow: hidden;
+    height: 28px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .ticker {
+    display: inline-block;
+    white-space: nowrap;
+    padding-left: 100%;
+    animation: tick 40s linear infinite;
+    font-family: 'Nunito', monospace;
+    font-size: 12px;
+    line-height: 28px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    font-weight: 800;
+  }
+  .ticker .up { color: var(--green); }
+  .ticker .down { color: var(--red); }
+  @keyframes tick {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+
+  /* Header */
+  .header {
+    padding: 14px 16px 14px;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 100%);
+    border-bottom: 2px solid rgba(0,0,0,0.3);
+    position: relative;
+  }
+  .brand {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.4);
+  }
+  .brand .sub {
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 1px;
+    display: block;
+    margin-top: 0px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    text-transform: none;
+  }
+  .cash-display {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 44px;
+    color: var(--text);
+    margin-top: 4px;
+    letter-spacing: 0;
+    text-shadow: 0 3px 0 rgba(0,0,0,0.45), 0 0 20px rgba(243,199,75,0.15);
+    line-height: 1.05;
+  }
+  /* Market switcher (Wall Street / Tokyo) at top of HOME tab */
+  .market-switcher {
+    display: flex;
+    gap: 6px;
+    margin: 6px 12px 10px;
+  }
+  .market-tab {
+    flex: 1;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel-dark));
+    border: 2px solid var(--panel-dark);
+    border-radius: 10px;
+    color: var(--text-dim);
+    padding: 8px 6px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4);
+    transition: transform 0.06s, color 0.15s;
+  }
+  .market-tab:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+  .market-tab.active {
+    background: linear-gradient(180deg, var(--blue), var(--blue-dark));
+    border-color: #0c2654;
+    color: var(--text);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+    box-shadow: 0 2px 0 #0c2654, inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  .gold-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(180deg, rgba(243,199,75,0.15), rgba(243,199,75,0.05));
+    border: 2px solid rgba(243,199,75,0.4);
+    border-radius: 999px;
+    padding: 3px 10px 3px 8px;
+    margin-top: 6px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    color: var(--gold);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4);
+  }
+  .gold-chip .gold-icon { font-size: 16px; line-height: 1; }
+  .income-rate {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    font-weight: 700;
+  }
+  .stats-row {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stats-row .stat-val {
+    display: block;
+    color: var(--gold);
+    font-family: 'Lilita One', sans-serif;
+    font-size: 16px;
+    margin-top: 2px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.35);
+  }
+
+  /* Event banner */
+  .event-banner {
+    margin: 12px 14px 4px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f3c74b, #d09a18);
+    border: 3px solid rgba(0,0,0,0.25);
+    font-size: 13px;
+    display: none;
+    animation: pulse 1.2s ease-in-out infinite;
+    box-shadow: var(--shadow);
+    color: #0a0e1a;
+  }
+  .event-banner.bad {
+    background: linear-gradient(180deg, #e74c3c, #a83025);
+    color: #fff;
+  }
+  .event-banner.show { display: block; }
+  .event-headline {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 16px;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .event-banner.bad .event-headline { text-shadow: 0 1px 0 rgba(0,0,0,0.3); }
+  .event-detail {
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.9;
+  }
+  .event-timer {
+    font-family: 'Lilita One', sans-serif;
+    color: inherit;
+    float: right;
+    font-size: 16px;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.01); }
+  }
+
+  /* Asset cards */
+  .assets {
+    padding: 6px 10px 10px;
+    position: relative;
+    z-index: 1;
+  }
+  .asset {
+    background: var(--panel);
+    border: 3px solid var(--panel-dark);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 76px 1fr;
+    gap: 10px;
+    transition: transform 0.06s, box-shadow 0.2s;
+    position: relative;
+    box-shadow: var(--shadow);
+  }
+  .asset.locked {
+    opacity: 0.45;
+    filter: grayscale(0.8);
+  }
+  .asset.boosted {
+    box-shadow: 0 3px 0 rgba(0,0,0,0.35), 0 0 0 3px var(--green), 0 0 24px rgba(92,184,58,0.4);
+  }
+  .asset.crashed {
+    box-shadow: 0 3px 0 rgba(0,0,0,0.35), 0 0 0 3px var(--red), 0 0 24px rgba(231,76,60,0.4);
+    animation: shake 0.4s ease-in-out infinite;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+  }
+
+  /* Left column: icon + count */
+  .asset-icon-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  .asset-icon {
+    font-size: 36px;
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 35% 30%, var(--panel-2), var(--panel-dark));
+    border-radius: 50%;
+    border: 3px solid var(--panel-dark);
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.08);
+  }
+  .asset-count {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 22px;
+    color: var(--text);
+    text-shadow: 0 2px 0 rgba(0,0,0,0.4);
+    line-height: 1;
+    margin-top: 2px;
+  }
+  .asset-mini-bar {
+    width: 56px;
+    height: 5px;
+    background: var(--panel-dark);
+    border-radius: 3px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .asset-mini-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), #f8d860);
+    transition: width 0.3s;
+  }
+  .milestone-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 0 2px;
+    line-height: 1.2;
+  }
+  .ms-progress { color: var(--text-dim); }
+  .ms-current { color: var(--gold); text-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+
+  /* Right column: header, income bar, buy buttons */
+  .asset-main {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .asset-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .asset-ticker {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+  }
+  .asset-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Green arrow income bar */
+  .income-bar {
+    height: 38px;
+    background: linear-gradient(180deg, #0a0e1a, #0a0e1a);
+    border-radius: 8px;
+    border: 2px solid rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.06s;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .income-bar:active { transform: translateY(2px); }
+  .income-fill {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    background: linear-gradient(180deg, #7ed750 0%, #5cb83a 50%, #3d8a26 100%);
+    width: 0%;
+    transition: width 0.12s linear;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.25), inset 0 -2px 0 rgba(0,0,0,0.2);
+  }
+  .income-fill.boosted {
+    background: linear-gradient(180deg, #f8d860 0%, #f3c74b 50%, #c89a18 100%);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -2px 0 rgba(0,0,0,0.25);
+  }
+  .income-fill.crashed {
+    background: linear-gradient(180deg, #ff6b5a 0%, #e74c3c 50%, #a83025 100%);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.25);
+  }
+  .income-label {
+    position: relative;
+    z-index: 2;
+    line-height: 34px;
+    text-align: center;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6), 0 -1px 0 rgba(0,0,0,0.4);
+    letter-spacing: 0.3px;
+    padding: 0 8px;
+  }
+  .auto-badge {
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    z-index: 3;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 9px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.6);
+  }
+
+  /* Orange buy buttons */
+  .buy-row {
+    display: flex;
+    gap: 6px;
+  }
+  .buy-btn {
+    flex: 1;
+    background: linear-gradient(180deg, #6ab1f5 0%, #4a90e2 50%, #2563ad 100%);
+    border: 2px solid #163d72;
+    border-radius: 8px;
+    color: #fff;
+    padding: 6px 8px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.06s, opacity 0.2s, box-shadow 0.06s;
+    box-shadow: 0 3px 0 #0c2654, inset 0 1px 0 rgba(255,255,255,0.3);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    line-height: 1.1;
+    min-height: 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+  }
+  .buy-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #0c2654, inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .buy-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: linear-gradient(180deg, #3a4560 0%, #2a334a 50%, #1a2030 100%);
+    border-color: #050810;
+    box-shadow: 0 3px 0 #050810;
+  }
+  .buy-btn .label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+  .buy-btn .price {
+    display: block;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0;
+  }
+  .buy-btn.alt {
+    background: linear-gradient(180deg, #b574d8 0%, #9550c0 50%, #6f3596 100%);
+    border-color: #4a1f6e;
+    box-shadow: 0 3px 0 #2e0e4a, inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .buy-btn.alt:active:not(:disabled) {
+    box-shadow: 0 1px 0 #2e0e4a, inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+
+  /* Upgrade row */
+  .upgrades-row {
+    display: flex;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .upg-btn {
+    flex: 1;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel-dark));
+    border: 2px solid var(--panel-dark);
+    border-radius: 7px;
+    color: var(--text);
+    padding: 5px 3px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.06s, opacity 0.2s;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4);
+    line-height: 1.1;
+  }
+  .upg-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.4);
+  }
+  .upg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .upg-btn .upg-icon { font-size: 14px; display: block; line-height: 1.1; }
+  .upg-btn .upg-cost { display: block; color: var(--gold); font-family: 'Lilita One', sans-serif; font-size: 10px; margin-top: 1px; }
+
+  /* Bottom bar */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #0a0e1a 0%, #050810 100%);
+    border-top: 3px solid #000;
+    display: flex;
+    padding: 10px 10px;
+    gap: 6px;
+    z-index: 50;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.5);
+  }
+  .bb-btn {
+    flex: 1;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel-dark));
+    border: 2px solid #050810;
+    border-radius: 12px;
+    color: var(--text);
+    padding: 8px 4px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.06s;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .bb-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.5);
+  }
+  .bb-btn .bb-icon { display: block; font-size: 20px; margin-bottom: 2px; }
+  .bb-btn.gold {
+    background: linear-gradient(180deg, #f8d860, #c89a18);
+    border-color: #6a4f0a;
+    color: #0a0e1a;
+    box-shadow: 0 2px 0 #5a3f08;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .bb-btn.gold:active { box-shadow: 0 1px 0 #5a3f08; }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--bg-2) 100%);
+    border: 4px solid var(--panel-dark);
+    border-radius: 18px;
+    padding: 22px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .modal h2 {
+    margin: 0 0 8px;
+    color: var(--gold);
+    font-family: 'Lilita One', sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.4);
+  }
+  .modal p {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    font-weight: 700;
+  }
+  .modal .big-num {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 32px;
+    color: var(--gold);
+    text-align: center;
+    margin: 12px 0;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.4);
+  }
+  .modal-btn {
+    width: 100%;
+    background: linear-gradient(180deg, #f8d860, #c89a18);
+    color: #0a0e1a;
+    border: 2px solid #6a4f0a;
+    padding: 12px;
+    border-radius: 12px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    box-shadow: 0 3px 0 #5a3f08;
+    transition: transform 0.06s, box-shadow 0.06s;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .modal-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #5a3f08;
+  }
+  .modal-btn.secondary {
+    background: linear-gradient(180deg, var(--panel-2), var(--panel-dark));
+    color: var(--text);
+    border-color: #050810;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.5);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+  }
+  .modal-btn.secondary:active { box-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+
+  /* Floating gain text */
+  .float-gain {
+    position: absolute;
+    color: var(--green);
+    font-weight: 800;
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 14px;
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+    z-index: 10;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-40px); opacity: 0; }
+  }
+
+  /* Stats list in modal */
+  .stat-list {
+    background: var(--panel-2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 8px 0;
+  }
+  .stat-list .row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid #2c3d66;
+  }
+  .stat-list .row:last-child { border: none; }
+  .stat-list .row .v { color: var(--gold); font-family: "SF Mono", Monaco, monospace; }
+
+  /* Celebration overlay — for milestone hits and major unlocks */
+  .celebrate-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(243,199,75,0.25) 0%, rgba(243,199,75,0) 60%);
+    opacity: 0;
+    animation: celebrateFlash 1.6s ease-out forwards;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .celebrate-banner {
+    background: linear-gradient(180deg, #f8d860 0%, #f3c74b 50%, #c89a18 100%);
+    border: 4px solid #6a4f0a;
+    border-radius: 18px;
+    padding: 18px 24px;
+    text-align: center;
+    box-shadow: 0 6px 0 #5a3f08, 0 0 40px rgba(243,199,75,0.5);
+    transform: scale(0.5);
+    animation: celebrateBanner 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    max-width: 360px;
+  }
+  .celebrate-title {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 22px;
+    color: #0a0e1a;
+    text-shadow: 0 2px 0 rgba(255,255,255,0.3);
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }
+  .celebrate-detail {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 14px;
+    color: #4a3a08;
+    margin-top: 4px;
+  }
+  @keyframes celebrateFlash {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes celebrateBanner {
+    0%   { transform: scale(0.3) rotate(-8deg); opacity: 0; }
+    20%  { transform: scale(1.15) rotate(2deg); opacity: 1; }
+    35%  { transform: scale(1.0) rotate(0deg); }
+    80%  { transform: scale(1.0) rotate(0deg); opacity: 1; }
+    100% { transform: scale(0.95) translateY(-10px); opacity: 0; }
+  }
+  /* Confetti dots */
+  .confetti {
+    position: absolute;
+    width: 8px;
+    height: 14px;
+    border-radius: 2px;
+    pointer-events: none;
+    animation: confettiFall 1.8s ease-out forwards;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translate(0, 0) rotate(0); opacity: 1; }
+    100% { transform: translate(var(--cx, 0), var(--cy, 200px)) rotate(720deg); opacity: 0; }
+  }
+
+  .toast {
+    position: fixed;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel-2);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    z-index: 300;
+    border: 1px solid #2c3d66;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker"></div>
+  </div>
+
+  <div class="header">
+    <div class="brand">
+      Day Trader Tycoon
+      <span class="sub">Wall St. Capital Partners LLC</span>
+    </div>
+    <div class="cash-display" id="cash">$0</div>
+    <div class="income-rate" id="incomeRate">$0/sec passive income</div>
+    <div class="gold-chip" id="goldChip"><span class="gold-icon">&#129689;</span><span id="goldAmount">0</span> GOLD</div>
+    <div class="stats-row">
+      <div>Influence<span class="stat-val" id="influence">0</span></div>
+      <div>Multiplier<span class="stat-val" id="multiplier">1.00x</span></div>
+      <div>Net Worth<span class="stat-val" id="lifetime">$0</span></div>
+    </div>
+  </div>
+
+  <div class="event-banner" id="eventBanner">
+    <span class="event-timer" id="eventTimer"></span>
+    <div class="event-headline" id="eventHeadline"></div>
+    <div class="event-detail" id="eventDetail"></div>
+  </div>
+
+  <div class="main-row">
+    <div class="tab-content">
+      <div class="tab-panel active" id="tab-home">
+        <div class="assets" id="assetList"></div>
+      </div>
+      <div class="tab-panel" id="tab-unlocks">
+        <div class="panel-title">Quests</div>
+        <div class="panel-sub">Complete quests to earn <span style="color:var(--gold);">GOLD</span>. Spend gold on premium managers and lifestyle upgrades.</div>
+        <div id="questsList"></div>
+        <div class="panel-title" style="margin-top:8px;">Achievements</div>
+        <div class="panel-sub">Hit milestones to earn permanent payout multipliers. These survive every IPO.</div>
+        <div id="unlocksList"></div>
+      </div>
+      <div class="tab-panel" id="tab-managers">
+        <div class="panel-title">Your Trading Floor</div>
+        <div class="panel-sub">The talent you've assembled. Each manager auto-trades their assigned asset.</div>
+        <div id="managersList"></div>
+      </div>
+      <div class="tab-panel" id="tab-perks">
+        <div class="panel-title">Premium Perks</div>
+        <div class="panel-sub">Firm-wide multipliers. Permanent. Not lost on IPO.</div>
+        <div id="perksList"></div>
+        <div class="panel-title" style="margin-top:8px;">Lifestyle</div>
+        <div class="panel-sub">Big-ticket purchases for the Wall Street lifestyle. Cost cash <i>and</i> <span style="color:var(--gold);">gold</span>. Permanent multipliers.</div>
+        <div id="lifestyleList"></div>
+        <div class="panel-title" style="margin-top:8px;">Mega Tickets</div>
+        <div class="panel-sub">One-time per asset. Permanent <b>+7.77x</b> multiplier on that asset. Choose wisely.</div>
+        <div id="megaTicketsList"></div>
+        <div class="panel-title" style="margin-top:8px;">Time Warps</div>
+        <div class="panel-sub">Consumable. Instantly grants cash equal to your passive income times the warp duration.</div>
+        <div id="timeWarpsList"></div>
+        <div class="panel-title" style="margin-top:8px;">Leverage</div>
+        <div class="panel-sub">Activate to multiply <b>all income</b> for a set time. Higher tiers = bigger multiplier, shorter duration. Only one can be active at a time.</div>
+        <div id="leverageActiveBar"></div>
+        <div id="leverageList"></div>
+      </div>
+      <div class="tab-panel" id="tab-news">
+        <div class="panel-title">Market News Feed</div>
+        <div class="panel-sub">A log of the chaos.</div>
+        <div id="newsList"></div>
+      </div>
+    </div>
+
+    <div class="tab-strip" id="tabStrip">
+      <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
+        <span class="tab-icon">&#128200;</span>HOME
+      </button>
+      <button class="tab-btn" data-tab="unlocks" onclick="switchTab('unlocks')">
+        <span class="tab-icon">&#127942;</span>GOALS
+        <span class="tab-dot"></span>
+      </button>
+      <button class="tab-btn" data-tab="managers" onclick="switchTab('managers')">
+        <span class="tab-icon">&#128188;</span>STAFF
+      </button>
+      <button class="tab-btn" data-tab="perks" onclick="switchTab('perks')">
+        <span class="tab-icon">&#9889;</span>PERKS
+      </button>
+      <button class="tab-btn" data-tab="news" onclick="switchTab('news')">
+        <span class="tab-icon">&#128240;</span>NEWS
+        <span class="tab-dot"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <button class="bb-btn" onclick="openModal('statsModal')">
+    <span class="bb-icon">&#128202;</span>Stats
+  </button>
+  <button class="bb-btn gold" onclick="openModal('prestigeModal')">
+    <span class="bb-icon">&#127970;</span>IPO Firm
+  </button>
+  <button class="bb-btn" onclick="openModal('settingsModal')">
+    <span class="bb-icon">&#9881;</span>Menu
+  </button>
+</div>
+
+<!-- Modals -->
+<div class="modal-bg" id="prestigeModal" onclick="if(event.target===this)closeModal('prestigeModal')">
+  <div class="modal">
+    <h2>Take Your Firm Public</h2>
+    <p>IPO your trading firm. You lose all cash, assets, traders, and speed boosts. In exchange, you gain <b>Influence</b> tokens, each granting +2% to all payouts permanently.</p>
+    <div class="big-num" id="prestigeGain">+0 Influence</div>
+    <p style="font-size:11px;text-align:center;">You need at least <b>$1M lifetime earnings</b> per Influence token. The market giveth.</p>
+    <button class="modal-btn" id="prestigeBtn" onclick="doPrestige()">Ring the Bell</button>
+    <h2 style="margin-top:16px;">Influence Shop</h2>
+    <p style="font-size:12px;">Spend Influence on permanent upgrades. These survive every IPO. Current Influence: <b id="influenceCurrent" style="color:var(--gold);">0</b></p>
+    <div id="influenceShopList"></div>
+    <button class="modal-btn secondary" onclick="closeModal('prestigeModal')">Close</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="statsModal" onclick="if(event.target===this)closeModal('statsModal')">
+  <div class="modal">
+    <h2>Firm Statistics</h2>
+    <div class="stat-list" id="statsBody"></div>
+    <button class="modal-btn secondary" onclick="closeModal('statsModal')">Close</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="upgradesModal" onclick="if(event.target===this)closeModal('upgradesModal')">
+  <div class="modal">
+    <h2>Premium Boosts</h2>
+    <p>Permanent firm-wide multipliers. These persist through IPOs.</p>
+    <div id="boostsBody"></div>
+    <button class="modal-btn secondary" onclick="closeModal('upgradesModal')">Close</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="settingsModal" onclick="if(event.target===this)closeModal('settingsModal')">
+  <div class="modal">
+    <h2>Menu</h2>
+    <p>Your firm autosaves every few seconds. Be advised: the SEC is always watching.</p>
+    <button class="modal-btn secondary" onclick="manualSave()">Save Now</button>
+    <button class="modal-btn secondary" onclick="exportSave()">Export Save Code</button>
+    <button class="modal-btn secondary" onclick="importSave()">Import Save Code</button>
+    <button class="modal-btn secondary" style="color:var(--red);border-color:var(--red);" onclick="hardReset()">Liquidate Everything</button>
+    <button class="modal-btn" onclick="closeModal('settingsModal')">Back</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="dailyModal" onclick="if(event.target===this)closeModal('dailyModal')">
+  <div class="modal">
+    <h2>Daily Bonus</h2>
+    <p>Welcome back to the trading floor.</p>
+    <div class="big-num" id="dailyAmount">+5 GOLD</div>
+    <p style="text-align:center;font-size:11px;" id="dailyStreakText">Streak: Day 1</p>
+    <button class="modal-btn" onclick="claimDaily()">Claim</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="welcomeModal" onclick="if(event.target===this)closeModal('welcomeModal')">
+  <div class="modal">
+    <h2>Welcome to Wall Street.</h2>
+    <p>You start with $4 and a dream. Buy positions in assets to generate cash. Tap the green progress bar to manually execute trades. Hire traders to automate.</p>
+    <p style="color:var(--gold);">Watch for market events &mdash; rate cuts boost your gains, SEC investigations crash them. Time your trades.</p>
+    <p>Eventually, IPO your firm to start over with permanent multipliers. The grind never ends.</p>
+    <button class="modal-btn" onclick="closeModal('welcomeModal')">Let's Make Money</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ GAME DATA ============
+const ASSETS = [
+  // === Wall Street market (USD) ===
+  { id: 'pnny', ticker: '$PNNY', name: 'Penny Stocks',         icon: '&#128181;', baseCost: 4,        basePayout: 1,         baseTime: 1.2,  hireCost: 100,      sector: 'retail',        market: 'wallst' },
+  { id: 'meme', ticker: '$MEME', name: 'Meme Coins',           icon: '&#128640;', baseCost: 60,       basePayout: 18,        baseTime: 3,    hireCost: 1500,     sector: 'meme',          market: 'wallst' },
+  { id: 'dogz', ticker: '$CNDY', name: 'Candy Crypto',         icon: '&#127852;', baseCost: 720,      basePayout: 270,       baseTime: 6,    hireCost: 18000,    sector: 'crypto',        market: 'wallst' },
+  { id: 'aibl', ticker: '$AIBL', name: 'AI Bubble Co.',        icon: '&#129302;', baseCost: 8640,     basePayout: 4050,      baseTime: 12,   hireCost: 216000,   sector: 'tech',          market: 'wallst' },
+  { id: 'hedg', ticker: '$HEDG', name: 'Hedge Fund Position',  icon: '&#128176;', baseCost: 103680,   basePayout: 60750,     baseTime: 24,   hireCost: 2592000,  sector: 'institutional', market: 'wallst' },
+  { id: 'yact', ticker: '$YACT', name: 'Offshore Yacht Fund',  icon: '&#128674;', baseCost: 1244160,  basePayout: 911250,    baseTime: 60,   hireCost: 31104000, sector: 'institutional', market: 'wallst' },
+  // === Tokyo Trading Floor (JPY ¥) — unlocked after first IPO ===
+  { id: 't_sushi',   ticker: '¥SUSHI', name: 'Sushi Bonds',             icon: '&#127843;', baseCost: 100,      basePayout: 25,         baseTime: 1.5, hireCost: 2500,      sector: 't_food',     market: 'tokyo' },
+  { id: 't_anime',   ticker: '¥ANIME', name: 'Anime Studio Stocks',     icon: '&#127884;', baseCost: 1500,     basePayout: 450,        baseTime: 3,   hireCost: 37500,     sector: 't_culture',  market: 'tokyo' },
+  { id: 't_karaoke', ticker: '¥KARA',  name: 'Karaoke ETF',             icon: '&#127908;', baseCost: 18000,    basePayout: 6750,       baseTime: 6,   hireCost: 450000,    sector: 't_culture',  market: 'tokyo' },
+  { id: 't_neko',    ticker: '¥NEKO',  name: 'Cat Cafe Holdings',       icon: '&#128049;', baseCost: 216000,   basePayout: 101250,     baseTime: 12,  hireCost: 5400000,   sector: 't_food',     market: 'tokyo' },
+  { id: 't_sumo',    ticker: '¥SUMO',  name: 'Sumo Sponsorships',       icon: '&#129336;', baseCost: 2592000,  basePayout: 1518750,    baseTime: 24,  hireCost: 64800000,  sector: 't_sport',    market: 'tokyo' },
+  { id: 't_toyota',  ticker: '¥TYTA',  name: 'Toyota Heavy Industries', icon: '&#128666;', baseCost: 31104000, basePayout: 22781250,   baseTime: 60,  hireCost: 777600000, sector: 't_industry', market: 'tokyo' },
+];
+
+const COST_GROWTH = 1.15;  // each unit costs 15% more (rebalanced 2026-04-26 — was 1.13)
+const PAYOUT_MULT = 1.0;   // multiplier per unit owned
+
+// Per-asset profit milestones (AdC's "x25 / x50 / x100..." mechanic).
+// When you hit each threshold of owned positions, that asset gets a permanent multiplier on its own payout.
+const MILESTONES = [5, 10, 25, 50, 100, 200, 300, 400];
+const MILESTONE_MULT = 1.6; // each milestone multiplies that asset's payout (rebalanced 2026-04-26 — was 2.0)
+// Subset of milestones that ALSO grant a 2x speed boost (halves the trade cycle time).
+// Replaces the old cash-cost speed upgrade button (removed 2026-04-26 per Owen's directive).
+const SPEED_MILESTONES = [50, 200];
+function speedFromMilestones(asset) {
+  const owned = state.assets[asset.id]?.owned || 0;
+  return SPEED_MILESTONES.filter(m => owned >= m).length;
+}
+function milestonesHit(owned) { return MILESTONES.filter(m => owned >= m).length; }
+function milestoneMultOf(asset) {
+  const owned = state.assets[asset.id]?.owned || 0;
+  return Math.pow(MILESTONE_MULT, milestonesHit(owned));
+}
+function nextMilestone(asset) {
+  const owned = state.assets[asset.id]?.owned || 0;
+  for (const m of MILESTONES) if (owned < m) return m;
+  return null; // all milestones hit
+}
+
+const BOOSTS = [
+  { id: 'morningCoffee',  name: 'Morning Coffee',        desc: 'All payouts +25%',           mult: 1.25, cost: 5000,         icon: '&#9749;' },
+  { id: 'bloomberg',      name: 'Bloomberg Terminal',    desc: 'All payouts +50%',           mult: 1.5,  cost: 250000,       icon: '&#128187;' },
+  { id: 'cornerOffice',   name: 'Corner Office',         desc: 'All payouts +100%',          mult: 2.0,  cost: 10000000,     icon: '&#127970;' },
+  { id: 'privateJet',     name: 'Private Jet',           desc: 'All payouts +200%',          mult: 3.0,  cost: 500000000,    icon: '&#128747;' },
+  { id: 'congressBuddy',  name: 'Congressional Buddy',   desc: 'All payouts +500%',          mult: 6.0,  cost: 25000000000,  icon: '&#127963;' },
+];
+
+// Manager personalities — flavor text per asset.
+const MANAGER_BIOS = {
+  pnny: { name: 'Chad Pennywise',  role: 'Penny Desk Trader',     bio: '"Eats only ramen. Will trade anything for a 1% commission."' },
+  meme: { name: 'Pepe McTendies',  role: 'Meme Coin Specialist',  bio: '"Posts in r/wallstreetbets. Refers to your portfolio as ‘the rocket.’"' },
+  dogz: { name: 'Sugar Wallet',    role: 'Candy Crypto Broker',   bio: '"Six year old crypto bro. Holds candy in cold storage."' },
+  aibl: { name: 'Dr. Synapse',     role: 'AI Bubble Analyst',     bio: '"Stanford dropout. CTO of ‘AI for AI for AI.’ Mostly does nothing."' },
+  hedg: { name: 'Bartholomew III', role: 'Hedge Fund Director',   bio: '"Old money. Owns 12 horses. Calls everyone ‘champ.’"' },
+  yact: { name: 'Captain Veranda', role: 'Yacht Fund Principal',  bio: '"Speaks four languages. Owns three islands. You are not on the Christmas list."' },
+  // Tokyo roster
+  t_sushi:   { name: 'Hiroshi Maguro',    role: 'Sushi Bond Specialist',  bio: '"Third-generation tuna trader. Knife collection insured for more than your house."' },
+  t_anime:   { name: 'Yuki Otaku',        role: 'Animation Sector Lead',  bio: '"Owns more body pillows than you have friends. The pillows have business cards."' },
+  t_karaoke: { name: 'Kenji Bellwether',  role: 'Karaoke Floor Manager',  bio: '"Knows every song from 1985-2003. Sings nothing. Glares at you instead."' },
+  t_neko:    { name: 'Aiko Nyancat',      role: 'Cat Cafe Concierge',     bio: '"Owns 47 cats. Talks to them about your portfolio. They have opinions."' },
+  t_sumo:    { name: 'Daiki Mountain',    role: 'Sumo Sponsorship Director', bio: '"Former wrestler. Eats six lunches. Has never lost a negotiation."' },
+  t_toyota:  { name: 'Reiko Tanaka',      role: 'Heavy Industry Director', bio: '"Inherited the company. Drives a 1987 Camry on principle."' },
+};
+
+// Achievement unlocks — permanent multipliers, persist across IPO.
+const UNLOCKS = [
+  { id: 'first_trade',   icon: '&#128176;', name: 'First Trade',         desc: 'Execute your very first trade.',                                  mult: 1.005, check: () => state.totalTrades >= 1 },
+  { id: 'first_hire',    icon: '&#128104;&#8205;&#128188;', name: 'Delegated',  desc: 'Hire your first trader.',                                            mult: 1.01,  check: () => Object.values(state.assets).some(a => a.hired) },
+  { id: 'penny_pincher', icon: '&#128181;', name: 'Penny Pincher',       desc: 'Own 50 Penny Stock positions.',                                   mult: 1.05,  check: () => (state.assets.pnny?.owned || 0) >= 50 },
+  { id: 'meme_lord',     icon: '&#128640;', name: 'Meme Lord',           desc: 'Own 25 Meme Coin positions.',                                     mult: 1.05,  check: () => (state.assets.meme?.owned || 0) >= 25 },
+  { id: 'diversified',   icon: '&#128202;', name: 'Diversified',         desc: 'Own at least 1 of every asset.',                                  mult: 1.10,  check: () => ASSETS.every(a => (state.assets[a.id]?.owned || 0) >= 1) },
+  { id: 'first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1M lifetime (this run or any).',                            mult: 1.05,  check: () => (state.allTimeEarnings || 0) >= 1e6 },
+  { id: 'wolf_st',       icon: '&#128054;', name: 'Wolf of Wall St',     desc: 'Earn $1B lifetime.',                                              mult: 1.10,  check: () => (state.allTimeEarnings || 0) >= 1e9 },
+  { id: 'diamond_hands', icon: '&#128142;', name: 'Diamond Hands',       desc: 'Survive a meme coin rug pull.',                                   mult: 1.15,  check: () => (state.rugPullsExperienced || 0) >= 1 },
+  { id: 'yacht_club',    icon: '&#128674;', name: 'Yacht Club Member',   desc: 'Buy your first Offshore Yacht Fund position.',                    mult: 1.10,  check: () => (state.assets.yact?.owned || 0) >= 1 },
+  { id: 'ipo_day',       icon: '&#128276;', name: 'IPO Day',             desc: 'Take your firm public for the first time.',                       mult: 1.10,  check: () => (state.influence || 0) >= 1 },
+  { id: 'speed_demon',   icon: '&#9889;',   name: 'Speed Demon',         desc: 'Buy 5 speed upgrades on a single asset.',                         mult: 1.05,  check: () => Object.values(state.assets).some(a => (a.speedLevel || 0) >= 5) },
+  { id: 'staffed_up',    icon: '&#128188;', name: 'Fully Staffed',       desc: 'Hire all 6 traders.',                                             mult: 1.20,  check: () => ASSETS.every(a => state.assets[a.id]?.hired) },
+];
+const NEWS_MAX = 30;
+
+// Quests — completable goals that grant gold. One-time per save.
+const QUESTS = [
+  { id: 'q_first_steps',   icon: '&#128181;', name: 'First Steps',         desc: 'Execute 10 trades.',                    target: () => 10,  progress: () => state.totalTrades || 0,                                                       reward: 5 },
+  { id: 'q_buying_in',     icon: '&#128722;', name: 'Buying In',           desc: 'Own 25 positions across all assets.',   target: () => 25,  progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),             reward: 10 },
+  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every asset.',               target: () => ASSETS.length, progress: () => ASSETS.filter(a => (state.assets[a.id]?.owned || 0) >= 1).length,        reward: 25 },
+  { id: 'q_crypto_curious',icon: '&#127852;', name: 'Crypto Curious',      desc: 'Own 5 Candy Crypto positions.',         target: () => 5,   progress: () => state.assets.dogz?.owned || 0,                                                reward: 10 },
+  { id: 'q_first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1,000,000 lifetime.',             target: () => 1e6, progress: () => state.allTimeEarnings || 0,                                                   reward: 25 },
+  { id: 'q_hedge_mgr',     icon: '&#128188;', name: 'Hedge Fund Manager',  desc: 'Hire 4 traders.',                       target: () => 4,   progress: () => Object.values(state.assets).filter(a => a.hired).length,                      reward: 25 },
+  { id: 'q_first_ipo',     icon: '&#127970;', name: 'First IPO',           desc: 'Take your firm public for the first time.', target: () => 1, progress: () => state.influence >= 1 ? 1 : 0,                                                reward: 100 },
+  { id: 'q_yacht_bound',   icon: '&#128674;', name: 'Yacht Bound',         desc: 'Own 1 Offshore Yacht Fund position.',   target: () => 1,   progress: () => state.assets.yact?.owned || 0,                                                reward: 50 },
+
+  // Mid-late progression
+  { id: 'q_click_trader',  icon: '&#128075;', name: 'Click Trader',        desc: 'Manually execute 100 trades.',           target: () => 100, progress: () => state.manualTrades || 0,                                                       reward: 15 },
+  { id: 'q_speed_demon',   icon: '&#9889;',   name: 'Speed Demon',         desc: 'Hit the 50-position speed milestone on any asset.', target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 20 },
+  { id: 'q_big_spender',   icon: '&#128181;', name: 'Big Spender',         desc: 'Hire any premium manager.',              target: () => 1,   progress: () => Object.keys(state.premiumOwned || {}).length >= 1 ? 1 : 0,                     reward: 25 },
+  { id: 'q_day_trader',    icon: '&#128184;', name: 'Day Trader',          desc: 'Hold $10M cash at one time.',           target: () => 1e7, progress: () => Math.min(state.cash, 1e7),                                                     reward: 30 },
+  { id: 'q_wall_st_tycoon',icon: '&#127970;', name: 'Wall Street Tycoon',  desc: 'Hold $1B cash at one time.',            target: () => 1e9, progress: () => Math.min(state.cash, 1e9),                                                     reward: 75 },
+  { id: 'q_goldsmith',     icon: '&#129689;', name: 'Goldsmith',           desc: 'Earn 100 gold lifetime.',                target: () => 100, progress: () => state.lifetimeGold || 0,                                                       reward: 30 },
+  { id: 'q_time_lord',     icon: '&#9203;',   name: 'Time Lord',           desc: 'Use 3 Time Warps.',                      target: () => 3,   progress: () => state.timeWarpsUsed || 0,                                                      reward: 30 },
+  { id: 'q_influencer',    icon: '&#128276;', name: 'Influencer',          desc: 'Own 2+ Influence Shop items.',           target: () => 2,   progress: () => Object.keys(state.influenceShopOwned || {}).length,                            reward: 100 },
+  { id: 'q_survivor',      icon: '&#129505;', name: 'Survivor',            desc: 'Survive a Black Swan event.',            target: () => 1,   progress: () => state.blackSwansExperienced || 0,                                              reward: 200 },
+];
+
+// Premium managers — gold-cost. Few, impactful, unique.
+const PREMIUM_MANAGERS = [
+  { id: 'senator',       name: 'The Senator',       role: 'Inside Source',          icon: '&#127963;', goldCost: 50,
+    desc: '+10% all payouts, plus a 5-second heads-up before any market event fires.',
+    bio: '"Old friend from college. Never asks where the campaign donations come from."',
+    mult: 1.10 },
+  { id: 'quant',         name: 'The Quant',         role: 'Algorithmic Trader',     icon: '&#129302;', goldCost: 75,
+    desc: '+15% all payouts. Auto-trades execute 10% faster.',
+    bio: '"PhD from MIT. Hasn\'t slept since 2019. Speaks only in Greek letters."',
+    mult: 1.15 },
+  { id: 'cfo',           name: 'The CFO',           role: 'Chief Financial Officer',icon: '&#128188;', goldCost: 150,
+    desc: '+30% all payouts. Knows where every penny is.',
+    bio: '"Former Goldman exec. Knows things about you that you don\'t know."',
+    mult: 1.30 },
+  { id: 'whistleblower', name: 'The Whistleblower', role: 'Receipt Keeper',         icon: '&#128264;', goldCost: 200,
+    desc: '+20% all payouts. Once per IPO cycle, trigger a guaranteed 5x bullish event for 30s.',
+    bio: '"Used to work for a big bank. Now works for you. Still has all the receipts."',
+    mult: 1.20, hasAbility: true },
+  // === Tokyo Trading Floor premium roster ===
+  { id: 'shogun',     name: 'The Shogun',     role: 'Tokyo Floor Boss',       icon: '&#128483;', goldCost: 100, market: 'tokyo',
+    desc: '+25% Tokyo payouts. Demands respect. Runs the floor with quiet menace.',
+    bio: '"Shows up in a perfectly tailored suit. Has never raised his voice. Everyone is terrified."',
+    mult: 1.25 },
+  { id: 'sensei',     name: 'The Sensei',     role: 'Master of the Spread',   icon: '&#127891;', goldCost: 150, market: 'tokyo',
+    desc: '+10% Tokyo payouts AND +10% faster Tokyo auto-trades. Decades of wisdom.',
+    bio: '"Has been trading since before you were born. Drinks one cup of tea per market session. Always right."',
+    mult: 1.10 },
+  { id: 'kaiju',      name: 'The Kaiju',      role: 'Volatility Beast',       icon: '&#129422;', goldCost: 200, market: 'tokyo',
+    desc: '+30% Tokyo payouts. Tokyo events fire 50% more often. Embrace chaos.',
+    bio: '"Eight feet tall and twice as wide. Cannot be reasoned with. The market moves when he enters the room."',
+    mult: 1.30 },
+  { id: 'salaryman',  name: 'The Salaryman',  role: '12-Hour Loyalty',        icon: '&#128104;&#8205;&#128188;', goldCost: 75, market: 'tokyo',
+    desc: '+15% Tokyo payouts. Never sleeps. Never complains. Drinks too much sake on Fridays.',
+    bio: '"Has worked here for 23 years. You\'ve seen him cry once. You will not bring it up."',
+    mult: 1.15 },
+];
+
+// Lifestyle upgrades — cash + gold. Permanent multipliers.
+const LIFESTYLE = [
+  { id: 'penthouse',   name: 'Penthouse Apartment',  icon: '&#127961;', cashCost: 1e8,  goldCost: 25,
+    desc: 'Skyline views and private elevator. +25% all payouts forever.', mult: 1.25 },
+  { id: 'yacht',       name: 'The Yacht',            icon: '&#128674;', cashCost: 1e9,  goldCost: 75,
+    desc: '47 meters of teak deck and contempt. +50% all payouts forever.', mult: 1.50 },
+  { id: 'jet',         name: 'Private Jet',          icon: '&#128747;', cashCost: 1e10, goldCost: 150,
+    desc: 'No more middle seats, ever. +75% all payouts forever.', mult: 1.75 },
+  { id: 'art',         name: 'Modern Art Collection',icon: '&#127912;', cashCost: 1e11, goldCost: 250,
+    desc: 'Tax-deductible scribbles by long-dead Europeans. +100% all payouts forever.', mult: 2.00 },
+  { id: 'island',      name: 'Private Island',       icon: '&#127965;', cashCost: 1e12, goldCost: 500,
+    desc: 'Your own zip code in international waters. +150% all payouts forever.', mult: 2.50 },
+  { id: 'nfl_team',    name: 'NFL Franchise',        icon: '&#127944;', cashCost: 1e14, goldCost: 1000,
+    desc: 'You sit in the owner\'s box now. The league hates you. +250% all payouts forever.', mult: 3.50 },
+];
+
+// Influence Shop — spend Influence (prestige currency) on permanent upgrades.
+// Bought once per shop item; survives across IPO resets.
+// Costs rebalanced 2026-04-26 — should feel like genuine endgame purchases, not session-2 buys.
+const INFLUENCE_SHOP = [
+  { id: 'heavens_lottery',     icon: '&#128276;', name: "Heaven's Lottery",  cost: 150,
+    desc: 'Each Influence is worth +4% (was +2%). Doubles your prestige value forever.' },
+  { id: 'fed_friend',          icon: '&#127970;', name: 'Federal Reserve Friend', cost: 200,
+    desc: '+50% all payouts forever. Bipartisan but expensive.', mult: 1.5 },
+  { id: 'senate_connections',  icon: '&#127963;', name: 'Senate Connections', cost: 125,
+    desc: 'Market events fire ~25% more often. More chaos = more chances.' },
+  { id: 'plutocracy',          icon: '&#128737;', name: 'Plutocracy',         cost: 100,
+    desc: '+5% all payouts per hired trader (max +30%).' },
+];
+
+// Mega Tickets — once per asset, gold cost. Permanent x7.77 multiplier on that asset.
+const MEGA_TICKET_MULT = 7.77;
+const MEGA_TICKETS = ASSETS.map((a, i) => ({
+  id: 'mt_' + a.id,
+  assetId: a.id,
+  ticker: a.ticker,
+  name: a.name + ' Mega Ticket',
+  goldCost: [100, 200, 400, 800, 1600, 3200][i] || 4000,
+}));
+
+// Leverage — tiered consumables. Activate to multiply ALL income (both markets) for a duration.
+// Higher tiers = more powerful but shorter (more dramatic moments). Only one active at a time.
+// Players get a starter gift of 1× [2x/5x/10x] at first boot.
+const LEVERAGE_TIERS = [
+  { id: 'lv_2x',   mult: 2,   name: '2x Leverage',   icon: '&#128640;', goldCost: 10,   minutes: 30 },
+  { id: 'lv_5x',   mult: 5,   name: '5x Leverage',   icon: '&#128640;', goldCost: 50,   minutes: 20 },
+  { id: 'lv_10x',  mult: 10,  name: '10x Leverage',  icon: '&#128640;', goldCost: 200,  minutes: 15 },
+  { id: 'lv_20x',  mult: 20,  name: '20x Leverage',  icon: '&#128640;', goldCost: 800,  minutes: 10 },
+  { id: 'lv_100x', mult: 100, name: '100x Leverage', icon: '&#128640;', goldCost: 5000, minutes: 5  },
+];
+const LEVERAGE_STARTER = { lv_2x: 1, lv_5x: 1, lv_10x: 1 };
+
+// Time Warps — consumable, gold cost. Instant cash = passiveIncomePerSec * duration.
+// Pricing tiers down per hour as you buy bigger packages — bulk discount.
+const TIME_WARPS = [
+  { id: 'tw_1h',  name: '1-Hour Time Warp',  icon: '&#9203;', goldCost: 25,  hours: 1 },
+  { id: 'tw_8h',  name: '8-Hour Time Warp',  icon: '&#9203;', goldCost: 100, hours: 8 },
+  { id: 'tw_24h', name: '24-Hour Time Warp', icon: '&#9203;', goldCost: 250, hours: 24 },
+];
+
+// Black Swan events — extremely rare, cataclysmic. Capped at MAX_BLACK_SWANS lifetime.
+const MAX_BLACK_SWANS = 2;
+const BLACK_SWANS = [
+  { id: 'bs_lehman',    headline: 'LEHMAN 2.0',         detail: 'Major bank collapses. Markets in freefall. -30% cash.',          dur: 30, cashLossPct: 0.30, surviveBonus: 1.25 },
+  { id: 'bs_flashcrash',headline: 'FLASH CRASH 2026',   detail: 'Algorithmic meltdown. Markets evaporate. -50% cash.',           dur: 15, cashLossPct: 0.50, surviveBonus: 1.25 },
+  { id: 'bs_dotcom',    headline: 'DOT-COM BUST 2.0',   detail: 'AI bubble pops, taking down everything tech. -25% cash.',       dur: 25, cashLossPct: 0.25, surviveBonus: 1.25 },
+];
+
+// ============ STATE ============
+let state = {
+  cash: 4,
+  yen: 0,                    // Tokyo market currency (separate from cash)
+  gold: 0,                   // premium currency, earned from quests, spent on premium content
+  activeMarket: 'wallst',    // 'wallst' or 'tokyo' — which floor the player is currently viewing
+  tokyoUnlocked: false,      // true after first IPO
+  lifetimeEarnings: 0,
+  allTimeEarnings: 0,        // never resets — for unlock checks
+  lifetimeYen: 0,            // tokyo lifetime earnings
+  totalTrades: 0,            // counts manual + auto trades
+  influence: 0,
+  assets: {},   // id -> { owned, progress, hired, speedLevel, payoutLevel }
+  boostsOwned: {}, // id -> true
+  unlocks: {},     // id -> true (achievement unlocked)
+  questsClaimed: {}, // id -> true (quest completed AND gold collected)
+  premiumOwned: {},  // id -> true (premium gold-cost managers)
+  lifestyleOwned: {},// id -> true (lifestyle upgrades)
+  lastDailyClaimAt: 0,  // timestamp of last daily reward claim
+  dailyStreak: 0,       // consecutive days claimed (resets if >36hr gap)
+  influenceShopOwned: {},   // id -> true (permanent shop purchases)
+  megaTicketsOwned: {},     // id -> true (per-asset gold-bought mega tickets)
+  blackSwansExperienced: 0, // lifetime — capped at MAX_BLACK_SWANS
+  blackSwanBonus: 1,        // permanent multiplier from surviving black swans
+  manualTrades: 0,          // count of manual click trades only
+  timeWarpsUsed: 0,         // total time warps consumed
+  lifetimeGold: 0,          // ever-earned gold (never decreases)
+  whistleblowerUsedThisRun: false, // resets on IPO
+  leverageInventory: {},    // id -> count remaining (consumable)
+  leverageStarterGiven: false, // true after the one-time onboarding gift
+  activeLeverage: null,     // { mult, until: ms timestamp } when a leverage is active
+  newsLog: [],     // [{ts, headline, detail, kind: 'good'|'bad'|'rug'|'milestone'}]
+  rugPullsExperienced: 0, // lifetime — capped at MAX_RUG_PULLS
+  activeTab: 'home',
+  hasUnseenUnlock: false,
+  hasUnseenNews: false,
+  lastTick: Date.now(),
+  lastEventAt: Date.now(),
+  activeEvent: null, // {sector, mult, until, headline, detail, bad, rugPull}
+};
+
+// Initialize state for every asset (both Wall Street and Tokyo).
+ASSETS.forEach(a => {
+  state.assets[a.id] = { owned: 0, progress: 0, hired: false, speedLevel: 0, payoutLevel: 0 };
+});
+
+// Helper: assets in the currently-viewed market (used by renderAssets).
+function activeMarketAssets() {
+  return ASSETS.filter(a => (a.market || 'wallst') === state.activeMarket);
+}
+
+// ============ HELPERS ============
+function fmt(n, currency) {
+  const sym = currency === 'yen' ? '¥' : '$';
+  if (n < 1000) return sym + n.toFixed(2);
+  const units = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+  let i = 0;
+  while (n >= 1000 && i < units.length - 1) { n /= 1000; i++; }
+  return sym + n.toFixed(2) + units[i];
+}
+// Per-asset currency helpers — Tokyo assets use yen, Wall Street uses cash.
+function currencyOf(asset) { return asset.market === 'tokyo' ? 'yen' : 'cash'; }
+function getMoney(asset) { return asset.market === 'tokyo' ? state.yen : state.cash; }
+function spendMoney(asset, amt) {
+  if (asset.market === 'tokyo') state.yen -= amt;
+  else state.cash -= amt;
+}
+function earnMoney(asset, amt) {
+  if (asset.market === 'tokyo') {
+    state.yen += amt;
+    state.lifetimeYen = (state.lifetimeYen || 0) + amt;
+  } else {
+    state.cash += amt;
+    state.lifetimeEarnings += amt;
+    state.allTimeEarnings += amt;
+  }
+}
+function fmtAsset(amt, asset) { return fmt(amt, currencyOf(asset)); }
+function fmtNum(n) {
+  return Math.floor(n).toLocaleString();
+}
+function costOf(asset) {
+  const a = state.assets[asset.id];
+  return asset.baseCost * Math.pow(COST_GROWTH, a.owned);
+}
+// How many positions could the player buy right now, capped at 100 per click.
+function maxBuyable(asset) {
+  const a = state.assets[asset.id];
+  let money = getMoney(asset);
+  let owned = a.owned;
+  let count = 0;
+  while (count < 100) {
+    const cost = asset.baseCost * Math.pow(COST_GROWTH, owned);
+    if (money < cost) break;
+    money -= cost;
+    owned++;
+    count++;
+  }
+  return count;
+}
+function speedUpgradeCost(asset) {
+  return asset.baseCost * 25 * Math.pow(8, state.assets[asset.id].speedLevel);
+}
+function payoutUpgradeCost(asset) {
+  return asset.baseCost * 60 * Math.pow(10, state.assets[asset.id].payoutLevel);
+}
+function timeOf(asset) {
+  const milestoneSpeed = speedFromMilestones(asset);
+  const legacySpeed = state.assets[asset.id]?.speedLevel || 0;
+  let t = asset.baseTime / Math.pow(2, milestoneSpeed + legacySpeed);
+  if (state.premiumOwned?.quant) t *= 0.90; // The Quant: 10% faster auto-trades (all markets)
+  if (asset.market === 'tokyo' && state.premiumOwned?.sensei) t *= 0.90; // The Sensei: 10% faster Tokyo
+  return t;
+}
+function basePayoutOf(asset) {
+  const a = state.assets[asset.id];
+  return asset.basePayout * a.owned * Math.pow(2, a.payoutLevel) * milestoneMultOf(asset) * megaTicketMultOf(asset);
+}
+function payoutOf(asset) {
+  let p = basePayoutOf(asset);
+  // Per-market multipliers (includes globals + market-specific premium managers)
+  p *= marketMult(asset.market || 'wallst');
+  // event multiplier
+  if (state.activeEvent && state.activeEvent.sector === asset.sector) {
+    p *= state.activeEvent.mult;
+  } else if (state.activeEvent && state.activeEvent.sector === 'all') {
+    p *= state.activeEvent.mult;
+  }
+  // Active leverage multiplier (consumable, time-limited) — applies to all markets
+  if (state.activeLeverage && Date.now() < state.activeLeverage.until) {
+    p *= state.activeLeverage.mult;
+  }
+  return p;
+}
+// Global multiplier — applies to BOTH markets. Premium managers without a .market property are global;
+// market-specific premium managers (Tokyo, etc.) are layered on in marketMult() instead.
+function globalMult() {
+  const perInfluence = state.influenceShopOwned?.heavens_lottery ? 0.04 : 0.02;
+  let m = 1 + (state.influence * perInfluence);
+  BOOSTS.forEach(b => { if (state.boostsOwned[b.id]) m *= b.mult; });
+  UNLOCKS.forEach(u => { if (state.unlocks[u.id]) m *= u.mult; });
+  PREMIUM_MANAGERS.forEach(p => { if (!p.market && state.premiumOwned[p.id]) m *= (p.mult || 1); });
+  LIFESTYLE.forEach(l => { if (state.lifestyleOwned[l.id]) m *= (l.mult || 1); });
+  INFLUENCE_SHOP.forEach(s => { if (state.influenceShopOwned?.[s.id] && s.mult) m *= s.mult; });
+  if (state.influenceShopOwned?.plutocracy) {
+    const hired = Math.min(6, Object.values(state.assets).filter(a => a.hired).length);
+    m *= 1 + (0.05 * hired);
+  }
+  m *= (state.blackSwanBonus || 1);
+  return m;
+}
+
+// Per-market multiplier — globalMult plus any market-specific premium managers.
+function marketMult(market) {
+  let m = globalMult();
+  PREMIUM_MANAGERS.forEach(p => {
+    if (!state.premiumOwned[p.id]) return;
+    if (p.market && p.market === market) m *= (p.mult || 1);
+  });
+  return m;
+}
+
+// Per-asset mega ticket multiplier
+function megaTicketMultOf(asset) {
+  return state.megaTicketsOwned?.['mt_' + asset.id] ? MEGA_TICKET_MULT : 1;
+}
+
+// Add an entry to the rolling news log, capped at NEWS_MAX.
+function addNews(headline, detail, kind) {
+  state.newsLog.unshift({ ts: Date.now(), headline, detail: detail || '', kind: kind || 'good' });
+  if (state.newsLog.length > NEWS_MAX) state.newsLog.length = NEWS_MAX;
+  if (state.activeTab !== 'news') {
+    state.hasUnseenNews = true;
+    document.querySelector('.tab-btn[data-tab="news"]').classList.add('has-news');
+  }
+}
+
+// Check unlocks — if any newly satisfied, mark unlocked, log it, toast, ping the tab.
+function checkUnlocks() {
+  let any = false;
+  UNLOCKS.forEach(u => {
+    if (state.unlocks[u.id]) return;
+    if (u.check()) {
+      state.unlocks[u.id] = true;
+      const pct = Math.round((u.mult - 1) * 100);
+      addNews('UNLOCK: ' + u.name, '+' + pct + '% all payouts (permanent).', 'milestone');
+      // Big celebration for ≥10% unlocks, regular toast for the small ones
+      if (pct >= 10) celebrate('UNLOCK: ' + u.name, '+' + pct + '% all payouts forever');
+      else toast('UNLOCK: ' + u.name + ' (+' + pct + '%)');
+      any = true;
+      if (state.activeTab !== 'unlocks') {
+        state.hasUnseenUnlock = true;
+        const btn = document.querySelector('.tab-btn[data-tab="unlocks"]');
+        if (btn) btn.classList.add('has-news');
+      }
+    }
+  });
+  if (any) { renderCash(); save(); }
+}
+
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + 's';
+  if (s < 3600) return Math.floor(s/60) + 'm';
+  if (s < 86400) return Math.floor(s/3600) + 'h';
+  return Math.floor(s/86400) + 'd';
+}
+// Income per second for the currently-viewed market (display only).
+function totalIncomePerSec() {
+  let total = 0;
+  ASSETS.forEach(a => {
+    if ((a.market || 'wallst') !== state.activeMarket) return;
+    const s = state.assets[a.id];
+    if (s && s.hired && s.owned > 0) {
+      total += payoutOf(a) / timeOf(a);
+    }
+  });
+  return total;
+}
+function prestigeGain() {
+  // 1 token per $10M lifetime earnings, scaling sqrt (rebalanced 2026-04-26 — was 1e6)
+  if (state.lifetimeEarnings < 1e7) return 0;
+  return Math.floor(Math.sqrt(state.lifetimeEarnings / 1e7));
+}
+function nextPrestigeAt() {
+  const cur = state.influence + prestigeGain();
+  return Math.pow(cur + 1, 2) * 1e7;
+}
+
+// ============ EVENTS ============
+// `weight` controls how often the event can fire when one is rolled.
+// Default weight = 10. Lower = rarer. Rug pulls are weight 1 (very rare).
+const EVENTS = [
+  // Common positive events
+  { sector: 'all',           mult: 1.5,  dur: 25, headline: 'FED CUTS RATES',        detail: 'All payouts +50% briefly.',      bad: false, weight: 10 },
+  { sector: 'crypto',        mult: 4,    dur: 18, headline: '$CNDY ON A SUGAR HIGH', detail: 'Candy Crypto x4 payouts!',       bad: false, weight: 10 },
+  { sector: 'meme',          mult: 5,    dur: 15, headline: 'WSB PUMPS $MEME',       detail: 'Meme coins x5 payouts!',         bad: false, weight: 10 },
+  { sector: 'tech',          mult: 3,    dur: 20, headline: 'AI HYPE CYCLE',         detail: 'Tech sector x3 payouts!',        bad: false, weight: 10 },
+  { sector: 'retail',        mult: 3,    dur: 18, headline: 'RETAIL FOMO',           detail: 'Penny stocks x3 payouts!',       bad: false, weight: 10 },
+  { sector: 'institutional', mult: 3.5,  dur: 22, headline: 'WHALE BUYS',            detail: 'Institutional x3.5 payouts!',    bad: false, weight: 10 },
+
+  // Common negative events
+  { sector: 'tech',          mult: 0.2,  dur: 18, headline: 'AI BUBBLE POPS',        detail: 'Tech crashes -80%!',             bad: true,  weight: 6 },
+  { sector: 'all',           mult: 0.5,  dur: 20, headline: 'SEC INVESTIGATION',     detail: 'All payouts -50%.',              bad: true,  weight: 6 },
+
+  // Rare meme coin events — big upside, terrifying downside
+  { sector: 'meme',          mult: 12,   dur: 12, headline: '$MEME GOES PARABOLIC',  detail: 'Meme coins x12! Diamond hands.', bad: false, weight: 3 },
+  { sector: 'meme',          mult: 0.05, dur: 10, headline: 'MEME COIN RUG PULL',    detail: 'Devs vanished. -95% crash.',     bad: true,  weight: 0.3, rugPull: true },
+];
+
+// Lifetime cap on rug pulls per save — they should be a story, not a recurring event.
+const MAX_RUG_PULLS = 2;
+
+// Weighted random pick — picks an event with probability proportional to its weight.
+// Skips rug pull events if the player has already experienced the lifetime cap.
+function pickWeightedEvent() {
+  const eligible = EVENTS.filter(e => {
+    if (e.rugPull && (state.rugPullsExperienced || 0) >= MAX_RUG_PULLS) return false;
+    return true;
+  });
+  const total = eligible.reduce((s, e) => s + (e.weight || 10), 0);
+  let r = Math.random() * total;
+  for (const e of eligible) {
+    r -= (e.weight || 10);
+    if (r <= 0) return e;
+  }
+  return eligible[0];
+}
+
+function maybeFireEvent() {
+  if (state.activeEvent) return;
+  const sinceLast = (Date.now() - state.lastEventAt) / 1000;
+  // Don't fire events until player has unlocked at least asset 2
+  if (state.assets[ASSETS[1].id].owned === 0) return;
+  // Senate Connections: events fire ~25% more often (cooldown 33s vs 45s, roll 0.0312 vs 0.025)
+  const senate = !!state.influenceShopOwned?.senate_connections;
+  const cooldown = senate ? 33 : 45;
+  const rollChance = senate ? 0.0312 : 0.025;
+  if (sinceLast < cooldown) return;
+  if (Math.random() < rollChance) {
+    fireEvent();
+  }
+}
+function fireEvent() {
+  // Black Swan check: ~1 in 800 rolls if conditions met, capped at MAX_BLACK_SWANS lifetime
+  const eligibleForSwan = (state.allTimeEarnings || 0) >= 1e9 // unlocks at $1B lifetime (rebalanced 2026-04-26 — was 1e8)
+    && (state.blackSwansExperienced || 0) < MAX_BLACK_SWANS
+    && Math.random() < (1 / 800);
+  if (eligibleForSwan) {
+    const sw = BLACK_SWANS[Math.floor(Math.random() * BLACK_SWANS.length)];
+    state.lastEventAt = Date.now();
+    if (state.premiumOwned.senator) {
+      toast('INSIDER ALERT: ' + sw.headline + ' incoming in 5s', 4500);
+      setTimeout(() => activateBlackSwan(sw), 5000);
+    } else {
+      activateBlackSwan(sw);
+    }
+    return;
+  }
+
+  const ev = pickWeightedEvent();
+  state.lastEventAt = Date.now(); // gate further rolls immediately so we don't double-fire during the delay
+  if (state.premiumOwned.senator) {
+    toast('INSIDER ALERT: ' + ev.headline + ' incoming in 5s', 4500);
+    setTimeout(() => activateEvent(ev), 5000);
+  } else {
+    activateEvent(ev);
+  }
+}
+
+function activateBlackSwan(sw) {
+  // Immediate cash hit
+  const cashLost = state.cash * sw.cashLossPct;
+  state.cash -= cashLost;
+  state.blackSwansExperienced = (state.blackSwansExperienced || 0) + 1;
+  // Make it look like an all-sector crash event
+  state.activeEvent = {
+    sector: 'all', mult: 0.05,
+    until: Date.now() + sw.dur * 1000,
+    headline: sw.headline, detail: sw.detail, bad: true, rugPull: false, blackSwan: true,
+  };
+  addNews(sw.headline, sw.detail + ' Lost ' + fmt(cashLost) + ' cash.', 'rug');
+  showEvent();
+  renderAssets();
+  // Massive screen flash on activation
+  celebrate('BLACK SWAN: ' + sw.headline, 'You lost ' + fmt(cashLost) + '. Survive for permanent +25%.');
+  // Grant permanent bonus when the event ends — schedule it
+  setTimeout(() => {
+    state.blackSwanBonus = (state.blackSwanBonus || 1) * sw.surviveBonus;
+    addNews('SURVIVED: ' + sw.headline, '+25% global mult earned forever.', 'milestone');
+    celebrate('YOU SURVIVED', '+25% all payouts forever (' + state.blackSwansExperienced + '/' + MAX_BLACK_SWANS + ' lifetime)');
+    renderCash();
+    save();
+  }, sw.dur * 1000 + 200);
+  save();
+}
+
+function activateEvent(ev) {
+  state.activeEvent = {
+    sector: ev.sector, mult: ev.mult,
+    until: Date.now() + ev.dur * 1000,
+    headline: ev.headline, detail: ev.detail, bad: ev.bad, rugPull: !!ev.rugPull,
+  };
+  if (ev.rugPull) state.rugPullsExperienced = (state.rugPullsExperienced || 0) + 1;
+  addNews(ev.headline, ev.detail, ev.rugPull ? 'rug' : (ev.bad ? 'bad' : 'good'));
+  showEvent();
+  renderAssets();
+  save();
+}
+function showEvent() {
+  const banner = document.getElementById('eventBanner');
+  document.getElementById('eventHeadline').textContent = state.activeEvent.headline;
+  document.getElementById('eventDetail').textContent = state.activeEvent.detail;
+  banner.classList.add('show');
+  banner.classList.toggle('bad', state.activeEvent.bad);
+}
+function hideEvent() {
+  document.getElementById('eventBanner').classList.remove('show');
+}
+
+// ============ ACTIONS ============
+function buyAsset(id) {
+  const asset = ASSETS.find(a => a.id === id);
+  const c = costOf(asset);
+  if (getMoney(asset) < c) { toast('Not enough ' + (currencyOf(asset) === 'yen' ? 'yen' : 'cash') + '.'); return; }
+  const before = state.assets[id].owned;
+  spendMoney(asset, c);
+  state.assets[id].owned++;
+  checkMilestoneCross(asset, before, state.assets[id].owned);
+  renderAll();
+  save();
+}
+function buyMax(id) {
+  const asset = ASSETS.find(a => a.id === id);
+  const before = state.assets[id].owned;
+  let bought = 0;
+  while (getMoney(asset) >= costOf(asset) && bought < 100) {
+    spendMoney(asset, costOf(asset));
+    state.assets[id].owned++;
+    bought++;
+  }
+  if (bought === 0) toast('Not enough ' + (currencyOf(asset) === 'yen' ? 'yen' : 'cash') + '.');
+  else checkMilestoneCross(asset, before, state.assets[id].owned);
+  renderAll();
+  save();
+}
+// If buying crossed any milestone, fire a celebration for the highest one hit.
+function checkMilestoneCross(asset, ownedBefore, ownedAfter) {
+  const crossed = MILESTONES.filter(m => ownedBefore < m && ownedAfter >= m);
+  if (crossed.length === 0) return;
+  const top = crossed[crossed.length - 1];
+  const newMult = Math.pow(MILESTONE_MULT, crossed.length);
+  celebrate('MILESTONE: ' + top + ' ' + asset.ticker + ' positions!', '+' + (newMult).toFixed(0) + 'x ' + asset.ticker + ' payouts forever');
+  addNews('MILESTONE: ' + asset.ticker + ' x' + top, 'Asset payout permanently x' + newMult, 'milestone');
+}
+function hireTrader(id) {
+  const asset = ASSETS.find(a => a.id === id);
+  if (state.assets[id].hired) return;
+  if (getMoney(asset) < asset.hireCost) { toast('Cannot afford trader.'); return; }
+  spendMoney(asset, asset.hireCost);
+  state.assets[id].hired = true;
+  toast('Trader hired for ' + asset.ticker);
+  renderAll();
+  save();
+}
+function buySpeed(id) {
+  const asset = ASSETS.find(a => a.id === id);
+  const c = speedUpgradeCost(asset);
+  if (state.cash < c) { toast('Cannot afford speed upgrade.'); return; }
+  state.cash -= c;
+  state.assets[id].speedLevel++;
+  renderAll();
+  save();
+}
+function buyPayout(id) {
+  const asset = ASSETS.find(a => a.id === id);
+  const c = payoutUpgradeCost(asset);
+  if (getMoney(asset) < c) { toast('Cannot afford payout upgrade.'); return; }
+  spendMoney(asset, c);
+  state.assets[id].payoutLevel++;
+  renderAll();
+  save();
+}
+function executeTrade(id, evt) {
+  const asset = ASSETS.find(a => a.id === id);
+  const s = state.assets[id];
+  if (s.owned === 0) { toast('Buy a position first.'); return; }
+  if (s.progress < 1) return; // not ready
+  const gain = payoutOf(asset);
+  earnMoney(asset, gain);
+  state.totalTrades++;
+  state.manualTrades = (state.manualTrades || 0) + 1;
+  s.progress = 0;
+  spawnFloat(evt, gain, currencyOf(asset));
+  renderCash();
+}
+
+// Whistleblower active ability — once per IPO cycle, trigger a guaranteed bull event
+function useWhistleblower() {
+  if (!state.premiumOwned?.whistleblower) return;
+  if (state.whistleblowerUsedThisRun) { toast('Already used this IPO cycle.'); return; }
+  if (state.activeEvent) { toast('Wait for the current event to end.'); return; }
+  state.whistleblowerUsedThisRun = true;
+  const ev = { sector: 'all', mult: 5, dur: 30, headline: 'WHISTLEBLOWER LEAK', detail: 'Receipts dropped. Markets surge x5 for 30s.', bad: false };
+  activateEvent(ev);
+  celebrate('LEAKED!', '5x all payouts for 30 seconds');
+  renderManagersTab();
+  save();
+}
+function spawnFloat(evt, gain, currency) {
+  if (!evt) return;
+  const target = evt.currentTarget || evt.target;
+  const rect = target.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'float-gain';
+  el.textContent = '+' + fmt(gain, currency);
+  el.style.left = (rect.left + rect.width/2 - 30) + 'px';
+  el.style.top = (rect.top - 5) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+function claimQuest(id) {
+  if (state.questsClaimed[id]) return;
+  const q = QUESTS.find(x => x.id === id);
+  if (!q) return;
+  if (q.progress() < q.target()) { toast('Not yet complete.'); return; }
+  state.questsClaimed[id] = true;
+  state.gold = (state.gold || 0) + q.reward;
+  state.lifetimeGold = (state.lifetimeGold || 0) + q.reward;
+  toast('+' + q.reward + ' GOLD: ' + q.name);
+  addNews('QUEST: ' + q.name, '+' + q.reward + ' gold rewarded.', 'milestone');
+  renderCash();
+  renderGoalsTab();
+  save();
+}
+
+function buyPremiumManager(id) {
+  if (state.premiumOwned[id]) return;
+  const p = PREMIUM_MANAGERS.find(x => x.id === id);
+  if (!p) return;
+  if ((state.gold || 0) < p.goldCost) { toast('Not enough gold.'); return; }
+  state.gold -= p.goldCost;
+  state.premiumOwned[id] = true;
+  toast(p.name + ' joins your firm!');
+  addNews('HIRED: ' + p.name, p.role + ' — ' + (p.mult ? '+' + Math.round((p.mult-1)*100) + '% global mult' : ''), 'milestone');
+  renderCash();
+  renderManagersTab();
+  save();
+}
+
+function buyInfluenceShop(id) {
+  if (state.influenceShopOwned?.[id]) return;
+  const item = INFLUENCE_SHOP.find(s => s.id === id);
+  if (!item) return;
+  if (state.influence < item.cost) { toast('Not enough Influence.'); return; }
+  state.influence -= item.cost;
+  if (!state.influenceShopOwned) state.influenceShopOwned = {};
+  state.influenceShopOwned[id] = true;
+  toast('Acquired: ' + item.name);
+  addNews('INFLUENCE: ' + item.name, item.desc, 'milestone');
+  celebrate('INFLUENCE PURCHASE', item.name);
+  renderCash();
+  renderPrestige();
+  renderInfluenceShop();
+  save();
+}
+
+function buyMegaTicket(id) {
+  if (state.megaTicketsOwned?.[id]) return;
+  const t = MEGA_TICKETS.find(x => x.id === id);
+  if (!t) return;
+  if ((state.gold || 0) < t.goldCost) { toast('Not enough gold.'); return; }
+  state.gold -= t.goldCost;
+  if (!state.megaTicketsOwned) state.megaTicketsOwned = {};
+  state.megaTicketsOwned[id] = true;
+  celebrate('MEGA TICKET: ' + t.ticker, '+' + MEGA_TICKET_MULT + 'x ' + t.ticker + ' payouts forever');
+  addNews('MEGA TICKET: ' + t.ticker, 'Asset payout permanently +' + MEGA_TICKET_MULT + 'x', 'milestone');
+  renderCash();
+  renderPerksTab();
+  renderAssets(); // labels show new payout
+  save();
+}
+
+// Leverage v2 — tiered consumables.
+function buyLeverage(id) {
+  const t = LEVERAGE_TIERS.find(x => x.id === id);
+  if (!t) return;
+  if ((state.gold || 0) < t.goldCost) { toast('Not enough gold.'); return; }
+  state.gold -= t.goldCost;
+  if (!state.leverageInventory) state.leverageInventory = {};
+  state.leverageInventory[id] = (state.leverageInventory[id] || 0) + 1;
+  toast('+1 ' + t.name);
+  renderCash();
+  renderPerksTab();
+  save();
+}
+function activateLeverage(id) {
+  const t = LEVERAGE_TIERS.find(x => x.id === id);
+  if (!t) return;
+  if (state.activeLeverage && Date.now() < state.activeLeverage.until) {
+    toast('Another leverage is already active.'); return;
+  }
+  const have = (state.leverageInventory?.[id] || 0);
+  if (have <= 0) { toast('None in inventory.'); return; }
+  state.leverageInventory[id] = have - 1;
+  state.activeLeverage = {
+    id: id,
+    mult: t.mult,
+    until: Date.now() + t.minutes * 60 * 1000,
+    name: t.name,
+  };
+  celebrate(t.name + ' ACTIVE', t.mult + 'x all income for ' + t.minutes + ' minutes');
+  addNews('LEVERAGE: ' + t.name, t.mult + 'x income for ' + t.minutes + ' min', 'milestone');
+  renderCash();
+  renderPerksTab();
+  save();
+}
+// Grant the one-time starter gift on first boot.
+function maybeGrantLeverageStarter() {
+  if (state.leverageStarterGiven) return;
+  if (!state.leverageInventory) state.leverageInventory = {};
+  Object.entries(LEVERAGE_STARTER).forEach(([id, count]) => {
+    state.leverageInventory[id] = (state.leverageInventory[id] || 0) + count;
+  });
+  state.leverageStarterGiven = true;
+  addNews('STARTER PACK', '+1× 2x, 5x, 10x leverage gifted. Check the Perks tab.', 'milestone');
+  save();
+}
+
+function useTimeWarp(id) {
+  const w = TIME_WARPS.find(x => x.id === id);
+  if (!w) return;
+  if ((state.gold || 0) < w.goldCost) { toast('Not enough gold.'); return; }
+  const rate = totalIncomePerSec();
+  if (rate <= 0) { toast('No passive income to warp. Hire a trader first.'); return; }
+  const gain = rate * w.hours * 3600;
+  state.gold -= w.goldCost;
+  state.cash += gain;
+  state.lifetimeEarnings += gain;
+  state.allTimeEarnings += gain;
+  state.timeWarpsUsed = (state.timeWarpsUsed || 0) + 1;
+  celebrate('TIME WARP: +' + w.hours + 'h', '+' + fmt(gain) + ' instant cash');
+  addNews('TIME WARP: ' + w.hours + 'h', '+' + fmt(gain) + ' cash', 'milestone');
+  renderCash();
+  renderPerksTab();
+  save();
+}
+
+function buyLifestyle(id) {
+  if (state.lifestyleOwned[id]) return;
+  const l = LIFESTYLE.find(x => x.id === id);
+  if (!l) return;
+  if (state.cash < l.cashCost) { toast('Not enough cash.'); return; }
+  if ((state.gold || 0) < l.goldCost) { toast('Not enough gold.'); return; }
+  state.cash -= l.cashCost;
+  state.gold -= l.goldCost;
+  state.lifestyleOwned[id] = true;
+  toast('Acquired: ' + l.name);
+  addNews('LIFESTYLE: ' + l.name, '+' + Math.round((l.mult-1)*100) + '% global mult forever.', 'milestone');
+  renderCash();
+  renderPerksTab();
+  save();
+}
+
+// Daily login reward — eligible if 20+ hours since last claim. Streak resets if 36+ hours.
+function dailyEligible() {
+  const since = Date.now() - (state.lastDailyClaimAt || 0);
+  return since >= 20 * 3600 * 1000;
+}
+function dailyAmount() {
+  // Base 5 + streak bonus, capped at +10
+  const streakBonus = Math.min(10, state.dailyStreak || 0);
+  return 5 + streakBonus;
+}
+function maybeOpenDaily() {
+  if (!dailyEligible()) return;
+  // If streak gap > 36h, the streak resets to 0 (next claim starts at Day 1)
+  const since = Date.now() - (state.lastDailyClaimAt || 0);
+  if (state.lastDailyClaimAt && since > 36 * 3600 * 1000) state.dailyStreak = 0;
+  document.getElementById('dailyAmount').textContent = '+' + dailyAmount() + ' GOLD';
+  document.getElementById('dailyStreakText').textContent = 'Streak: Day ' + ((state.dailyStreak || 0) + 1);
+  openModal('dailyModal');
+}
+function claimDaily() {
+  if (!dailyEligible()) { closeModal('dailyModal'); return; }
+  const amt = dailyAmount();
+  state.gold = (state.gold || 0) + amt;
+  state.lifetimeGold = (state.lifetimeGold || 0) + amt;
+  state.dailyStreak = (state.dailyStreak || 0) + 1;
+  state.lastDailyClaimAt = Date.now();
+  closeModal('dailyModal');
+  celebrate('+' + amt + ' GOLD', 'Daily Bonus &middot; Day ' + state.dailyStreak);
+  addNews('DAILY BONUS', '+' + amt + ' gold (Day ' + state.dailyStreak + ' streak)', 'milestone');
+  renderCash();
+  save();
+}
+
+function buyBoost(id) {
+  const b = BOOSTS.find(x => x.id === id);
+  if (state.boostsOwned[id]) return;
+  if (state.cash < b.cost) { toast('Cannot afford ' + b.name + '.'); return; }
+  state.cash -= b.cost;
+  state.boostsOwned[id] = true;
+  toast(b.name + ' acquired!');
+  renderBoosts();
+  renderAll();
+  save();
+}
+
+function doPrestige() {
+  const gain = prestigeGain();
+  if (gain === 0) { toast('You need more lifetime earnings.'); return; }
+  state.influence += gain;
+  state.cash = 4;
+  state.lifetimeEarnings = 0;
+  state.activeEvent = null;
+  state.lastEventAt = Date.now();
+  state.whistleblowerUsedThisRun = false; // refresh ability per run
+  ASSETS.forEach(a => {
+    state.assets[a.id] = { owned: 0, progress: 0, hired: false, speedLevel: 0, payoutLevel: 0 };
+  });
+  closeModal('prestigeModal');
+  hideEvent();
+  celebrate('IPO!', '+' + gain + ' Influence earned');
+  renderAll();
+  save();
+}
+
+// ============ TICK ============
+function tick() {
+  const now = Date.now();
+  const dt = Math.min((now - state.lastTick) / 1000, 1.5); // cap at 1.5s per frame
+  state.lastTick = now;
+
+  // Event timer
+  if (state.activeEvent && now > state.activeEvent.until) {
+    state.activeEvent = null;
+    hideEvent();
+    renderAll();
+  }
+  if (state.activeEvent) {
+    const remaining = Math.max(0, Math.ceil((state.activeEvent.until - now) / 1000));
+    const t = document.getElementById('eventTimer');
+    if (t) t.textContent = remaining + 's';
+  }
+
+  maybeFireEvent();
+
+  // Per-asset progress
+  ASSETS.forEach(a => {
+    const s = state.assets[a.id];
+    if (s.owned === 0) return;
+    const t = timeOf(a);
+    s.progress += dt / t;
+    if (s.progress >= 1) {
+      if (s.hired) {
+        // auto-execute, possibly multiple cycles per frame in extreme cases
+        const cycles = Math.floor(s.progress);
+        const gain = payoutOf(a) * cycles;
+        earnMoney(a, gain);
+        state.totalTrades += cycles;
+        s.progress -= cycles;
+      } else {
+        s.progress = 1; // wait for click
+      }
+    }
+  });
+
+  renderProgressBars();
+  renderCash();
+  // Lightweight: refresh button enabled states & unlocks every ~700ms
+  state._lastButtonsRefresh = state._lastButtonsRefresh || 0;
+  if (now - state._lastButtonsRefresh > 700) {
+    state._lastButtonsRefresh = now;
+    refreshButtonStates();
+    checkUnlocks();
+    // Re-render the active side panel if it shows live data
+    if (state.activeTab === 'unlocks') renderGoalsTab();
+    else if (state.activeTab === 'perks') renderPerksTab();
+    else if (state.activeTab === 'managers') renderManagersTab();
+    else if (state.activeTab === 'news') renderNewsTab();
+  }
+}
+
+// Update only enabled/disabled state on existing buttons (no DOM rebuild)
+function refreshButtonStates() {
+  let needsFullRender = false;
+  ASSETS.forEach((asset, idx) => {
+    const s = state.assets[asset.id];
+    const unlocked = idx === 0 || state.assets[ASSETS[idx-1].id].owned >= 1;
+    const card = document.getElementById('asset-' + asset.id);
+    if (!card) {
+      // Asset card doesn't exist yet — first time it should appear, do a full render
+      if (unlocked || s.owned > 0) needsFullRender = true;
+      return;
+    }
+    const btns = card.querySelectorAll('button');
+    btns.forEach(btn => {
+      const onclick = btn.getAttribute('onclick') || '';
+      if (onclick.startsWith('buyAsset')) {
+        btn.disabled = !(state.cash >= costOf(asset) && unlocked);
+      } else if (onclick.startsWith('buyMax')) {
+        const n = maxBuyable(asset);
+        btn.disabled = n === 0;
+        const priceEl = btn.querySelector('.price');
+        if (priceEl) priceEl.textContent = 'x' + n;
+      } else if (onclick.startsWith('hireTrader')) {
+        btn.disabled = !(state.cash >= asset.hireCost && !s.hired && s.owned > 0);
+      } else if (onclick.startsWith('buyPayout')) {
+        btn.disabled = !(state.cash >= payoutUpgradeCost(asset) && s.owned > 0);
+      }
+    });
+  });
+  if (needsFullRender) renderAssets();
+}
+
+// ============ RENDER ============
+function renderAll() {
+  renderCash();
+  renderAssets();
+}
+function renderCash() {
+  // Header shows the currency of the currently-viewed market
+  const isTokyo = state.activeMarket === 'tokyo';
+  const displayMoney = isTokyo ? state.yen : state.cash;
+  const lifetime = isTokyo ? (state.lifetimeYen || 0) : state.lifetimeEarnings;
+  const cur = isTokyo ? 'yen' : 'cash';
+  document.getElementById('cash').textContent = fmt(displayMoney, cur);
+  document.getElementById('incomeRate').textContent = fmt(totalIncomePerSec(), cur) + '/sec passive';
+  document.getElementById('influence').textContent = fmtNum(state.influence);
+  document.getElementById('multiplier').textContent = marketMult(state.activeMarket).toFixed(2) + 'x';
+  document.getElementById('lifetime').textContent = fmt(lifetime, cur);
+  const g = document.getElementById('goldAmount'); if (g) g.textContent = fmtNum(state.gold || 0);
+}
+
+// Switch the active market (Wall Street or Tokyo). Re-renders and saves.
+function switchMarket(market) {
+  if (market !== 'wallst' && market !== 'tokyo') return;
+  if (market === 'tokyo' && !state.tokyoUnlocked) { toast('Tokyo unlocks after your first IPO.'); return; }
+  state.activeMarket = market;
+  renderAll();
+  save();
+}
+function renderAssets() {
+  const list = document.getElementById('assetList');
+  list.innerHTML = '';
+
+  // Market switcher at top of HOME — only show the Tokyo button if unlocked
+  const tokyoUnlockedNow = state.tokyoUnlocked || (state.influence || 0) >= 1;
+  if (tokyoUnlockedNow && !state.tokyoUnlocked) {
+    state.tokyoUnlocked = true;
+    state.yen = (state.yen || 0) + 100; // welcome bonus to bootstrap Tokyo
+    addNews('TOKYO UNLOCKED', 'Welcome to the Tokyo Trading Floor. +100 ¥ starter bonus.', 'milestone');
+  }
+  if (tokyoUnlockedNow) {
+    const sw = document.createElement('div');
+    sw.className = 'market-switcher';
+    sw.innerHTML = `
+      <button class="market-tab ${state.activeMarket === 'wallst' ? 'active' : ''}" onclick="switchMarket('wallst')">$ WALL ST</button>
+      <button class="market-tab ${state.activeMarket === 'tokyo' ? 'active' : ''}" onclick="switchMarket('tokyo')">¥ TOKYO</button>
+    `;
+    list.appendChild(sw);
+  }
+
+  // Filter to only the active market's assets
+  const marketAssets = activeMarketAssets();
+  let prevUnlocked = true;
+  marketAssets.forEach((asset, idx) => {
+    const s = state.assets[asset.id];
+    // Unlock the next asset when previous has at least 1 owned
+    const unlocked = idx === 0 || state.assets[marketAssets[idx-1].id].owned >= 1;
+    const visible = unlocked || (idx > 0 && state.cash >= costOf(asset) * 0.5) || s.owned > 0;
+    if (!visible && !prevUnlocked) return;
+    const div = document.createElement('div');
+    div.className = 'asset' + (unlocked ? '' : ' locked');
+    div.id = 'asset-' + asset.id;
+    if (state.activeEvent && state.activeEvent.sector === asset.sector) {
+      div.classList.add(state.activeEvent.bad ? 'crashed' : 'boosted');
+    }
+    if (state.activeEvent && state.activeEvent.sector === 'all') {
+      div.classList.add(state.activeEvent.bad ? 'crashed' : 'boosted');
+    }
+
+    const buyCost = costOf(asset);
+    const speedCost = speedUpgradeCost(asset);
+    const payoutCost = payoutUpgradeCost(asset);
+    const hireCost = asset.hireCost;
+    const money = getMoney(asset);
+    const canBuy = money >= buyCost && unlocked;
+    const canHire = money >= hireCost && !s.hired && s.owned > 0;
+    const canSpeed = money >= speedCost && s.owned > 0;
+    const canPay = money >= payoutCost && s.owned > 0;
+
+    let incomeText;
+    if (s.owned === 0) {
+      if (unlocked) {
+        incomeText = 'BUY A POSITION';
+      } else {
+        const prev = marketAssets[idx - 1];
+        incomeText = 'LOCKED &middot; BUY 1 ' + (prev ? prev.ticker : '?') + ' FIRST';
+      }
+    } else {
+      incomeText = s.hired ? fmtAsset(payoutOf(asset), asset) + ' /trade' : 'TAP TO TRADE &middot; ' + fmtAsset(payoutOf(asset), asset);
+    }
+
+    // Milestone progress text — show next threshold, current x bonus, and speed indicator
+    const next = nextMilestone(asset);
+    const hits = milestonesHit(s.owned);
+    const speedHits = speedFromMilestones(asset);
+    const speedTag = speedHits > 0 ? ` &middot; <span style="color:var(--blue);">&#9889;${Math.pow(2, speedHits)}x</span>` : '';
+    const nextIsSpeed = next !== null && SPEED_MILESTONES.includes(next);
+    const milestoneText = !unlocked
+      ? ''
+      : (next === null
+          ? `<div class="milestone-line"><span class="ms-current">x${Math.pow(MILESTONE_MULT, hits).toFixed(1)} maxed${speedTag}</span></div>`
+          : `<div class="milestone-line">
+               <span class="ms-progress">${s.owned}/${next} &rarr; +${MILESTONE_MULT}x${nextIsSpeed ? ' <span style="color:var(--blue);">+&#9889;</span>' : ''}</span>
+               ${hits > 0 ? `<span class="ms-current">x${Math.pow(MILESTONE_MULT, hits).toFixed(1)}${speedTag}</span>` : ''}
+             </div>`);
+
+    // Owned-count display: show fraction toward next milestone if we haven't maxed
+    const countDisplay = next === null
+      ? fmtNum(s.owned)
+      : fmtNum(s.owned);
+
+    div.innerHTML = `
+      <div class="asset-icon-col">
+        <div class="asset-icon">${asset.icon}</div>
+        <div class="asset-count">${countDisplay}</div>
+        ${unlocked && next ? `<div class="asset-mini-bar"><div class="asset-mini-fill" style="width:${Math.min(100, (s.owned / next) * 100)}%;"></div></div>` : ''}
+      </div>
+      <div class="asset-main">
+        <div class="asset-header">
+          <span class="asset-ticker">${asset.ticker}</span>
+          <span class="asset-name">${asset.name}</span>
+        </div>
+        <div class="income-bar" data-id="${asset.id}">
+          ${s.hired ? '<div class="auto-badge">AUTO</div>' : ''}
+          <div class="income-fill" id="prog-${asset.id}"></div>
+          <div class="income-label">${incomeText}</div>
+        </div>
+        ${milestoneText}
+        <div class="buy-row">
+          <button class="buy-btn" ${canBuy?'':'disabled'} onclick="buyAsset('${asset.id}')">
+            <span class="label">BUY x1</span>
+            <span class="price">${fmtAsset(buyCost, asset)}</span>
+          </button>
+          <button class="buy-btn alt" ${maxBuyable(asset) === 0 ? 'disabled' : ''} onclick="buyMax('${asset.id}')">
+            <span class="label">BUY MAX</span>
+            <span class="price">x${maxBuyable(asset)}</span>
+          </button>
+        </div>
+        <div class="upgrades-row">
+          ${!s.hired ? `
+            <button class="upg-btn" ${canHire?'':'disabled'} onclick="hireTrader('${asset.id}')">
+              <span class="upg-icon">&#128104;&#8205;&#128188;</span>
+              <span>HIRE</span>
+              <span class="upg-cost">${fmtAsset(hireCost, asset)}</span>
+            </button>` : ''}
+          <button class="upg-btn" ${canPay?'':'disabled'} onclick="buyPayout('${asset.id}')">
+            <span class="upg-icon">&#128200;</span>
+            <span>2x $ &middot; L${s.payoutLevel}</span>
+            <span class="upg-cost">${fmtAsset(payoutCost, asset)}</span>
+          </button>
+        </div>
+      </div>
+    `;
+    list.appendChild(div);
+    prevUnlocked = unlocked;
+  });
+
+  // Bind tap-to-trade handlers
+  document.querySelectorAll('.income-bar').forEach(el => {
+    el.onclick = (e) => executeTrade(el.dataset.id, e);
+  });
+}
+
+function renderProgressBars() {
+  ASSETS.forEach(a => {
+    const s = state.assets[a.id];
+    const fill = document.getElementById('prog-' + a.id);
+    if (!fill) return;
+    fill.style.width = (Math.min(1, s.progress) * 100) + '%';
+    fill.classList.toggle('boosted', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && !state.activeEvent.bad));
+    fill.classList.toggle('crashed', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && state.activeEvent.bad));
+  });
+}
+
+function renderBoosts() {
+  const body = document.getElementById('boostsBody');
+  body.innerHTML = '';
+  BOOSTS.forEach(b => {
+    const owned = !!state.boostsOwned[b.id];
+    const canAfford = state.cash >= b.cost;
+    const div = document.createElement('div');
+    div.className = 'asset';
+    div.style.padding = '10px 12px';
+    div.style.opacity = owned ? '0.6' : '1';
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div>
+          <div style="font-weight:700;">${b.name}</div>
+          <div style="font-size:11px;color:var(--text-dim);">${b.desc}</div>
+        </div>
+        <button class="buy-btn" ${owned||!canAfford?'disabled':''} onclick="buyBoost('${b.id}')">
+          ${owned ? '<span class="price">OWNED</span>' : '<span class="price">'+fmt(b.cost)+'</span>'}
+        </button>
+      </div>
+    `;
+    body.appendChild(div);
+  });
+}
+
+// ============ TABS ============
+function switchTab(name) {
+  state.activeTab = name;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('tab-' + name);
+  const btn = document.querySelector('.tab-btn[data-tab="' + name + '"]');
+  if (panel) panel.classList.add('active');
+  if (btn) {
+    btn.classList.add('active');
+    btn.classList.remove('has-news'); // clear notification dot
+  }
+  if (name === 'unlocks') { state.hasUnseenUnlock = false; renderGoalsTab(); }
+  if (name === 'managers') renderManagersTab();
+  if (name === 'perks') renderPerksTab();
+  if (name === 'news')   { state.hasUnseenNews = false; renderNewsTab(); }
+  save();
+}
+
+function renderUnlocksTab() {
+  const root = document.getElementById('unlocksList');
+  if (!root) return;
+  let html = '';
+  // Show unlocked first, then locked
+  const sorted = [...UNLOCKS].sort((a, b) => {
+    const ad = state.unlocks[a.id] ? 0 : 1;
+    const bd = state.unlocks[b.id] ? 0 : 1;
+    return ad - bd;
+  });
+  sorted.forEach(u => {
+    const done = !!state.unlocks[u.id];
+    const pct = Math.round((u.mult - 1) * 100);
+    html += `
+      <div class="unlock-card${done ? ' done' : ''}">
+        <div class="unlock-icon">${u.icon}</div>
+        <div class="unlock-text">
+          <div class="unlock-name">${u.name}</div>
+          <div class="unlock-desc">${u.desc}</div>
+        </div>
+        <div class="unlock-reward">+${pct}%</div>
+      </div>`;
+  });
+  root.innerHTML = html;
+}
+
+function renderQuestsTab() {
+  const root = document.getElementById('questsList');
+  if (!root) return;
+  // Sort: completable first, then in-progress, then claimed
+  const rows = QUESTS.map(q => {
+    const claimed = !!state.questsClaimed[q.id];
+    const prog = q.progress();
+    const tgt = q.target();
+    const complete = !claimed && prog >= tgt;
+    return { q, claimed, prog, tgt, complete };
+  }).sort((a, b) => {
+    const sa = a.complete ? 0 : (a.claimed ? 2 : 1);
+    const sb = b.complete ? 0 : (b.claimed ? 2 : 1);
+    return sa - sb;
+  });
+  let html = '';
+  rows.forEach(({ q, claimed, prog, tgt, complete }) => {
+    const pct = Math.min(100, Math.round((prog / tgt) * 100));
+    const cls = claimed ? 'claimed' : (complete ? 'complete' : '');
+    let btnHtml;
+    if (claimed) {
+      btnHtml = '<span style="font-family:\'Lilita One\',sans-serif;color:var(--green);font-size:13px;">CLAIMED</span>';
+    } else if (complete) {
+      btnHtml = `<button class="buy-btn gold-btn" onclick="claimQuest('${q.id}')">
+                   <span class="label">CLAIM</span>
+                   <span class="price">+${q.reward} &#129689;</span>
+                 </button>`;
+    } else {
+      btnHtml = `<div style="text-align:right;">
+                   <div style="font-family:'Lilita One',sans-serif;color:var(--gold);font-size:13px;">+${q.reward} &#129689;</div>
+                   <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;font-weight:800;">REWARD</div>
+                 </div>`;
+    }
+    // Format progress numbers smartly: $ for money quests, plain count otherwise
+    const moneyQuests = ['q_first_million', 'q_day_trader', 'q_wall_st_tycoon'];
+    const progStr = moneyQuests.includes(q.id) ? (fmt(prog) + ' / ' + fmt(tgt)) : (fmtNum(prog) + ' / ' + fmtNum(tgt));
+    html += `
+      <div class="quest-card ${cls}">
+        <div class="quest-icon">${q.icon}</div>
+        <div class="quest-text">
+          <div class="quest-name">${q.name}</div>
+          <div class="quest-desc">${q.desc}</div>
+          <div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${pct}%;"></div></div>
+          <div class="quest-progress-text">${progStr}</div>
+        </div>
+        ${btnHtml}
+      </div>`;
+  });
+  root.innerHTML = html;
+}
+
+function renderGoalsTab() {
+  renderQuestsTab();
+  renderUnlocksTab();
+}
+
+function renderManagersTab() {
+  const root = document.getElementById('managersList');
+  if (!root) return;
+  let html = '';
+
+  // Premium managers section (gold-cost, special)
+  if (PREMIUM_MANAGERS.length) {
+    html += '<div class="panel-sub" style="padding:0 14px 4px;color:var(--gold);font-family:\'Lilita One\',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;">Premium Roster</div>';
+    PREMIUM_MANAGERS.forEach(p => {
+      const owned = !!state.premiumOwned[p.id];
+      const can = (state.gold || 0) >= p.goldCost;
+      html += `
+        <div class="manager-card${owned ? '' : ' unhired'}" style="border-color:${owned ? '#5a3f08' : 'var(--panel-dark)'};${owned ? 'background:linear-gradient(180deg, #2a2030, #1a1424);' : ''}">
+          <div class="manager-portrait" style="${owned ? 'background:radial-gradient(circle at 35% 30%, var(--gold), #6a4f0a);' : ''}">${p.icon}</div>
+          <div>
+            <div class="manager-name" style="color:var(--gold);">${p.name}</div>
+            <div class="manager-role">${p.role} &middot; ${p.desc}</div>
+            <div class="manager-bio">${p.bio}</div>
+          </div>
+          ${owned
+            ? (p.hasAbility
+                ? `<button class="buy-btn manager-hire" ${state.whistleblowerUsedThisRun ? 'disabled' : ''} onclick="useWhistleblower()" style="background:linear-gradient(180deg, #f8d860, #c89a18);border-color:#6a4f0a;box-shadow:0 3px 0 #5a3f08, inset 0 1px 0 rgba(255,255,255,0.3);color:#0a0e1a;text-shadow:0 1px 0 rgba(255,255,255,0.25);">
+                    <span class="label">${state.whistleblowerUsedThisRun ? 'USED' : 'USE LEAK'}</span>
+                    <span class="price">${state.whistleblowerUsedThisRun ? 'Resets at IPO' : 'Trigger 5x event'}</span>
+                  </button>`
+                : `<div class="manager-hire" style="text-align:center;color:var(--gold);font-family:'Lilita One',sans-serif;font-size:14px;">&#10003; ON RETAINER</div>`)
+            : `<button class="buy-btn gold-btn manager-hire" ${can ? '' : 'disabled'} onclick="buyPremiumManager('${p.id}')">
+                <span class="label">HIRE</span>
+                <span class="price">${p.goldCost} &#129689;</span>
+              </button>`}
+        </div>`;
+    });
+    html += '<div class="panel-sub" style="padding:8px 14px 4px;font-family:\'Lilita One\',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);">Standard Roster</div>';
+  }
+
+  ASSETS.forEach(a => {
+    const s = state.assets[a.id];
+    const bio = MANAGER_BIOS[a.id];
+    if (!bio) return;
+    const hired = !!s.hired;
+    const owned = s.owned > 0;
+    const canHire = state.cash >= a.hireCost && !hired && owned;
+    html += `
+      <div class="manager-card${hired ? '' : ' unhired'}">
+        <div class="manager-portrait">${a.icon}</div>
+        <div>
+          <div class="manager-name">${bio.name}</div>
+          <div class="manager-role">${bio.role}</div>
+          <div class="manager-bio">${bio.bio}</div>
+        </div>
+        ${hired
+          ? `<div class="manager-hire" style="text-align:center;color:var(--green);font-family:'Lilita One',sans-serif;font-size:14px;">&#10003; ON THE FLOOR</div>`
+          : (!owned
+              ? `<div class="manager-hire" style="text-align:center;color:var(--text-dim);font-size:11px;font-weight:800;">Buy a ${a.ticker} position to enable hiring.</div>`
+              : `<button class="buy-btn manager-hire" ${canHire ? '' : 'disabled'} onclick="hireTrader('${a.id}'); renderManagersTab();">
+                  <span class="label">HIRE</span>
+                  <span class="price">${fmt(a.hireCost)}</span>
+                </button>`)}
+      </div>`;
+  });
+  root.innerHTML = html;
+}
+
+function renderPerksTab() {
+  const root = document.getElementById('perksList');
+  if (root) {
+    let html = '';
+    BOOSTS.forEach(b => {
+      const owned = !!state.boostsOwned[b.id];
+      const can = state.cash >= b.cost;
+      const pct = Math.round((b.mult - 1) * 100);
+      html += `
+        <div class="perk-card${owned ? ' owned' : ''}">
+          <div class="perk-icon">${b.icon || '&#9889;'}</div>
+          <div>
+            <div class="perk-name">${b.name}</div>
+            <div class="perk-desc">+${pct}% all payouts &middot; permanent</div>
+          </div>
+          <button class="buy-btn" ${owned || !can ? 'disabled' : ''} onclick="buyBoost('${b.id}'); renderPerksTab();">
+            ${owned ? '<span class="price">OWNED</span>' : '<span class="label">BUY</span><span class="price">' + fmt(b.cost) + '</span>'}
+          </button>
+        </div>`;
+    });
+    root.innerHTML = html;
+  }
+
+  // Lifestyle upgrades
+  const lroot = document.getElementById('lifestyleList');
+  if (lroot) {
+    let html = '';
+    LIFESTYLE.forEach(l => {
+      const owned = !!state.lifestyleOwned[l.id];
+      const canCash = state.cash >= l.cashCost;
+      const canGold = (state.gold || 0) >= l.goldCost;
+      const can = canCash && canGold;
+      html += `
+        <div class="perk-card${owned ? ' owned' : ''}">
+          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--gold), #6a4f0a);'}">${l.icon || '&#127961;'}</div>
+          <div>
+            <div class="perk-name">${l.name}</div>
+            <div class="perk-desc">${l.desc}</div>
+          </div>
+          ${owned
+            ? `<button class="buy-btn" disabled><span class="price">OWNED</span></button>`
+            : `<button class="buy-btn gold-btn" ${can ? '' : 'disabled'} onclick="buyLifestyle('${l.id}')">
+                <span class="label">BUY</span>
+                <span class="price">${fmt(l.cashCost)} + ${l.goldCost}&#129689;</span>
+              </button>`}
+        </div>`;
+    });
+    lroot.innerHTML = html;
+  }
+
+  // Mega Tickets
+  const mtroot = document.getElementById('megaTicketsList');
+  if (mtroot) {
+    let html = '';
+    MEGA_TICKETS.forEach((t, i) => {
+      const asset = ASSETS[i];
+      const owned = !!state.megaTicketsOwned?.[t.id];
+      const can = (state.gold || 0) >= t.goldCost;
+      const unlocked = i === 0 || (state.assets[ASSETS[i-1].id]?.owned || 0) >= 1;
+      html += `
+        <div class="perk-card${owned ? ' owned' : ''}" style="${unlocked ? '' : 'opacity:0.45;'}">
+          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--gold), #6a4f0a);'}">${asset.icon}</div>
+          <div>
+            <div class="perk-name">${t.ticker} Mega Ticket</div>
+            <div class="perk-desc">+${MEGA_TICKET_MULT}x ${t.ticker} payouts &middot; permanent &middot; one-time</div>
+          </div>
+          ${owned
+            ? `<button class="buy-btn" disabled><span class="price">USED</span></button>`
+            : `<button class="buy-btn gold-btn" ${(can && unlocked) ? '' : 'disabled'} onclick="buyMegaTicket('${t.id}')">
+                <span class="label">BUY</span>
+                <span class="price">${t.goldCost}&#129689;</span>
+              </button>`}
+        </div>`;
+    });
+    mtroot.innerHTML = html;
+  }
+
+  // Leverage active bar
+  const labar = document.getElementById('leverageActiveBar');
+  if (labar) {
+    if (state.activeLeverage && Date.now() < state.activeLeverage.until) {
+      const remainSec = Math.max(0, Math.ceil((state.activeLeverage.until - Date.now()) / 1000));
+      const mm = Math.floor(remainSec / 60);
+      const ss = String(remainSec % 60).padStart(2, '0');
+      labar.innerHTML = `
+        <div class="perk-card owned" style="margin: 6px 12px;">
+          <div class="perk-icon" style="background:linear-gradient(180deg, var(--green), var(--green-dark));">&#128640;</div>
+          <div>
+            <div class="perk-name">${state.activeLeverage.name} ACTIVE</div>
+            <div class="perk-desc">${state.activeLeverage.mult}x all income &middot; ${mm}:${ss} remaining</div>
+          </div>
+          <div style="font-family:'Lilita One',sans-serif;color:var(--green);font-size:14px;">LIVE</div>
+        </div>`;
+    } else {
+      if (state.activeLeverage) state.activeLeverage = null;
+      labar.innerHTML = '';
+    }
+  }
+
+  // Leverage tiers — buy + activate
+  const lvroot = document.getElementById('leverageList');
+  if (lvroot) {
+    let html = '';
+    LEVERAGE_TIERS.forEach(t => {
+      const owned = (state.leverageInventory?.[t.id] || 0);
+      const canAfford = (state.gold || 0) >= t.goldCost;
+      const isActive = !!(state.activeLeverage && Date.now() < state.activeLeverage.until);
+      html += `
+        <div class="perk-card">
+          <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${t.icon}</div>
+          <div>
+            <div class="perk-name">${t.name} <span style="color:var(--gold);">&times;${owned}</span></div>
+            <div class="perk-desc">${t.mult}x all income for ${t.minutes} min</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <button class="buy-btn" ${(owned > 0 && !isActive) ? '' : 'disabled'} onclick="activateLeverage('${t.id}')">
+              <span class="label">USE</span>
+              <span class="price">x${t.mult}</span>
+            </button>
+            <button class="buy-btn gold-btn" ${canAfford ? '' : 'disabled'} onclick="buyLeverage('${t.id}')" style="font-size:9px;padding:3px 6px;min-height:24px;">
+              <span class="label" style="font-size:8px;">BUY</span>
+              <span class="price" style="font-size:10px;">${t.goldCost}&#129689;</span>
+            </button>
+          </div>
+        </div>`;
+    });
+    lvroot.innerHTML = html;
+  }
+
+  // Time Warps
+  const twroot = document.getElementById('timeWarpsList');
+  if (twroot) {
+    const rate = totalIncomePerSec();
+    let html = '';
+    TIME_WARPS.forEach(w => {
+      const can = (state.gold || 0) >= w.goldCost && rate > 0;
+      const projected = rate * w.hours * 3600;
+      html += `
+        <div class="perk-card">
+          <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${w.icon}</div>
+          <div>
+            <div class="perk-name">${w.name}</div>
+            <div class="perk-desc">Instant: <b style="color:var(--green);">${fmt(projected)}</b> at current rate</div>
+          </div>
+          <button class="buy-btn gold-btn" ${can ? '' : 'disabled'} onclick="useTimeWarp('${w.id}')">
+            <span class="label">USE</span>
+            <span class="price">${w.goldCost}&#129689;</span>
+          </button>
+        </div>`;
+    });
+    twroot.innerHTML = html;
+  }
+}
+
+function renderNewsTab() {
+  const root = document.getElementById('newsList');
+  if (!root) return;
+  if (!state.newsLog.length) {
+    root.innerHTML = '<div class="news-empty">No headlines yet. Keep playing &mdash; the market will eventually do something dramatic.</div>';
+    return;
+  }
+  let html = '';
+  state.newsLog.forEach(n => {
+    html += `
+      <div class="news-row ${n.kind}">
+        <div class="news-time">${timeAgo(n.ts)}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="news-headline">${n.headline}</div>
+          ${n.detail ? `<div class="news-detail">${n.detail}</div>` : ''}
+        </div>
+      </div>`;
+  });
+  root.innerHTML = html;
+}
+
+function renderStats() {
+  const body = document.getElementById('statsBody');
+  let html = '';
+  html += `<div class="row"><span>Cash</span><span class="v">${fmt(state.cash)}</span></div>`;
+  html += `<div class="row"><span>Lifetime Earnings (this run)</span><span class="v">${fmt(state.lifetimeEarnings)}</span></div>`;
+  html += `<div class="row"><span>Influence Tokens</span><span class="v">${fmtNum(state.influence)}</span></div>`;
+  html += `<div class="row"><span>Global Multiplier</span><span class="v">${globalMult().toFixed(2)}x</span></div>`;
+  html += `<div class="row"><span>Passive Income</span><span class="v">${fmt(totalIncomePerSec())}/s</span></div>`;
+  html += `<div class="row"><span>Next IPO Threshold</span><span class="v">${fmt(nextPrestigeAt())}</span></div>`;
+  ASSETS.forEach(a => {
+    const s = state.assets[a.id];
+    if (s.owned > 0) {
+      html += `<div class="row"><span>${a.ticker} positions</span><span class="v">${fmtNum(s.owned)}</span></div>`;
+    }
+  });
+  body.innerHTML = html;
+}
+
+function renderPrestige() {
+  const gain = prestigeGain();
+  document.getElementById('prestigeGain').textContent = '+' + fmtNum(gain) + ' Influence';
+  document.getElementById('prestigeBtn').disabled = gain === 0;
+  const ic = document.getElementById('influenceCurrent');
+  if (ic) ic.textContent = fmtNum(state.influence || 0);
+  renderInfluenceShop();
+}
+
+function renderInfluenceShop() {
+  const root = document.getElementById('influenceShopList');
+  if (!root) return;
+  let html = '';
+  INFLUENCE_SHOP.forEach(s => {
+    const owned = !!state.influenceShopOwned?.[s.id];
+    const can = (state.influence || 0) >= s.cost;
+    html += `
+      <div class="perk-card${owned ? ' owned' : ''}" style="margin: 6px 0;">
+        <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--blue), var(--blue-dark));'}">${s.icon}</div>
+        <div>
+          <div class="perk-name">${s.name}</div>
+          <div class="perk-desc">${s.desc}</div>
+        </div>
+        ${owned
+          ? `<button class="buy-btn" disabled><span class="price">OWNED</span></button>`
+          : `<button class="buy-btn" ${can ? '' : 'disabled'} onclick="buyInfluenceShop('${s.id}')" style="background:linear-gradient(180deg, #6ab1f5, #2563ad);border-color:#163d72;box-shadow:0 3px 0 #0c2654, inset 0 1px 0 rgba(255,255,255,0.3);">
+              <span class="label">SPEND</span>
+              <span class="price">${s.cost} INF</span>
+            </button>`}
+      </div>`;
+  });
+  root.innerHTML = html;
+}
+
+// ============ TICKER ============
+const TICKER_SYMBOLS = ['AAPL', 'TSLA', 'MSFT', 'NVDA', 'GME', 'AMC', 'CNDY', 'BTC', 'GOOG', 'META', 'AMZN', 'PNNY', 'YACT', 'SCAM', 'BAGZ', 'MEME', 'PEPE', 'TENDIES'];
+function buildTicker() {
+  const t = document.getElementById('ticker');
+  let html = '';
+  for (let i = 0; i < 30; i++) {
+    const s = TICKER_SYMBOLS[Math.floor(Math.random()*TICKER_SYMBOLS.length)];
+    const change = (Math.random() * 12 - 6);
+    const cls = change >= 0 ? 'up' : 'down';
+    const arrow = change >= 0 ? '▲' : '▼';
+    html += `${s} ${arrow} <span class="${cls}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</span> &nbsp; &middot; &nbsp; `;
+  }
+  t.innerHTML = html;
+}
+
+// ============ MODAL HELPERS ============
+function openModal(id) {
+  if (id === 'statsModal') renderStats();
+  if (id === 'prestigeModal') renderPrestige();
+  if (id === 'upgradesModal') renderBoosts();
+  document.getElementById(id).classList.add('show');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+// Big screen celebration overlay — for milestone hits / major unlocks
+function celebrate(title, detail) {
+  const overlay = document.createElement('div');
+  overlay.className = 'celebrate-overlay';
+  overlay.innerHTML = `
+    <div class="celebrate-banner">
+      <div class="celebrate-title">${title}</div>
+      ${detail ? `<div class="celebrate-detail">${detail}</div>` : ''}
+    </div>
+  `;
+  // Confetti — 24 colored squares flying outward
+  const colors = ['#f3c74b', '#2ecc71', '#4a90e2', '#e74c3c', '#b574d8', '#fff7e8'];
+  for (let i = 0; i < 24; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.left = (45 + Math.random() * 10) + '%';
+    c.style.top = '50%';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 100 + Math.random() * 180;
+    c.style.setProperty('--cx', Math.cos(angle) * dist + 'px');
+    c.style.setProperty('--cy', Math.sin(angle) * dist + 'px');
+    c.style.animationDelay = (Math.random() * 0.15) + 's';
+    overlay.appendChild(c);
+  }
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 1800);
+}
+
+function toast(msg, durationMs) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), durationMs || 1800);
+}
+
+// ============ SAVE / LOAD ============
+const SAVE_KEY = 'dayTraderTycoonSave_v1';
+function save() {
+  try {
+    const out = {
+      cash: state.cash,
+      yen: state.yen || 0,
+      activeMarket: state.activeMarket || 'wallst',
+      tokyoUnlocked: !!state.tokyoUnlocked,
+      lifetimeYen: state.lifetimeYen || 0,
+      gold: state.gold || 0,
+      lifetimeEarnings: state.lifetimeEarnings,
+      allTimeEarnings: state.allTimeEarnings || 0,
+      totalTrades: state.totalTrades || 0,
+      influence: state.influence,
+      assets: state.assets,
+      boostsOwned: state.boostsOwned,
+      unlocks: state.unlocks || {},
+      questsClaimed: state.questsClaimed || {},
+      premiumOwned: state.premiumOwned || {},
+      lifestyleOwned: state.lifestyleOwned || {},
+      lastDailyClaimAt: state.lastDailyClaimAt || 0,
+      dailyStreak: state.dailyStreak || 0,
+      influenceShopOwned: state.influenceShopOwned || {},
+      megaTicketsOwned: state.megaTicketsOwned || {},
+      blackSwansExperienced: state.blackSwansExperienced || 0,
+      blackSwanBonus: state.blackSwanBonus || 1,
+      manualTrades: state.manualTrades || 0,
+      timeWarpsUsed: state.timeWarpsUsed || 0,
+      lifetimeGold: state.lifetimeGold || 0,
+      whistleblowerUsedThisRun: !!state.whistleblowerUsedThisRun,
+      leverageInventory: state.leverageInventory || {},
+      leverageStarterGiven: !!state.leverageStarterGiven,
+      activeLeverage: state.activeLeverage || null,
+      newsLog: state.newsLog || [],
+      activeTab: state.activeTab || 'home',
+      rugPullsExperienced: state.rugPullsExperienced || 0,
+      lastSavedAt: Date.now(),
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(out));
+  } catch (e) { /* private mode etc. */ }
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    state.cash = data.cash || 4;
+    state.yen = data.yen || 0;
+    state.activeMarket = data.activeMarket || 'wallst';
+    state.tokyoUnlocked = !!data.tokyoUnlocked;
+    state.lifetimeYen = data.lifetimeYen || 0;
+    state.gold = data.gold || 0;
+    state.lifetimeEarnings = data.lifetimeEarnings || 0;
+    state.allTimeEarnings = data.allTimeEarnings || data.lifetimeEarnings || 0;
+    state.totalTrades = data.totalTrades || 0;
+    state.influence = data.influence || 0;
+    state.boostsOwned = data.boostsOwned || {};
+    state.unlocks = data.unlocks || {};
+    state.questsClaimed = data.questsClaimed || {};
+    state.premiumOwned = data.premiumOwned || {};
+    state.lifestyleOwned = data.lifestyleOwned || {};
+    state.lastDailyClaimAt = data.lastDailyClaimAt || 0;
+    state.dailyStreak = data.dailyStreak || 0;
+    state.influenceShopOwned = data.influenceShopOwned || {};
+    state.megaTicketsOwned = data.megaTicketsOwned || {};
+    state.blackSwansExperienced = data.blackSwansExperienced || 0;
+    state.blackSwanBonus = data.blackSwanBonus || 1;
+    state.manualTrades = data.manualTrades || 0;
+    state.timeWarpsUsed = data.timeWarpsUsed || 0;
+    state.lifetimeGold = data.lifetimeGold || 0;
+    state.whistleblowerUsedThisRun = !!data.whistleblowerUsedThisRun;
+    state.leverageInventory = data.leverageInventory || {};
+    state.leverageStarterGiven = !!data.leverageStarterGiven;
+    state.activeLeverage = data.activeLeverage || null;
+    state.newsLog = data.newsLog || [];
+    state.activeTab = data.activeTab || 'home';
+    state.rugPullsExperienced = data.rugPullsExperienced || 0;
+    if (data.assets) {
+      ASSETS.forEach(a => {
+        if (data.assets[a.id]) {
+          state.assets[a.id] = Object.assign({ owned:0, progress:0, hired:false, speedLevel:0, payoutLevel:0 }, data.assets[a.id]);
+        }
+      });
+    }
+    // Offline earnings (capped at 4 hours, half rate)
+    if (data.lastSavedAt) {
+      const offlineSec = Math.min((Date.now() - data.lastSavedAt) / 1000, 4 * 3600);
+      if (offlineSec > 30) {
+        const rate = totalIncomePerSec() * 0.5;
+        const offlineGain = rate * offlineSec;
+        if (offlineGain > 0) {
+          state.cash += offlineGain;
+          state.lifetimeEarnings += offlineGain;
+          setTimeout(() => toast('Offline earnings: ' + fmt(offlineGain)), 700);
+        }
+      }
+    }
+    return true;
+  } catch (e) { return false; }
+}
+function manualSave() { save(); toast('Saved.'); }
+function exportSave() {
+  save();
+  const raw = localStorage.getItem(SAVE_KEY) || '';
+  const code = btoa(raw);
+  navigator.clipboard?.writeText(code);
+  prompt('Save code (copied to clipboard):', code);
+}
+function importSave() {
+  const code = prompt('Paste save code:');
+  if (!code) return;
+  try {
+    const raw = atob(code);
+    localStorage.setItem(SAVE_KEY, raw);
+    location.reload();
+  } catch (e) { toast('Invalid save code.'); }
+}
+function hardReset() {
+  if (!confirm('REALLY liquidate everything? All progress and Influence will be lost.')) return;
+  localStorage.removeItem(SAVE_KEY);
+  location.reload();
+}
+
+// ============ BOOT ============
+function boot() {
+  buildTicker();
+  setInterval(buildTicker, 40000);
+  const had = load();
+  if (!had) openModal('welcomeModal');
+  renderAll();
+  // Initial unlock pass + restore the tab the player was on
+  checkUnlocks();
+  switchTab(state.activeTab || 'home');
+  // One-time leverage starter gift
+  maybeGrantLeverageStarter();
+  // Daily login bonus prompt for returning players (give the welcome modal priority for new ones)
+  if (had) setTimeout(maybeOpenDaily, 600);
+  state.lastTick = Date.now();
+  setInterval(tick, 100);
+  setInterval(save, 5000);
+  window.addEventListener('beforeunload', save);
+}
+boot();
+</script>
+</body>
+</html>
