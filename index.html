@@ -1233,15 +1233,6 @@
   </div>
 </div>
 
-<div class="modal-bg" id="upgradesModal" onclick="if(event.target===this)closeModal('upgradesModal')">
-  <div class="modal">
-    <h2>Premium Boosts</h2>
-    <p>Permanent firm-wide multipliers. These persist through IPOs.</p>
-    <div id="boostsBody"></div>
-    <button class="modal-btn secondary" onclick="closeModal('upgradesModal')">Close</button>
-  </div>
-</div>
-
 <div class="modal-bg" id="settingsModal" onclick="if(event.target===this)closeModal('settingsModal')">
   <div class="modal">
     <h2>Menu</h2>
@@ -1285,7 +1276,11 @@ const ASSETS = [
   { id: 'dogz', ticker: '$CNDY', name: 'Candy Crypto',         icon: '&#127852;', baseCost: 720,      basePayout: 270,       baseTime: 6,    hireCost: 18000,    sector: 'crypto',        market: 'wallst' },
   { id: 'aibl', ticker: '$AIBL', name: 'AI Bubble Co.',        icon: '&#129302;', baseCost: 8640,     basePayout: 4050,      baseTime: 12,   hireCost: 216000,   sector: 'tech',          market: 'wallst' },
   { id: 'hedg', ticker: '$HEDG', name: 'Hedge Fund Position',  icon: '&#128176;', baseCost: 103680,   basePayout: 60750,     baseTime: 24,   hireCost: 2592000,  sector: 'institutional', market: 'wallst' },
-  { id: 'yact', ticker: '$YACT', name: 'Offshore Yacht Fund',  icon: '&#128674;', baseCost: 1244160,  basePayout: 911250,    baseTime: 60,   hireCost: 31104000, sector: 'institutional', market: 'wallst' },
+  { id: 'yact', ticker: '$YACT', name: 'Offshore Yacht Fund',  icon: '&#128674;', baseCost: 1244160,    basePayout: 911250,       baseTime: 60,  hireCost: 31104000,    sector: 'institutional', market: 'wallst' },
+  { id: 'prvt', ticker: '$PRVT', name: 'Private Equity Fund',  icon: '&#128188;', baseCost: 14929920,   basePayout: 10935000,     baseTime: 90,  hireCost: 373248000,   sector: 'institutional', market: 'wallst' },
+  { id: 'sovr', ticker: '$SOVR', name: 'Sovereign Wealth Fund',icon: '&#128737;', baseCost: 179159040,  basePayout: 131220000,    baseTime: 120, hireCost: 4478976000,  sector: 'institutional', market: 'wallst' },
+  { id: 'feds', ticker: '$FEDS', name: 'Federal Reserve Position', icon: '&#127970;', baseCost: 2149908480, basePayout: 1574640000, baseTime: 150, hireCost: 53747712000, sector: 'institutional', market: 'wallst' },
+  { id: 'glbl', ticker: '$GLBL', name: 'Global Reserve Currency',  icon: '&#127760;', baseCost: 25798901760,basePayout: 18895680000,baseTime: 180, hireCost: 644972544000,sector: 'institutional', market: 'wallst' },
   // === Tokyo Trading Floor (JPY ¥) — unlocked after first IPO ===
   { id: 't_sushi',   ticker: '¥SUSHI', name: 'Sushi Bonds',             icon: '&#127843;', baseCost: 100,      basePayout: 25,         baseTime: 1.5, hireCost: 2500,      sector: 't_food',     market: 'tokyo' },
   { id: 't_anime',   ticker: '¥ANIME', name: 'Anime Studio Stocks',     icon: '&#127884;', baseCost: 1500,     basePayout: 450,        baseTime: 3,   hireCost: 37500,     sector: 't_culture',  market: 'tokyo' },
@@ -1295,7 +1290,7 @@ const ASSETS = [
   { id: 't_toyota',  ticker: '¥TYTA',  name: 'Toyota Heavy Industries', icon: '&#128666;', baseCost: 31104000, basePayout: 22781250,   baseTime: 60,  hireCost: 777600000, sector: 't_industry', market: 'tokyo' },
 ];
 
-const COST_GROWTH = 1.15;  // each unit costs 15% more (rebalanced 2026-04-26 — was 1.13)
+const COST_GROWTH = 1.12;  // each unit costs 12% more (rebalanced 2026-04-27 — extended ladder to 10 tiers does the heavy lifting; AdC uses 1.07)
 const PAYOUT_MULT = 1.0;   // multiplier per unit owned
 
 // Per-asset profit milestones (AdC's "x25 / x50 / x100..." mechanic).
@@ -1324,7 +1319,7 @@ const BOOSTS = [
   { id: 'morningCoffee',  name: 'Morning Coffee',        desc: 'All payouts +25%',           mult: 1.25, cost: 5000,         icon: '&#9749;' },
   { id: 'bloomberg',      name: 'Bloomberg Terminal',    desc: 'All payouts +50%',           mult: 1.5,  cost: 250000,       icon: '&#128187;' },
   { id: 'cornerOffice',   name: 'Corner Office',         desc: 'All payouts +100%',          mult: 2.0,  cost: 10000000,     icon: '&#127970;' },
-  { id: 'privateJet',     name: 'Private Jet',           desc: 'All payouts +200%',          mult: 3.0,  cost: 500000000,    icon: '&#128747;' },
+  { id: 'privateJet',     name: 'NetJets Membership',    desc: 'All payouts +200%',          mult: 3.0,  cost: 500000000,    icon: '&#128747;' },
   { id: 'congressBuddy',  name: 'Congressional Buddy',   desc: 'All payouts +500%',          mult: 6.0,  cost: 25000000000,  icon: '&#127963;' },
 ];
 
@@ -1336,6 +1331,10 @@ const MANAGER_BIOS = {
   aibl: { name: 'Dr. Synapse',     role: 'AI Bubble Analyst',     bio: '"Stanford dropout. CTO of ‘AI for AI for AI.’ Mostly does nothing."' },
   hedg: { name: 'Bartholomew III', role: 'Hedge Fund Director',   bio: '"Old money. Owns 12 horses. Calls everyone ‘champ.’"' },
   yact: { name: 'Captain Veranda', role: 'Yacht Fund Principal',  bio: '"Speaks four languages. Owns three islands. You are not on the Christmas list."' },
+  prvt: { name: 'Cassius Stripmine',role: 'PE Managing Director', bio: '"Buys companies, sells them in pieces. Has never made anything. Worth more than your home country."' },
+  sovr: { name: 'Sheikh Petromax',  role: 'Sovereign Wealth Steward', bio: '"His country has 40,000 citizens and a $900B treasury. You handle the wealth. He handles the falconry."' },
+  feds: { name: 'Chairman Veil',    role: 'Open Market Operator',  bio: '"Speaks in deliberate fragments. Markets move on his coughs. You print the money now."' },
+  glbl: { name: 'The Anonymous',    role: 'Reserve Currency Architect', bio: '"No name on file. Photos are blurred. Owns enough sovereign debt to end nations. Polite to waiters."' },
   // Tokyo roster
   t_sushi:   { name: 'Hiroshi Maguro',    role: 'Sushi Bond Specialist',  bio: '"Third-generation tuna trader. Knife collection insured for more than your house."' },
   t_anime:   { name: 'Yuki Otaku',        role: 'Animation Sector Lead',  bio: '"Owns more body pillows than you have friends. The pillows have business cards."' },
@@ -1357,7 +1356,7 @@ const UNLOCKS = [
   { id: 'diamond_hands', icon: '&#128142;', name: 'Diamond Hands',       desc: 'Survive a meme coin rug pull.',                                   mult: 1.15,  check: () => (state.rugPullsExperienced || 0) >= 1 },
   { id: 'yacht_club',    icon: '&#128674;', name: 'Yacht Club Member',   desc: 'Buy your first Offshore Yacht Fund position.',                    mult: 1.10,  check: () => (state.assets.yact?.owned || 0) >= 1 },
   { id: 'ipo_day',       icon: '&#128276;', name: 'IPO Day',             desc: 'Take your firm public for the first time.',                       mult: 1.10,  check: () => (state.influence || 0) >= 1 },
-  { id: 'speed_demon',   icon: '&#9889;',   name: 'Speed Demon',         desc: 'Buy 5 speed upgrades on a single asset.',                         mult: 1.05,  check: () => Object.values(state.assets).some(a => (a.speedLevel || 0) >= 5) },
+  { id: 'speed_demon',   icon: '&#9889;',   name: 'Pedal to the Metal',  desc: 'Hit the 200-position speed milestone on any asset.',              mult: 1.05,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 200) },
   { id: 'staffed_up',    icon: '&#128188;', name: 'Fully Staffed',       desc: 'Hire all 6 traders.',                                             mult: 1.20,  check: () => ASSETS.every(a => state.assets[a.id]?.hired) },
 ];
 const NEWS_MAX = 30;
@@ -1453,14 +1452,18 @@ const INFLUENCE_SHOP = [
 ];
 
 // Mega Tickets — once per asset, gold cost. Permanent x7.77 multiplier on that asset.
+// Currently only Wall Street has mega tickets; Tokyo's are a future addition.
 const MEGA_TICKET_MULT = 7.77;
-const MEGA_TICKETS = ASSETS.map((a, i) => ({
-  id: 'mt_' + a.id,
-  assetId: a.id,
-  ticker: a.ticker,
-  name: a.name + ' Mega Ticket',
-  goldCost: [100, 200, 400, 800, 1600, 3200][i] || 4000,
-}));
+const MEGA_TICKET_COSTS_WALLST = [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200];
+const MEGA_TICKETS = ASSETS
+  .filter(a => a.market === 'wallst')
+  .map((a, i) => ({
+    id: 'mt_' + a.id,
+    assetId: a.id,
+    ticker: a.ticker,
+    name: a.name + ' Mega Ticket',
+    goldCost: MEGA_TICKET_COSTS_WALLST[i] || 100000,
+  }));
 
 // Leverage — tiered consumables. Activate to multiply ALL income (both markets) for a duration.
 // Higher tiers = more powerful but shorter (more dramatic moments). Only one active at a time.
@@ -1573,7 +1576,15 @@ function fmtNum(n) {
 }
 function costOf(asset) {
   const a = state.assets[asset.id];
-  return asset.baseCost * Math.pow(COST_GROWTH, a.owned);
+  const geometric = asset.baseCost * Math.pow(COST_GROWTH, a.owned);
+  // Safety floor — Owen's invariant: "buying 1x must always cost more than what you make per trade".
+  // Without this, late-game stacking (milestones × mega ticket × global mult × leverage) can outpace
+  // the geometric cost growth. The floor enforces cost > payoutOf × 1.2 even when multipliers stack hard.
+  if (a.owned > 0) {
+    const payout = payoutOf(asset);
+    if (payout > 0) return Math.max(geometric, payout * 1.2);
+  }
+  return geometric;
 }
 // How many positions could the player buy right now, capped at 100 per click.
 function maxBuyable(asset) {
@@ -1589,12 +1600,6 @@ function maxBuyable(asset) {
     count++;
   }
   return count;
-}
-function speedUpgradeCost(asset) {
-  return asset.baseCost * 25 * Math.pow(8, state.assets[asset.id].speedLevel);
-}
-function payoutUpgradeCost(asset) {
-  return asset.baseCost * 60 * Math.pow(10, state.assets[asset.id].payoutLevel);
 }
 function timeOf(asset) {
   const milestoneSpeed = speedFromMilestones(asset);
@@ -1895,24 +1900,6 @@ function hireTrader(id) {
   renderAll();
   save();
 }
-function buySpeed(id) {
-  const asset = ASSETS.find(a => a.id === id);
-  const c = speedUpgradeCost(asset);
-  if (state.cash < c) { toast('Cannot afford speed upgrade.'); return; }
-  state.cash -= c;
-  state.assets[id].speedLevel++;
-  renderAll();
-  save();
-}
-function buyPayout(id) {
-  const asset = ASSETS.find(a => a.id === id);
-  const c = payoutUpgradeCost(asset);
-  if (getMoney(asset) < c) { toast('Cannot afford payout upgrade.'); return; }
-  spendMoney(asset, c);
-  state.assets[id].payoutLevel++;
-  renderAll();
-  save();
-}
 function executeTrade(id, evt) {
   const asset = ASSETS.find(a => a.id === id);
   const s = state.assets[id];
@@ -2135,7 +2122,7 @@ function buyBoost(id) {
   state.cash -= b.cost;
   state.boostsOwned[id] = true;
   toast(b.name + ' acquired!');
-  renderBoosts();
+  renderPerksTab();
   renderAll();
   save();
 }
@@ -2239,8 +2226,6 @@ function refreshButtonStates() {
         if (priceEl) priceEl.textContent = 'x' + n;
       } else if (onclick.startsWith('hireTrader')) {
         btn.disabled = !(state.cash >= asset.hireCost && !s.hired && s.owned > 0);
-      } else if (onclick.startsWith('buyPayout')) {
-        btn.disabled = !(state.cash >= payoutUpgradeCost(asset) && s.owned > 0);
       }
     });
   });
@@ -2315,14 +2300,10 @@ function renderAssets() {
     }
 
     const buyCost = costOf(asset);
-    const speedCost = speedUpgradeCost(asset);
-    const payoutCost = payoutUpgradeCost(asset);
     const hireCost = asset.hireCost;
     const money = getMoney(asset);
     const canBuy = money >= buyCost && unlocked;
     const canHire = money >= hireCost && !s.hired && s.owned > 0;
-    const canSpeed = money >= speedCost && s.owned > 0;
-    const canPay = money >= payoutCost && s.owned > 0;
 
     let incomeText;
     if (s.owned === 0) {
@@ -2390,11 +2371,6 @@ function renderAssets() {
               <span>HIRE</span>
               <span class="upg-cost">${fmtAsset(hireCost, asset)}</span>
             </button>` : ''}
-          <button class="upg-btn" ${canPay?'':'disabled'} onclick="buyPayout('${asset.id}')">
-            <span class="upg-icon">&#128200;</span>
-            <span>2x $ &middot; L${s.payoutLevel}</span>
-            <span class="upg-cost">${fmtAsset(payoutCost, asset)}</span>
-          </button>
         </div>
       </div>
     `;
@@ -2416,31 +2392,6 @@ function renderProgressBars() {
     fill.style.width = (Math.min(1, s.progress) * 100) + '%';
     fill.classList.toggle('boosted', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && !state.activeEvent.bad));
     fill.classList.toggle('crashed', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && state.activeEvent.bad));
-  });
-}
-
-function renderBoosts() {
-  const body = document.getElementById('boostsBody');
-  body.innerHTML = '';
-  BOOSTS.forEach(b => {
-    const owned = !!state.boostsOwned[b.id];
-    const canAfford = state.cash >= b.cost;
-    const div = document.createElement('div');
-    div.className = 'asset';
-    div.style.padding = '10px 12px';
-    div.style.opacity = owned ? '0.6' : '1';
-    div.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-        <div>
-          <div style="font-weight:700;">${b.name}</div>
-          <div style="font-size:11px;color:var(--text-dim);">${b.desc}</div>
-        </div>
-        <button class="buy-btn" ${owned||!canAfford?'disabled':''} onclick="buyBoost('${b.id}')">
-          ${owned ? '<span class="price">OWNED</span>' : '<span class="price">'+fmt(b.cost)+'</span>'}
-        </button>
-      </div>
-    `;
-    body.appendChild(div);
   });
 }
 
@@ -2854,7 +2805,6 @@ function buildTicker() {
 function openModal(id) {
   if (id === 'statsModal') renderStats();
   if (id === 'prestigeModal') renderPrestige();
-  if (id === 'upgradesModal') renderBoosts();
   document.getElementById(id).classList.add('show');
 }
 function closeModal(id) {
