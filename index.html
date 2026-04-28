@@ -1587,17 +1587,24 @@ function costOf(asset) {
   return geometric;
 }
 // How many positions could the player buy right now, capped at 100 per click.
+// Bug fix (v1.15): previously used only the geometric cost, ignoring the safety floor in costOf.
+// That made the BUY MAX label show too many. Now we mutate state.owned temporarily to call costOf
+// directly so the simulated cost matches what a real buy would charge. Mutation is restored in finally.
 function maxBuyable(asset) {
   const a = state.assets[asset.id];
+  const origOwned = a.owned;
   let money = getMoney(asset);
-  let owned = a.owned;
   let count = 0;
-  while (count < 100) {
-    const cost = asset.baseCost * Math.pow(COST_GROWTH, owned);
-    if (money < cost) break;
-    money -= cost;
-    owned++;
-    count++;
+  try {
+    while (count < 100) {
+      a.owned = origOwned + count;
+      const cost = costOf(asset);
+      if (money < cost) break;
+      money -= cost;
+      count++;
+    }
+  } finally {
+    a.owned = origOwned;
   }
   return count;
 }
