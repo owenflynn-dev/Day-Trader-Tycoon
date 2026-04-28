@@ -1617,8 +1617,10 @@ function timeOf(asset) {
   return t;
 }
 function basePayoutOf(asset) {
+  // payoutLevel was the old "2x $" upgrade button — removed in v1.14, no longer factored in.
+  // Old saves get their payoutLevel zeroed on load() so this is moot, but kept defensive.
   const a = state.assets[asset.id];
-  return asset.basePayout * a.owned * Math.pow(2, a.payoutLevel) * milestoneMultOf(asset) * megaTicketMultOf(asset);
+  return asset.basePayout * a.owned * milestoneMultOf(asset) * megaTicketMultOf(asset);
 }
 function payoutOf(asset) {
   let p = basePayoutOf(asset);
@@ -1740,7 +1742,7 @@ const EVENTS = [
   { sector: 'crypto',        mult: 4,    dur: 18, headline: '$CNDY ON A SUGAR HIGH', detail: 'Candy Crypto x4 payouts!',       bad: false, weight: 10 },
   { sector: 'meme',          mult: 5,    dur: 15, headline: 'WSB PUMPS $MEME',       detail: 'Meme coins x5 payouts!',         bad: false, weight: 10 },
   { sector: 'tech',          mult: 3,    dur: 20, headline: 'AI HYPE CYCLE',         detail: 'Tech sector x3 payouts!',        bad: false, weight: 10 },
-  { sector: 'retail',        mult: 3,    dur: 18, headline: 'RETAIL FOMO',           detail: 'Penny stocks x3 payouts!',       bad: false, weight: 10 },
+  { sector: 'retail',        mult: 3,    dur: 18, headline: 'RETAIL FOMO',           detail: 'Penny Stocks x3 payouts!',       bad: false, weight: 10 },
   { sector: 'institutional', mult: 3.5,  dur: 22, headline: 'WHALE BUYS',            detail: 'Institutional x3.5 payouts!',    bad: false, weight: 10 },
 
   // Common negative events
@@ -2936,6 +2938,9 @@ function load() {
       ASSETS.forEach(a => {
         if (data.assets[a.id]) {
           state.assets[a.id] = Object.assign({ owned:0, progress:0, hired:false, speedLevel:0, payoutLevel:0 }, data.assets[a.id]);
+          // Wipe legacy payout multipliers — the "2x $" upgrade button was removed in v1.14.
+          // Owen requested existing saves lose this bonus so it's like the button never existed.
+          state.assets[a.id].payoutLevel = 0;
         }
       });
     }
