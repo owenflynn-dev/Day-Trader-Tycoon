@@ -2889,6 +2889,7 @@ function toast(msg, durationMs) {
 // ============ SAVE / LOAD ============
 const SAVE_KEY = 'dayTraderTycoonSave_v1';
 function save() {
+  if (window._liquidating) return;
   try {
     const out = {
       cash: state.cash,
@@ -3010,7 +3011,9 @@ function importSave() {
 function hardReset() {
   if (!confirm('REALLY liquidate everything? All progress and Influence will be lost.')) return;
   // Block any further saves (setInterval, beforeunload) so nothing rewrites state during teardown.
-  save = function() {};
+  // We set a flag instead of reassigning save(), because the beforeunload listener holds a
+  // direct reference to the original function — reassigning the variable doesn't stop it.
+  window._liquidating = true;
   localStorage.removeItem(SAVE_KEY);
   location.reload();
 }
