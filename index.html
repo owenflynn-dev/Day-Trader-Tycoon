@@ -3009,6 +3009,8 @@ function importSave() {
 }
 function hardReset() {
   if (!confirm('REALLY liquidate everything? All progress and Influence will be lost.')) return;
+  // Block any further saves (setInterval, beforeunload) so nothing rewrites state during teardown.
+  save = function() {};
   localStorage.removeItem(SAVE_KEY);
   location.reload();
 }
