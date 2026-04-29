@@ -1296,7 +1296,7 @@ const PAYOUT_MULT = 1.0;   // multiplier per unit owned
 // Per-asset profit milestones (AdC's "x25 / x50 / x100..." mechanic).
 // When you hit each threshold of owned positions, that asset gets a permanent multiplier on its own payout.
 const MILESTONES = [5, 10, 25, 50, 100, 200, 300, 400];
-const MILESTONE_MULT = 1.6; // each milestone multiplies that asset's payout (rebalanced 2026-04-26 — was 2.0)
+const MILESTONE_MULT = 1.1; // each milestone multiplies that asset's payout (rebalanced 2026-04-26 — was 2.0)
 // Subset of milestones that ALSO grant a 2x speed boost (halves the trade cycle time).
 // Replaces the old cash-cost speed upgrade button (removed 2026-04-26 per Owen's directive).
 const SPEED_MILESTONES = [50, 200];
