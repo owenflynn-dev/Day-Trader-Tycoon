@@ -1731,13 +1731,21 @@ function totalIncomePerSec() {
   return total;
 }
 function prestigeGain() {
-  // 1 token per $10M lifetime earnings, scaling sqrt (rebalanced 2026-04-26 — was 1e6)
-  if (state.lifetimeEarnings < 1e7) return 0;
-  return Math.floor(Math.sqrt(state.lifetimeEarnings / 1e7));
+  // We use $1M as the base and 150 as a multiplier to make the gain feel substantial
+  if (state.lifetimeEarnings < 1e6) return 0;
+  
+  // 150 * sqrt(Earnings / 1M)
+  let totalPossible = Math.floor(150 * Math.sqrt(state.lifetimeEarnings / 1e6));
+  
+  // Subtract what you already have so you only see the NEW tokens
+  let pending = totalPossible - (state.influence + (state.influenceSpent || 0));
+  return Math.max(0, pending);
 }
+
 function nextPrestigeAt() {
-  const cur = state.influence + prestigeGain();
-  return Math.pow(cur + 1, 2) * 1e7;
+  // Calculates the cash needed for the next +1 token
+  const nextTarget = (state.influence + (state.influenceSpent || 0)) + prestigeGain() + 1;
+  return Math.pow(nextTarget / 150, 2) * 1e6;
 }
 
 // ============ EVENTS ============
