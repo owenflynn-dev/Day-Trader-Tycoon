@@ -1285,9 +1285,9 @@ const ASSETS = [
   { id: 't_sushi',   ticker: '¥SUSHI', name: 'Sushi Bonds',             icon: '&#127843;', baseCost: 100,      basePayout: 25,         baseTime: 1.5, hireCost: 2500,      sector: 't_food',     market: 'tokyo' },
   { id: 't_anime',   ticker: '¥ANIME', name: 'Anime Studio Stocks',     icon: '&#127884;', baseCost: 1500,     basePayout: 450,        baseTime: 3,   hireCost: 37500,     sector: 't_culture',  market: 'tokyo' },
   { id: 't_karaoke', ticker: '¥KARA',  name: 'Karaoke ETF',             icon: '&#127908;', baseCost: 18000,    basePayout: 6750,       baseTime: 6,   hireCost: 450000,    sector: 't_culture',  market: 'tokyo' },
-  { id: 't_neko',    ticker: '¥NEKO',  name: 'Cat Cafe Holdings',       icon: '&#128049;', baseCost: 216000,   basePayout: 101250,     baseTime: 12,  hireCost: 5400000,   sector: 't_food',     market: 'tokyo' },
-  { id: 't_sumo',    ticker: '¥SUMO',  name: 'Sumo Sponsorships',       icon: '&#129336;', baseCost: 2592000,  basePayout: 1518750,    baseTime: 24,  hireCost: 64800000,  sector: 't_sport',    market: 'tokyo' },
-  { id: 't_toyota',  ticker: '¥TYTA',  name: 'Toyota Heavy Industries', icon: '&#128666;', baseCost: 31104000, basePayout: 22781250,   baseTime: 60,  hireCost: 777600000, sector: 't_industry', market: 'tokyo' },
+  { id: 't_neko',    ticker: '¥RAIL',  name: 'Bullet Train Network',    icon: '&#128646;', baseCost: 216000,   basePayout: 101250,     baseTime: 12,  hireCost: 5400000,   sector: 't_industry', market: 'tokyo' },
+  { id: 't_sumo',    ticker: '¥MECHA', name: 'Mecha Patents Inc.',      icon: '&#129302;', baseCost: 2592000,  basePayout: 1518750,    baseTime: 24,  hireCost: 64800000,  sector: 't_industry', market: 'tokyo' },
+  { id: 't_toyota',  ticker: '¥KAIJU', name: 'Kaiju IP Holdings',       icon: '&#128050;', baseCost: 31104000, basePayout: 22781250,   baseTime: 60,  hireCost: 777600000, sector: 't_industry', market: 'tokyo' },
 ];
 
 const COST_GROWTH = 1.12;  // each unit costs 12% more (rebalanced 2026-04-27 — extended ladder to 10 tiers does the heavy lifting; AdC uses 1.07)
@@ -1339,9 +1339,9 @@ const MANAGER_BIOS = {
   t_sushi:   { name: 'Hiroshi Maguro',    role: 'Sushi Bond Specialist',  bio: '"Third-generation tuna trader. Knife collection insured for more than your house."' },
   t_anime:   { name: 'Yuki Otaku',        role: 'Animation Sector Lead',  bio: '"Owns more body pillows than you have friends. The pillows have business cards."' },
   t_karaoke: { name: 'Kenji Bellwether',  role: 'Karaoke Floor Manager',  bio: '"Knows every song from 1985-2003. Sings nothing. Glares at you instead."' },
-  t_neko:    { name: 'Aiko Nyancat',      role: 'Cat Cafe Concierge',     bio: '"Owns 47 cats. Talks to them about your portfolio. They have opinions."' },
-  t_sumo:    { name: 'Daiki Mountain',    role: 'Sumo Sponsorship Director', bio: '"Former wrestler. Eats six lunches. Has never lost a negotiation."' },
-  t_toyota:  { name: 'Reiko Tanaka',      role: 'Heavy Industry Director', bio: '"Inherited the company. Drives a 1987 Camry on principle."' },
+  t_neko:    { name: 'Conductor Tetsuya', role: 'Rail Operations Lead',   bio: '"Punctual to the second. Has never been late, even by accident. Will judge you for being five seconds early."' },
+  t_sumo:    { name: 'Engineer Hideo',    role: 'Chief Mecha Architect',  bio: '"Builds his own arms in the basement. Three patents pending. Replaces his coffee with motor oil on weekends."' },
+  t_toyota:  { name: 'Producer Megumi',   role: 'Kaiju IP Director',      bio: '"Owns the rights to 47 monster franchises. Considers Godzilla a personal friend. Office is shaped like Mt. Fuji."' },
 };
 
 // Achievement unlocks — permanent multipliers, persist across IPO.
@@ -1382,6 +1382,10 @@ const QUESTS = [
   { id: 'q_time_lord',     icon: '&#9203;',   name: 'Time Lord',           desc: 'Use 3 Time Warps.',                      target: () => 3,   progress: () => state.timeWarpsUsed || 0,                                                      reward: 30 },
   { id: 'q_influencer',    icon: '&#128276;', name: 'Influencer',          desc: 'Own 2+ Influence Shop items.',           target: () => 2,   progress: () => Object.keys(state.influenceShopOwned || {}).length,                            reward: 100 },
   { id: 'q_survivor',      icon: '&#129505;', name: 'Survivor',            desc: 'Survive a Black Swan event.',            target: () => 1,   progress: () => state.blackSwansExperienced || 0,                                              reward: 200 },
+
+  // Tokyo-specific quests
+  { id: 'q_neo_tokyo',     icon: '&#127884;', name: 'Neo-Tokyo Resident',  desc: 'Own 100 $ANIME positions.',              target: () => 100, progress: () => state.assets.t_anime?.owned || 0,                                              reward: 30 },
+  { id: 'q_last_samurai',  icon: '&#129686;', name: 'The Last Samurai',    desc: 'Hire all 6 Tokyo traders.',              target: () => 6,   progress: () => ASSETS.filter(a => a.market === 'tokyo' && state.assets[a.id]?.hired).length,  reward: 100 },
 ];
 
 // Premium managers — gold-cost. Few, impactful, unique.
@@ -1452,18 +1456,21 @@ const INFLUENCE_SHOP = [
 ];
 
 // Mega Tickets — once per asset, gold cost. Permanent x7.77 multiplier on that asset.
-// Currently only Wall Street has mega tickets; Tokyo's are a future addition.
 const MEGA_TICKET_MULT = 7.77;
 const MEGA_TICKET_COSTS_WALLST = [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200];
-const MEGA_TICKETS = ASSETS
-  .filter(a => a.market === 'wallst')
-  .map((a, i) => ({
-    id: 'mt_' + a.id,
-    assetId: a.id,
-    ticker: a.ticker,
-    name: a.name + ' Mega Ticket',
+const MEGA_TICKET_COSTS_TOKYO  = [100, 200, 400, 800, 1600, 3200];
+const MEGA_TICKETS = [
+  ...ASSETS.filter(a => a.market === 'wallst').map((a, i) => ({
+    id: 'mt_' + a.id, assetId: a.id, ticker: a.ticker, name: a.name + ' Mega Ticket',
     goldCost: MEGA_TICKET_COSTS_WALLST[i] || 100000,
-  }));
+    market: 'wallst',
+  })),
+  ...ASSETS.filter(a => a.market === 'tokyo').map((a, i) => ({
+    id: 'mt_' + a.id, assetId: a.id, ticker: a.ticker, name: a.name + ' Mega Ticket',
+    goldCost: MEGA_TICKET_COSTS_TOKYO[i] || 100000,
+    market: 'tokyo',
+  })),
+];
 
 // Leverage — tiered consumables. Activate to multiply ALL income (both markets) for a duration.
 // Higher tiers = more powerful but shorter (more dramatic moments). Only one active at a time.
@@ -1752,6 +1759,13 @@ const EVENTS = [
   // Rare meme coin events — big upside, terrifying downside
   { sector: 'meme',          mult: 12,   dur: 12, headline: '$MEME GOES PARABOLIC',  detail: 'Meme coins x12! Diamond hands.', bad: false, weight: 3 },
   { sector: 'meme',          mult: 0.05, dur: 10, headline: 'MEME COIN RUG PULL',    detail: 'Devs vanished. -95% crash.',     bad: true,  weight: 0.3, rugPull: true },
+
+  // Tokyo Trading Floor events
+  { sector: 't_culture',     mult: 2.5,  dur: 20, headline: 'CHERRY BLOSSOM FEVER',  detail: 'Tourism peaks as the trees bloom across the city.',     bad: false, weight: 10 },
+  { sector: 't_food',        mult: 4,    dur: 15, headline: 'TSUKIJI MARKET RAID',   detail: 'Record-breaking Bluefin tuna sale pumps the market.',   bad: false, weight: 5 },
+  { sector: 't_industry',    mult: 3,    dur: 25, headline: 'NEW CONSOLE LAUNCH',    detail: 'Gamers lining up around the block in Akihabara.',       bad: false, weight: 5 },
+  { sector: 'all',           mult: 0.2,  dur: 25, headline: 'GODZILLA WARNING',      detail: "It's just a movie promo, but the city panicked anyway.",bad: true,  weight: 2 },
+  { sector: 't_industry',    mult: 5,    dur: 30, headline: 'MAGLEV BREAKTHROUGH',   detail: 'Tokyo to Osaka in record time sends stocks soaring.',   bad: false, weight: 2 },
 ];
 
 // Lifetime cap on rug pulls per save — they should be a story, not a recurring event.
@@ -2622,11 +2636,19 @@ function renderPerksTab() {
   const mtroot = document.getElementById('megaTicketsList');
   if (mtroot) {
     let html = '';
-    MEGA_TICKETS.forEach((t, i) => {
-      const asset = ASSETS[i];
+    MEGA_TICKETS.forEach((t) => {
+      const asset = ASSETS.find(a => a.id === t.assetId);
+      if (!asset) return;
+      // Hide Tokyo mega tickets entirely until Tokyo is unlocked
+      if (asset.market === 'tokyo' && !state.tokyoUnlocked) return;
+      // Unlock check: previous asset within the SAME market must be owned >= 1
+      const sameMarket = ASSETS.filter(a => a.market === asset.market);
+      const idxInMarket = sameMarket.indexOf(asset);
+      const prevInMarket = idxInMarket > 0 ? sameMarket[idxInMarket - 1] : null;
+      const unlocked = !prevInMarket || (state.assets[prevInMarket.id]?.owned || 0) >= 1;
+
       const owned = !!state.megaTicketsOwned?.[t.id];
       const can = (state.gold || 0) >= t.goldCost;
-      const unlocked = i === 0 || (state.assets[ASSETS[i-1].id]?.owned || 0) >= 1;
       html += `
         <div class="perk-card${owned ? ' owned' : ''}" style="${unlocked ? '' : 'opacity:0.45;'}">
           <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--gold), #6a4f0a);'}">${asset.icon}</div>
