@@ -218,6 +218,12 @@
     color: #0a0e1a;
     text-shadow: 0 1px 0 rgba(255,255,255,0.25);
   }
+  /* Influence-spend button — blue variant used in the Influence Shop */
+  .buy-btn.inf-btn {
+    background: linear-gradient(180deg, #6ab1f5, #2563ad);
+    border-color: #163d72;
+    box-shadow: 0 3px 0 #0c2654, inset 0 1px 0 rgba(255,255,255,0.3);
+  }
   .buy-btn.gold-btn:active:not(:disabled) {
     box-shadow: 0 1px 0 #5a3f08, inset 0 1px 0 rgba(255,255,255,0.3);
   }
@@ -1726,9 +1732,7 @@ function payoutOf(asset) {
   // Per-market multipliers (includes globals + market-specific premium managers)
   p *= marketMult(asset.market || 'wallst');
   // event multiplier
-  if (state.activeEvent && state.activeEvent.sector === asset.sector) {
-    p *= state.activeEvent.mult;
-  } else if (state.activeEvent && state.activeEvent.sector === 'all') {
+  if (state.activeEvent && (state.activeEvent.sector === asset.sector || state.activeEvent.sector === 'all')) {
     p *= state.activeEvent.mult;
   }
   // Active leverage multiplier (consumable, time-limited) — applies to all markets
@@ -2347,9 +2351,19 @@ function tick() {
 // Update only enabled/disabled state on existing buttons (no DOM rebuild)
 function refreshButtonStates() {
   let needsFullRender = false;
-  ASSETS.forEach((asset, idx) => {
+  // Build a per-market "previous asset" map so unlock checks match renderAssets logic.
+  // Without this, the first Tokyo asset incorrectly checks the last Wall Street asset (Bug fix 2026-04-29).
+  const marketPrev = {};
+  const marketLast = {};
+  ASSETS.forEach(asset => {
+    const m = asset.market || 'wallst';
+    marketPrev[asset.id] = marketLast[m] || null;
+    marketLast[m] = asset;
+  });
+  ASSETS.forEach(asset => {
     const s = state.assets[asset.id];
-    const unlocked = idx === 0 || state.assets[ASSETS[idx-1].id].owned >= 1;
+    const prev = marketPrev[asset.id];
+    const unlocked = !prev || (state.assets[prev.id]?.owned || 0) >= 1; // safe nav guards against missing save keys
     const card = document.getElementById('asset-' + asset.id);
     if (!card) {
       // Asset card doesn't exist yet — first time it should appear, do a full render
@@ -2434,10 +2448,7 @@ function renderAssets() {
     const div = document.createElement('div');
     div.className = 'asset' + (unlocked ? '' : ' locked');
     div.id = 'asset-' + asset.id;
-    if (state.activeEvent && state.activeEvent.sector === asset.sector) {
-      div.classList.add(state.activeEvent.bad ? 'crashed' : 'boosted');
-    }
-    if (state.activeEvent && state.activeEvent.sector === 'all') {
+    if (state.activeEvent && (state.activeEvent.sector === asset.sector || state.activeEvent.sector === 'all')) {
       div.classList.add(state.activeEvent.bad ? 'crashed' : 'boosted');
     }
 
@@ -2678,7 +2689,7 @@ function renderManagersTab() {
           </div>
           ${owned
             ? (p.hasAbility
-                ? `<button class="buy-btn manager-hire" ${state.whistleblowerUsedThisRun ? 'disabled' : ''} onclick="useWhistleblower()" style="background:linear-gradient(180deg, #f8d860, #c89a18);border-color:#6a4f0a;box-shadow:0 3px 0 #5a3f08, inset 0 1px 0 rgba(255,255,255,0.3);color:#0a0e1a;text-shadow:0 1px 0 rgba(255,255,255,0.25);">
+                ? `<button class="buy-btn gold-btn manager-hire" ${state.whistleblowerUsedThisRun ? 'disabled' : ''} onclick="useWhistleblower()">
                     <span class="label">${state.whistleblowerUsedThisRun ? 'USED' : 'USE LEAK'}</span>
                     <span class="price">${state.whistleblowerUsedThisRun ? 'Resets at IPO' : 'Trigger 5x event'}</span>
                   </button>`
@@ -2946,7 +2957,7 @@ function renderInfluenceShop() {
         </div>
         ${owned
           ? `<button class="buy-btn" disabled><span class="price">OWNED</span></button>`
-          : `<button class="buy-btn" ${can ? '' : 'disabled'} onclick="buyInfluenceShop('${s.id}')" style="background:linear-gradient(180deg, #6ab1f5, #2563ad);border-color:#163d72;box-shadow:0 3px 0 #0c2654, inset 0 1px 0 rgba(255,255,255,0.3);">
+          : `<button class="buy-btn inf-btn" ${can ? '' : 'disabled'} onclick="buyInfluenceShop('${s.id}')">
               <span class="label">SPEND</span>
               <span class="price">${s.cost} INF</span>
             </button>`}
@@ -3122,10 +3133,21 @@ function load() {
   } catch (e) { return false; }
 }
 function manualSave() { save(); toast('Saved.'); }
+// Unicode-safe base64 helpers — btoa/atob only handle Latin-1, so we
+// round-trip through TextEncoder/TextDecoder to avoid DOMException on any
+// emoji or non-ASCII characters that end up in the save (e.g. ⚡ in newsLog).
+function _b64Encode(str) {
+  const bytes = new TextEncoder().encode(str);
+  return btoa(String.fromCharCode(...bytes));
+}
+function _b64Decode(str) {
+  const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
 function exportSave() {
   save();
   const raw = localStorage.getItem(SAVE_KEY) || '';
-  const code = btoa(raw);
+  const code = _b64Encode(raw);
   navigator.clipboard?.writeText(code);
   prompt('Save code (copied to clipboard):', code);
 }
@@ -3133,7 +3155,7 @@ function importSave() {
   const code = prompt('Paste save code:');
   if (!code) return;
   try {
-    const raw = atob(code);
+    const raw = _b64Decode(code);
     localStorage.setItem(SAVE_KEY, raw);
     location.reload();
   } catch (e) { toast('Invalid save code.'); }
