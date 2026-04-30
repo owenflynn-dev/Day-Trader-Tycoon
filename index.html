@@ -636,6 +636,29 @@
     25% { transform: translateX(-2px); }
     75% { transform: translateX(2px); }
   }
+  /* Market Pump — 5× speed spotlight on a single asset */
+  .asset.pumping {
+    box-shadow: 0 3px 0 rgba(0,0,0,0.35), 0 0 0 3px var(--gold), 0 0 28px rgba(243,199,75,0.5);
+    animation: pump-glow 0.8s ease-in-out infinite;
+  }
+  @keyframes pump-glow {
+    0%, 100% { box-shadow: 0 3px 0 rgba(0,0,0,0.35), 0 0 0 3px var(--gold), 0 0 18px rgba(243,199,75,0.4); }
+    50%       { box-shadow: 0 3px 0 rgba(0,0,0,0.35), 0 0 0 4px var(--gold), 0 0 40px rgba(243,199,75,0.8); }
+  }
+  .pump-badge {
+    position: absolute;
+    top: 7px; right: 7px;
+    background: linear-gradient(180deg, #f8d860, #c89a18);
+    color: #0a0e1a;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4);
+    pointer-events: none;
+    letter-spacing: 0.3px;
+    z-index: 5;
+  }
 
   /* Left column: icon + count */
   .asset-icon-col {
@@ -1295,8 +1318,8 @@ const PAYOUT_MULT = 1.0;   // multiplier per unit owned
 
 // Per-asset profit milestones (AdC's "x25 / x50 / x100..." mechanic).
 // When you hit each threshold of owned positions, that asset gets a permanent multiplier on its own payout.
-const MILESTONES = [5, 10, 25, 50, 100, 200, 300, 400];
-const MILESTONE_MULT = 1.1; // each milestone multiplies that asset's payout (rebalanced 2026-04-26 — was 2.0)
+const MILESTONES = [25, 50, 100, 200, 300, 400];
+const MILESTONE_MULT = 2.0; // each milestone DOUBLES that asset's payout — AdVenture Capitalist curve (was 1.1 on 2026-04-26, reverted 2026-04-29)
 // Subset of milestones that ALSO grant a 2x speed boost (halves the trade cycle time).
 // Replaces the old cash-cost speed upgrade button (removed 2026-04-26 per Owen's directive).
 const SPEED_MILESTONES = [50, 200];
@@ -1453,6 +1476,16 @@ const INFLUENCE_SHOP = [
     desc: 'Market events fire ~25% more often. More chaos = more chances.' },
   { id: 'plutocracy',          icon: '&#128737;', name: 'Plutocracy',         cost: 100,
     desc: '+5% all payouts per hired trader (max +30%).' },
+  // ── Synergy upgrades — cross-asset bonuses that reward portfolio thinking ──
+  { id: 'penny_pipeline',      icon: '&#128279;', name: 'Penny Pipeline',     cost: 75,
+    desc: '$PNNY earns +1% for every 10 Hedge Fund positions you own. Blue chips backstop penny plays.',
+    synergy: { sourceId: 'pnny', targetId: 'hedg', bonusPct: 0.01, per: 10 } },
+  { id: 'volatility_hedge',    icon: '&#127774;', name: 'Volatility Hedge',   cost: 100,
+    desc: '$MEME earns +2% for every 5 AI Bubble positions you own. Chaos funds chaos.',
+    synergy: { sourceId: 'meme', targetId: 'aibl', bonusPct: 0.02, per: 5 } },
+  { id: 'dark_pool',           icon: '&#128202;', name: 'Dark Pool Network',  cost: 175,
+    desc: 'All assets earn +0.5% for each asset type where you hold ≥25 positions. Go wide.',
+    synergy: { sourceId: 'all', threshold: 25, bonusPct: 0.005 } },
 ];
 
 // Mega Tickets — once per asset, gold cost. Permanent x7.77 multiplier on that asset.
@@ -1539,6 +1572,8 @@ let state = {
   lastTick: Date.now(),
   lastEventAt: Date.now(),
   activeEvent: null, // {sector, mult, until, headline, detail, bad, rugPull}
+  activePump: null,  // { assetId, until: ms } — single-asset 5× speed window
+  _nextPumpAt: 0,    // ms timestamp after which the next pump may fire
 };
 
 // Initialize state for every asset (both Wall Street and Tokyo).
@@ -1615,19 +1650,76 @@ function maxBuyable(asset) {
   }
   return count;
 }
+// ============ MARKET PUMP ============
+// Periodically targets one hired asset with 5× speed for 30s — the "active play" window.
+const PUMP_DUR = 30000;         // ms the pump lasts
+const PUMP_COOLDOWN_MIN = 45;   // minimum seconds between pumps
+const PUMP_COOLDOWN_RANGE = 45; // random extra seconds (total window: 45–90s between pumps)
+
+function maybeFirePump() {
+  const now = Date.now();
+  // Expire active pump
+  if (state.activePump && now > state.activePump.until) {
+    const expired = state.activePump;
+    state.activePump = null;
+    state._nextPumpAt = now + (PUMP_COOLDOWN_MIN + Math.random() * PUMP_COOLDOWN_RANGE) * 1000;
+    const card = document.getElementById('asset-' + expired.assetId);
+    if (card) card.classList.remove('pumping');
+    return;
+  }
+  if (state.activePump) return; // currently pumping, nothing to do
+  if (state._nextPumpAt === 0) {
+    // First run — wait 60-120s so the player can hire their first trader before missing a pump
+    state._nextPumpAt = now + (60 + Math.random() * 60) * 1000;
+    return;
+  }
+  if (now < state._nextPumpAt) return;
+  // Pick an eligible asset: hired, has positions, in the active market
+  const eligible = ASSETS.filter(a => {
+    const s = state.assets[a.id];
+    return s.hired && s.owned > 0 && (a.market || 'wallst') === state.activeMarket;
+  });
+  if (eligible.length === 0) return;
+  const target = eligible[Math.floor(Math.random() * eligible.length)];
+  state.activePump = { assetId: target.id, until: now + PUMP_DUR };
+  addNews('⚡ MARKET PUMP: ' + target.ticker, '5× trade speed for 30s! Watch it fly!', 'good');
+  toast('⚡ MARKET PUMP: ' + target.ticker + ' is PUMPING!');
+}
+
 function timeOf(asset) {
   const milestoneSpeed = speedFromMilestones(asset);
   const legacySpeed = state.assets[asset.id]?.speedLevel || 0;
   let t = asset.baseTime / Math.pow(2, milestoneSpeed + legacySpeed);
   if (state.premiumOwned?.quant) t *= 0.90; // The Quant: 10% faster auto-trades (all markets)
   if (asset.market === 'tokyo' && state.premiumOwned?.sensei) t *= 0.90; // The Sensei: 10% faster Tokyo
+  // Market Pump: active window gives 5× speed on the targeted asset
+  if (state.activePump?.assetId === asset.id && Date.now() < state.activePump.until) t /= 5;
   return t;
+}
+// Synergy multiplier — cross-asset bonuses from Influence Shop upgrades.
+// Applied per-asset in basePayoutOf so it stacks with milestones and mega tickets.
+function synergyMultOf(asset) {
+  let mult = 1;
+  INFLUENCE_SHOP.forEach(s => {
+    if (!state.influenceShopOwned?.[s.id] || !s.synergy) return;
+    const syn = s.synergy;
+    if (syn.sourceId === 'all') {
+      // Dark Pool: +bonusPct per asset type with ≥threshold positions
+      const breadth = ASSETS.filter(a => (state.assets[a.id]?.owned || 0) >= syn.threshold).length;
+      mult *= 1 + breadth * syn.bonusPct;
+    } else if (syn.sourceId === asset.id) {
+      // Directed synergy: this asset earns bonus based on how many of a target asset you own
+      const targetOwned = state.assets[syn.targetId]?.owned || 0;
+      mult *= 1 + Math.floor(targetOwned / syn.per) * syn.bonusPct;
+    }
+  });
+  return mult;
 }
 function basePayoutOf(asset) {
   // payoutLevel was the old "2x $" upgrade button — removed in v1.14, no longer factored in.
   // Old saves get their payoutLevel zeroed on load() so this is moot, but kept defensive.
   const a = state.assets[asset.id];
-  return asset.basePayout * a.owned * milestoneMultOf(asset) * megaTicketMultOf(asset);
+  return asset.basePayout * a.owned * milestoneMultOf(asset) * megaTicketMultOf(asset) * synergyMultOf(asset);
 }
 function payoutOf(asset) {
   let p = basePayoutOf(asset);
@@ -1969,6 +2061,23 @@ function spawnFloat(evt, gain, currency) {
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1000);
 }
+// Throttle tracker — max 1 auto-float per second per asset so the screen isn't a blizzard of numbers
+const _autoFloatLast = {};
+function spawnFloatForAsset(id, gain, currency) {
+  const now = Date.now();
+  if ((now - (_autoFloatLast[id] || 0)) < 1000) return;
+  _autoFloatLast[id] = now;
+  const prog = document.getElementById('prog-' + id);
+  if (!prog) return;
+  const rect = prog.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'float-gain';
+  el.textContent = '+' + fmt(gain, currency);
+  el.style.left = (rect.left + rect.width / 2 - 30) + 'px';
+  el.style.top = (rect.top - 5) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
 
 function claimQuest(id) {
   if (state.questsClaimed[id]) return;
@@ -2196,6 +2305,7 @@ function tick() {
   }
 
   maybeFireEvent();
+  maybeFirePump();
 
   // Per-asset progress
   ASSETS.forEach(a => {
@@ -2211,6 +2321,7 @@ function tick() {
         earnMoney(a, gain);
         state.totalTrades += cycles;
         s.progress -= cycles;
+        spawnFloatForAsset(a.id, gain, currencyOf(a)); // 💰 visual feedback on auto-payout
       } else {
         s.progress = 1; // wait for click
       }
@@ -2416,6 +2527,7 @@ function renderAssets() {
 }
 
 function renderProgressBars() {
+  const now = Date.now();
   ASSETS.forEach(a => {
     const s = state.assets[a.id];
     const fill = document.getElementById('prog-' + a.id);
@@ -2423,6 +2535,24 @@ function renderProgressBars() {
     fill.style.width = (Math.min(1, s.progress) * 100) + '%';
     fill.classList.toggle('boosted', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && !state.activeEvent.bad));
     fill.classList.toggle('crashed', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && state.activeEvent.bad));
+    // Market Pump badge — gold ring + countdown on the pumping asset card
+    const card = document.getElementById('asset-' + a.id);
+    if (card) {
+      const isPumping = !!(state.activePump?.assetId === a.id && now < state.activePump.until);
+      card.classList.toggle('pumping', isPumping);
+      let badge = card.querySelector('.pump-badge');
+      if (isPumping) {
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'pump-badge';
+          card.appendChild(badge);
+        }
+        const remaining = Math.max(0, Math.ceil((state.activePump.until - now) / 1000));
+        badge.textContent = '⚡ PUMPING! ' + remaining + 's';
+      } else if (badge) {
+        badge.remove();
+      }
+    }
   });
 }
 
