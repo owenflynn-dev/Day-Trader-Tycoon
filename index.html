@@ -807,6 +807,19 @@
     letter-spacing: 1px;
     text-shadow: 0 1px 1px rgba(0,0,0,0.6);
   }
+  .timer-badge {
+    position: absolute;
+    bottom: 3px;
+    right: 6px;
+    z-index: 3;
+    font-family: 'Nunito', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.6);
+    pointer-events: none;
+  }
 
   /* Orange buy buttons */
   .buy-row {
@@ -1621,6 +1634,17 @@ function earnMoney(asset, amt) {
 function fmtAsset(amt, asset) { return fmt(amt, currencyOf(asset)); }
 function fmtNum(n) {
   return Math.floor(n).toLocaleString();
+}
+// Format seconds into a compact countdown string matching AdVenture Capitalist style
+function fmtTimer(sec) {
+  if (sec <= 0.05) return '';
+  if (sec < 60) return sec.toFixed(1) + 's';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  if (m < 60) return s > 0 ? m + 'm ' + s + 's' : m + 'm';
+  const h = Math.floor(m / 60);
+  const rm = m % 60;
+  return rm > 0 ? h + 'h ' + rm + 'm' : h + 'h';
 }
 function costOf(asset) {
   const a = state.assets[asset.id];
@@ -2505,6 +2529,7 @@ function renderAssets() {
           ${s.hired ? '<div class="auto-badge">AUTO</div>' : ''}
           <div class="income-fill" id="prog-${asset.id}"></div>
           <div class="income-label">${incomeText}</div>
+          <span class="timer-badge" id="timer-${asset.id}"></span>
         </div>
         ${milestoneText}
         <div class="buy-row">
@@ -2546,6 +2571,16 @@ function renderProgressBars() {
     fill.style.width = (Math.min(1, s.progress) * 100) + '%';
     fill.classList.toggle('boosted', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && !state.activeEvent.bad));
     fill.classList.toggle('crashed', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && state.activeEvent.bad));
+    // Cycle timer badge
+    const timerEl = document.getElementById('timer-' + a.id);
+    if (timerEl) {
+      if (s.owned > 0) {
+        const remaining = Math.max(0, timeOf(a) * (1 - Math.min(1, s.progress)));
+        timerEl.textContent = fmtTimer(remaining);
+      } else {
+        timerEl.textContent = '';
+      }
+    }
     // Market Pump badge — gold ring + countdown on the pumping asset card
     const card = document.getElementById('asset-' + a.id);
     if (card) {
