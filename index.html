@@ -1203,6 +1203,7 @@
     <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
       <div class="gold-chip" id="goldChip"><span class="gold-icon">&#129689;</span><span id="goldAmount">0</span> GOLD</div>
       <div class="gold-chip" id="megabucksChip" style="background:linear-gradient(180deg,#6a2a9a,#3d0a6a);border-color:#9b3dca;display:none;"><span class="gold-icon">&#128142;</span><span id="megabucksAmount">0</span> MB</div>
+      <button id="muteBtn" onclick="toggleSFX()" title="Toggle sound" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;font-size:15px;padding:4px 8px;cursor:pointer;line-height:1;">&#128266;</button>
     </div>
     <div class="stats-row">
       <div>Influence<span class="stat-val" id="influence">0</span></div>
@@ -1669,6 +1670,169 @@ const BLACK_SWANS = [
   { id: 'bs_dotcom',    headline: 'DOT-COM BUST 2.0',   detail: 'AI bubble pops, taking down everything tech. -25% cash.',       dur: 25, cashLossPct: 0.25, surviveBonus: 1.25 },
 ];
 
+// ============ SFX ENGINE ============
+// Synthesized sounds only — no external files, Web Audio API.
+// AdVenture Capitalist feel: bouncy, cartoonish, satisfying.
+const SFX = (() => {
+  let _ctx = null;
+  let _muted = localStorage.getItem('sfx_muted') === '1';
+
+  function ctx() {
+    if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_ctx.state === 'suspended') _ctx.resume();
+    return _ctx;
+  }
+
+  function go(fn) {
+    if (_muted) return;
+    try { fn(ctx()); } catch(e) {}
+  }
+
+  // Utility: play one note (oscillator + gain envelope)
+  function note(ac, freq, type, vol, startAt, dur, slide) {
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = type;
+    o.frequency.setValueAtTime(freq, startAt);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, startAt + dur * 0.8);
+    g.gain.setValueAtTime(vol, startAt);
+    g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
+    o.start(startAt); o.stop(startAt + dur + 0.01);
+  }
+
+  // Single soft "bloop" — pitch varies by asset tier (0-15).
+  // Called on manual click trade only (auto-trades are silent to avoid chaos).
+  function trade(tierIndex) {
+    go(ac => {
+      const t = ac.currentTime;
+      const freq = 300 + Math.min(tierIndex, 15) * 55;
+      note(ac, freq, 'sine', 0.22, t, 0.18, freq * 1.35);
+    });
+  }
+
+  // Two-tap cash register "ka-CHING" — buy asset or hire trader.
+  function buy() {
+    go(ac => {
+      const t = ac.currentTime;
+      note(ac, 700,  'triangle', 0.30, t,        0.10);
+      note(ac, 1100, 'triangle', 0.35, t + 0.09, 0.14);
+    });
+  }
+
+  // Ascending 4-note arpeggio — milestone crossed.
+  function milestone() {
+    go(ac => {
+      const t = ac.currentTime;
+      [523, 659, 784, 1047].forEach((f, i) =>
+        note(ac, f, 'sine', 0.30, t + i * 0.10, 0.22)
+      );
+    });
+  }
+
+  // Big 7-note fanfare — IPO / prestige.
+  function ipo() {
+    go(ac => {
+      const t = ac.currentTime;
+      const seq = [262, 330, 392, 523, 659, 784, 1047];
+      seq.forEach((f, i) =>
+        note(ac, f, i < 3 ? 'sawtooth' : 'sine', 0.28, t + i * 0.09, 0.35)
+      );
+    });
+  }
+
+  // Professional double-tap — manager or trader hired.
+  function hire() {
+    go(ac => {
+      const t = ac.currentTime;
+      note(ac, 440, 'square', 0.18, t,       0.12);
+      note(ac, 660, 'square', 0.22, t + 0.11, 0.18);
+    });
+  }
+
+  // Market event — 3-note phrase: rising for bull, falling for bear.
+  function marketEvent(isBad) {
+    go(ac => {
+      const t = ac.currentTime;
+      const freqs = isBad ? [523, 415, 330] : [392, 523, 784];
+      freqs.forEach((f, i) =>
+        note(ac, f, 'sine', 0.28, t + i * 0.13, 0.28)
+      );
+    });
+  }
+
+  // Achievement fanfare — higher register, triumphant.
+  function achievement() {
+    go(ac => {
+      const t = ac.currentTime;
+      [784, 988, 1175, 1568].forEach((f, i) =>
+        note(ac, f, 'sine', 0.30, t + i * 0.09, 0.30)
+      );
+    });
+  }
+
+  // Gold spend — sparkly rising shimmer.
+  function gold() {
+    go(ac => {
+      const t = ac.currentTime;
+      [1200, 1500, 1800, 2200].forEach((f, i) =>
+        note(ac, f, 'sine', 0.18, t + i * 0.045, 0.14)
+      );
+    });
+  }
+
+  // Leverage activate — low-to-high power sweep.
+  function leverage() {
+    go(ac => {
+      const t = ac.currentTime;
+      note(ac, 80, 'sawtooth', 0.30, t, 0.45, 900);
+      note(ac, 160, 'sine',    0.18, t + 0.15, 0.30);
+    });
+  }
+
+  // Black Swan incoming — deep ominous descending toll.
+  function blackSwan() {
+    go(ac => {
+      const t = ac.currentTime;
+      [330, 247, 196, 165].forEach((f, i) =>
+        note(ac, f, 'sawtooth', 0.28, t + i * 0.18, 0.40)
+      );
+    });
+  }
+
+  // Skill unlock — crisp ascending double chime.
+  function skill() {
+    go(ac => {
+      const t = ac.currentTime;
+      note(ac, 880,  'sine', 0.22, t,       0.18);
+      note(ac, 1320, 'sine', 0.28, t + 0.14, 0.22);
+    });
+  }
+
+  // Time warp whoosh — quick rising sweep.
+  function timeWarp() {
+    go(ac => {
+      const t = ac.currentTime;
+      note(ac, 200, 'sine', 0.25, t, 0.40, 1600);
+    });
+  }
+
+  function toggleMute() {
+    _muted = !_muted;
+    localStorage.setItem('sfx_muted', _muted ? '1' : '0');
+    return _muted;
+  }
+  function isMuted() { return _muted; }
+
+  return { trade, buy, milestone, ipo, hire, marketEvent, achievement, gold, leverage, blackSwan, skill, timeWarp, toggleMute, isMuted };
+})();
+
+function toggleSFX() {
+  const muted = SFX.toggleMute();
+  const btn = document.getElementById('muteBtn');
+  if (btn) btn.textContent = muted ? '🔇' : '🔊';
+}
+
 // ============ STATE ============
 let state = {
   cash: 4,
@@ -1962,6 +2126,7 @@ function checkUnlocks() {
       state.unlocks[u.id] = true;
       const pct = Math.round((u.mult - 1) * 100);
       addNews('UNLOCK: ' + u.name, '+' + pct + '% all payouts (permanent).', 'milestone');
+      SFX.achievement();
       // Big celebration for ≥10% unlocks, regular toast for the small ones
       if (pct >= 10) celebrate('UNLOCK: ' + u.name, '+' + pct + '% all payouts forever');
       else toast('UNLOCK: ' + u.name + ' (+' + pct + '%)');
@@ -2118,6 +2283,7 @@ function activateBlackSwan(sw) {
     until: Date.now() + sw.dur * 1000,
     headline: sw.headline, detail: sw.detail, bad: true, rugPull: false, blackSwan: true,
   };
+  SFX.blackSwan();
   addNews(sw.headline, sw.detail + ' Lost ' + fmt(cashLost) + ' cash.', 'rug');
   showEvent();
   renderAssets();
@@ -2152,6 +2318,7 @@ function activateEvent(ev) {
     headline: ev.headline, detail: ev.detail, bad: ev.bad, rugPull: !!ev.rugPull,
   };
   if (ev.rugPull) state.rugPullsExperienced = (state.rugPullsExperienced || 0) + 1;
+  SFX.marketEvent(!!(ev.bad || ev.rugPull));
   addNews(ev.headline, ev.detail, ev.rugPull ? 'rug' : (ev.bad ? 'bad' : 'good'));
   showEvent();
   renderAssets();
@@ -2176,6 +2343,7 @@ function buyAsset(id) {
   const before = state.assets[id].owned;
   spendMoney(asset, c);
   state.assets[id].owned++;
+  SFX.buy();
   checkMilestoneCross(asset, before, state.assets[id].owned);
   renderAll();
   save();
@@ -2190,7 +2358,7 @@ function buyMax(id) {
     bought++;
   }
   if (bought === 0) toast('Not enough ' + (currencyOf(asset) === 'yen' ? 'yen' : 'cash') + '.');
-  else checkMilestoneCross(asset, before, state.assets[id].owned);
+  else { SFX.buy(); checkMilestoneCross(asset, before, state.assets[id].owned); }
   renderAll();
   save();
 }
@@ -2200,6 +2368,7 @@ function checkMilestoneCross(asset, ownedBefore, ownedAfter) {
   if (crossed.length === 0) return;
   const top = crossed[crossed.length - 1];
   const newMult = Math.pow(MILESTONE_MULT, crossed.length);
+  SFX.milestone();
   celebrate('MILESTONE: ' + top + ' ' + asset.ticker + ' positions!', '+' + (newMult).toFixed(0) + 'x ' + asset.ticker + ' payouts forever');
   addNews('MILESTONE: ' + asset.ticker + ' x' + top, 'Asset payout permanently x' + newMult, 'milestone');
 }
@@ -2209,6 +2378,7 @@ function hireTrader(id) {
   if (getMoney(asset) < asset.hireCost) { toast('Cannot afford trader.'); return; }
   spendMoney(asset, asset.hireCost);
   state.assets[id].hired = true;
+  SFX.hire();
   toast('Trader hired for ' + asset.ticker);
   renderAll();
   save();
@@ -2224,6 +2394,7 @@ function executeTrade(id, evt) {
   state.totalTrades++;
   state.manualTrades = (state.manualTrades || 0) + 1;
   s.progress = 0;
+  SFX.trade(ASSETS.indexOf(asset));
   spawnFloat(evt, gain, currencyOf(asset));
   renderCash();
 }
@@ -2293,6 +2464,7 @@ function buyPremiumManager(id) {
   state.influence -= p.influenceCost;
   state.influenceSpent = (state.influenceSpent || 0) + p.influenceCost;
   state.premiumOwned[id] = true;
+  SFX.hire();
   toast(p.name + ' joins your firm!');
   addNews('HIRED: ' + p.name, p.role + ' — ' + (p.mult ? '+' + Math.round((p.mult-1)*100) + '% global mult' : ''), 'milestone');
   celebrate('HIRED: ' + p.name, p.role);
@@ -2328,6 +2500,7 @@ function buyMegaTicket(id) {
   state.gold -= t.goldCost;
   if (!state.megaTicketsOwned) state.megaTicketsOwned = {};
   state.megaTicketsOwned[id] = true;
+  SFX.gold();
   celebrate('MEGA TICKET: ' + t.ticker, '+' + MEGA_TICKET_MULT + 'x ' + t.ticker + ' payouts forever');
   addNews('MEGA TICKET: ' + t.ticker, 'Asset payout permanently +' + MEGA_TICKET_MULT + 'x', 'milestone');
   renderCash();
@@ -2367,6 +2540,7 @@ function activateLeverage(id) {
   // Track high leverage use for achievements and quests
   if (t.mult >= 10) state.highLeverageUsed = true;
   state.maxLeverageUsed = Math.max(state.maxLeverageUsed || 0, t.mult);
+  SFX.leverage();
   celebrate(t.name + ' ACTIVE', t.mult + 'x all income for ' + t.minutes + ' minutes');
   addNews('LEVERAGE: ' + t.name, t.mult + 'x income for ' + t.minutes + ' min', 'milestone');
   renderCash();
@@ -2397,6 +2571,7 @@ function useTimeWarp(id) {
   state.lifetimeEarnings += gain;
   state.allTimeEarnings += gain;
   state.timeWarpsUsed = (state.timeWarpsUsed || 0) + 1;
+  SFX.timeWarp();
   celebrate('TIME WARP: +' + w.hours + 'h', '+' + fmt(gain) + ' instant cash');
   addNews('TIME WARP: ' + w.hours + 'h', '+' + fmt(gain) + ' cash', 'milestone');
   renderCash();
@@ -2415,6 +2590,7 @@ function buyLifestyle(id) {
   if (l.megabucksCost) state.megabucks = (state.megabucks || 0) - l.megabucksCost;
   if (l.goldCost) state.gold -= l.goldCost;
   state.lifestyleOwned[id] = true;
+  SFX.gold();
   toast('Acquired: ' + l.name);
   const speedNote = l.speedMult ? ' | -' + Math.round((1 - l.speedMult) * 100) + '% cycle times' : '';
   addNews('LIFESTYLE: ' + l.name, '+' + Math.round((l.mult-1)*100) + '% global mult forever' + speedNote + '.', 'milestone');
@@ -2488,6 +2664,7 @@ function buySkill(id) {
   state.influenceSpent = (state.influenceSpent || 0) + node.cost;
   if (!state.skillsOwned) state.skillsOwned = {};
   state.skillsOwned[id] = true;
+  SFX.skill();
   toast(node.name + ' unlocked!');
   addNews('SKILL: ' + node.name, node.desc, 'milestone');
   celebrate('SKILL UNLOCKED', node.name);
@@ -2538,6 +2715,7 @@ function buyHFTPerk(id) {
   state.gold -= p.goldCost;
   if (!state.hftPerksOwned) state.hftPerksOwned = {};
   state.hftPerksOwned[p.id] = true;
+  SFX.gold();
   toast(p.name + ' activated!');
   addNews('HFT: ' + p.name, p.desc, 'milestone');
   if (p.id === 'quantum') celebrate('QUANTUM EXECUTION', 'All bars pulse electric blue. Speed ×0.6.');
@@ -2567,6 +2745,7 @@ function doPrestige() {
   });
   closeModal('prestigeModal');
   hideEvent();
+  SFX.ipo();
   celebrate('IPO!', '+' + gain + ' Influence earned');
   renderAll();
   save();
@@ -3556,6 +3735,9 @@ function boot() {
   maybeGrantLeverageStarter();
   // Daily login bonus prompt for returning players (give the welcome modal priority for new ones)
   if (had) setTimeout(maybeOpenDaily, 600);
+  // Set mute button to match persisted pref
+  const muteBtn = document.getElementById('muteBtn');
+  if (muteBtn) muteBtn.textContent = SFX.isMuted() ? '🔇' : '🔊';
   state.lastTick = Date.now();
   setInterval(tick, 100);
   setInterval(save, 5000);
