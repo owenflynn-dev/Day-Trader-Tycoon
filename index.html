@@ -784,6 +784,35 @@
     background: linear-gradient(180deg, #ff6b5a 0%, #e74c3c 50%, #a83025 100%);
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.25);
   }
+  /* ── Skill Tree ── */
+  .skill-tree { display: flex; gap: 8px; padding: 8px 10px; }
+  .skill-branch { flex: 1; display: flex; flex-direction: column; gap: 0; }
+  .skill-branch-header {
+    text-align: center; font-family: 'Lilita One', sans-serif; font-size: 11px;
+    padding: 5px 4px; border-radius: 8px 8px 0 0; margin-bottom: 0;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .skill-node {
+    position: relative; background: var(--panel); border: 2px solid var(--panel-2);
+    border-radius: 8px; padding: 7px 8px; margin: 0; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-align: center;
+  }
+  .skill-node.owned { border-color: var(--green); background: linear-gradient(180deg, #0e2a1a, #071410); }
+  .skill-node.locked { opacity: 0.45; cursor: default; }
+  .skill-node.available { border-color: var(--blue); }
+  .skill-connector {
+    width: 2px; height: 14px; margin: 0 auto;
+    background: var(--panel-2);
+  }
+  .skill-connector.lit { background: var(--green); }
+  .skill-node-icon { font-size: 20px; line-height: 1; margin-bottom: 3px; }
+  .skill-node-name { font-size: 9px; font-family: 'Lilita One', sans-serif; color: var(--text); line-height: 1.2; }
+  .skill-node-cost { font-size: 8px; color: var(--text-dim); margin-top: 2px; }
+  .skill-node.owned .skill-node-cost { color: var(--green); }
+  .skill-node-desc { font-size: 7.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.3; display: none; }
+  .skill-node:not(.locked):hover .skill-node-desc { display: block; }
+
   /* Quantum Execution HFT perk — electric blue progress bars */
   .income-fill.quantum-bar {
     background: linear-gradient(180deg, #7be0ff 0%, #1ec8ff 45%, #0090d4 100%);
@@ -1171,7 +1200,10 @@
     </div>
     <div class="cash-display" id="cash">$0</div>
     <div class="income-rate" id="incomeRate">$0/sec passive income</div>
-    <div class="gold-chip" id="goldChip"><span class="gold-icon">&#129689;</span><span id="goldAmount">0</span> GOLD</div>
+    <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
+      <div class="gold-chip" id="goldChip"><span class="gold-icon">&#129689;</span><span id="goldAmount">0</span> GOLD</div>
+      <div class="gold-chip" id="megabucksChip" style="background:linear-gradient(180deg,#6a2a9a,#3d0a6a);border-color:#9b3dca;display:none;"><span class="gold-icon">&#128142;</span><span id="megabucksAmount">0</span> MB</div>
+    </div>
     <div class="stats-row">
       <div>Influence<span class="stat-val" id="influence">0</span></div>
       <div>Multiplier<span class="stat-val" id="multiplier">1.00x</span></div>
@@ -1224,6 +1256,11 @@
         <div id="leverageActiveBar"></div>
         <div id="leverageList"></div>
       </div>
+      <div class="tab-panel" id="tab-skills">
+        <div class="panel-title">Skill Tree</div>
+        <div class="panel-sub">Spend <b>Influence</b> on permanent firm upgrades. Each branch unlocks top to bottom. Hover a node to preview its effect.</div>
+        <div id="skillTreeRoot"></div>
+      </div>
       <div class="tab-panel" id="tab-news">
         <div class="panel-title">Market News Feed</div>
         <div class="panel-sub">A log of the chaos.</div>
@@ -1244,6 +1281,9 @@
       </button>
       <button class="tab-btn" data-tab="perks" onclick="switchTab('perks')">
         <span class="tab-icon">&#9889;</span>PERKS
+      </button>
+      <button class="tab-btn" data-tab="skills" onclick="switchTab('skills')">
+        <span class="tab-icon">&#127795;</span>SKILLS
       </button>
       <button class="tab-btn" data-tab="news" onclick="switchTab('news')">
         <span class="tab-icon">&#128240;</span>NEWS
@@ -1362,7 +1402,9 @@ function speedFromMilestones(asset) {
 function milestonesHit(owned) { return MILESTONES.filter(m => owned >= m).length; }
 function milestoneMultOf(asset) {
   const owned = state.assets[asset.id]?.owned || 0;
-  return Math.pow(MILESTONE_MULT, milestonesHit(owned));
+  const base = Math.pow(MILESTONE_MULT, milestonesHit(owned));
+  // Skill: Milestone Amp — each milestone multiplier is 20% stronger
+  return state.skillsOwned?.sk_ms_amp ? Math.pow(base, 1.20) : base;
 }
 function nextMilestone(asset) {
   const owned = state.assets[asset.id]?.owned || 0;
@@ -1385,6 +1427,38 @@ const HFT_PERKS = [
   { id: 'microwave',   name: 'Microwave Relay',    icon: '&#128225;', goldCost: 150,  speedMult: 0.80, desc: '-20% all cycle times. Signal bounced off the building across the street.' },
   { id: 'colocation',  name: 'Server Co-location', icon: '&#128442;', goldCost: 400,  speedMult: 0.75, desc: '-25% all cycle times. Your racks live inside the exchange itself.' },
   { id: 'quantum',     name: 'Quantum Execution',  icon: '&#9889;',   goldCost: 1000, speedMult: 0.60, desc: '-40% all cycle times. Progress bars pulse electric blue. Unreal.' },
+];
+
+// Skill Tree — 3 branches, 4 nodes each, unlocked sequentially.
+// Each node costs Influence. Effects are wired directly into timeOf(), globalMult(), executeTrade(), and events.
+const SKILL_TREE = [
+  {
+    id: 'speed', name: 'Trading Floor', icon: '&#9889;', color: '#4a90e2',
+    nodes: [
+      { id: 'sk_fast_hands',  name: 'Fast Hands',        icon: '&#128075;', cost: 2,   desc: '+10% payout on every manual trade you click.' },
+      { id: 'sk_pre_market',  name: 'Pre-Market Access', icon: '&#128338;', cost: 8,   desc: '-10% all asset cycle times.' },
+      { id: 'sk_algo_edge',   name: 'Algorithmic Edge',  icon: '&#129302;', cost: 25,  desc: '-15% all cycle times (stacks).' },
+      { id: 'sk_light_speed', name: 'Light Speed',       icon: '&#128640;', cost: 75,  desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
+    ]
+  },
+  {
+    id: 'intel', name: 'Market Intel', icon: '&#128225;', color: '#f3c74b',
+    nodes: [
+      { id: 'sk_scanner',    name: 'Market Scanner',  icon: '&#128202;', cost: 3,   desc: 'Positive events last 20% longer.' },
+      { id: 'sk_bull_ext',   name: 'Bull Extension',  icon: '&#128994;', cost: 10,  desc: 'Positive events last 40% longer total.' },
+      { id: 'sk_bear_buf',   name: 'Bear Buffer',     icon: '&#128308;', cost: 30,  desc: 'Negative events end 25% sooner.' },
+      { id: 'sk_bias',       name: 'Event Bias',      icon: '&#127775;', cost: 90,  desc: 'Each event roll has a 20% chance of being forced positive.' },
+    ]
+  },
+  {
+    id: 'capital', name: 'Capital', icon: '&#128176;', color: '#2ecc71',
+    nodes: [
+      { id: 'sk_compound',   name: 'Compounding',      icon: '&#128200;', cost: 5,   desc: '+5% all payouts per completed IPO (max bonus at 5 IPOs = +25%).' },
+      { id: 'sk_portfolio',  name: 'Portfolio Spread', icon: '&#128203;', cost: 15,  desc: '+10% payouts when 5+ assets each have 10+ positions.' },
+      { id: 'sk_ms_amp',     name: 'Milestone Amp',    icon: '&#127942;', cost: 45,  desc: 'Each milestone multiplier is 20% stronger.' },
+      { id: 'sk_legend',     name: 'Wall St. Legend',  icon: '&#127775;', cost: 120, desc: '+30% all payouts permanently. You made it.' },
+    ]
+  },
 ];
 
 // Manager personalities — flavor text per asset.
@@ -1466,38 +1540,39 @@ const QUESTS = [
   { id: 'q_last_samurai',  icon: '&#129686;', name: 'The Last Samurai',    desc: 'Hire all 6 Tokyo traders.',              target: () => 6,   progress: () => ASSETS.filter(a => a.market === 'tokyo' && state.assets[a.id]?.hired).length,  reward: 100 },
 ];
 
-// Premium managers — gold-cost. Few, impactful, unique.
+// Premium managers — now cost Influence (prestige currency), not gold.
+// Influence is scarce. Hiring a manager means banking fewer passive tokens — a real tradeoff.
 const PREMIUM_MANAGERS = [
-  { id: 'senator',       name: 'The Senator',       role: 'Inside Source',          icon: '&#127963;', goldCost: 50,
+  { id: 'senator',       name: 'The Senator',       role: 'Inside Source',          icon: '&#127963;', influenceCost: 5,
     desc: '+10% all payouts, plus a 5-second heads-up before any market event fires.',
     bio: '"Old friend from college. Never asks where the campaign donations come from."',
     mult: 1.10 },
-  { id: 'quant',         name: 'The Quant',         role: 'Algorithmic Trader',     icon: '&#129302;', goldCost: 75,
+  { id: 'quant',         name: 'The Quant',         role: 'Algorithmic Trader',     icon: '&#129302;', influenceCost: 15,
     desc: '+15% all payouts. Auto-trades execute 10% faster.',
     bio: '"PhD from MIT. Hasn\'t slept since 2019. Speaks only in Greek letters."',
     mult: 1.15 },
-  { id: 'cfo',           name: 'The CFO',           role: 'Chief Financial Officer',icon: '&#128188;', goldCost: 150,
+  { id: 'cfo',           name: 'The CFO',           role: 'Chief Financial Officer',icon: '&#128188;', influenceCost: 40,
     desc: '+30% all payouts. Knows where every penny is.',
     bio: '"Former Goldman exec. Knows things about you that you don\'t know."',
     mult: 1.30 },
-  { id: 'whistleblower', name: 'The Whistleblower', role: 'Receipt Keeper',         icon: '&#128264;', goldCost: 200,
+  { id: 'whistleblower', name: 'The Whistleblower', role: 'Receipt Keeper',         icon: '&#128264;', influenceCost: 100,
     desc: '+20% all payouts. Once per IPO cycle, trigger a guaranteed 5x bullish event for 30s.',
     bio: '"Used to work for a big bank. Now works for you. Still has all the receipts."',
     mult: 1.20, hasAbility: true },
   // === Tokyo Trading Floor premium roster ===
-  { id: 'shogun',     name: 'The Shogun',     role: 'Tokyo Floor Boss',       icon: '&#128483;', goldCost: 100, market: 'tokyo',
+  { id: 'shogun',     name: 'The Shogun',     role: 'Tokyo Floor Boss',       icon: '&#128483;', influenceCost: 20, market: 'tokyo',
     desc: '+25% Tokyo payouts. Demands respect. Runs the floor with quiet menace.',
     bio: '"Shows up in a perfectly tailored suit. Has never raised his voice. Everyone is terrified."',
     mult: 1.25 },
-  { id: 'sensei',     name: 'The Sensei',     role: 'Master of the Spread',   icon: '&#127891;', goldCost: 150, market: 'tokyo',
+  { id: 'sensei',     name: 'The Sensei',     role: 'Master of the Spread',   icon: '&#127891;', influenceCost: 35, market: 'tokyo',
     desc: '+10% Tokyo payouts AND +10% faster Tokyo auto-trades. Decades of wisdom.',
     bio: '"Has been trading since before you were born. Drinks one cup of tea per market session. Always right."',
     mult: 1.10 },
-  { id: 'kaiju',      name: 'The Kaiju',      role: 'Volatility Beast',       icon: '&#129422;', goldCost: 200, market: 'tokyo',
+  { id: 'kaiju',      name: 'The Kaiju',      role: 'Volatility Beast',       icon: '&#129422;', influenceCost: 80, market: 'tokyo',
     desc: '+30% Tokyo payouts. Tokyo events fire 50% more often. Embrace chaos.',
     bio: '"Eight feet tall and twice as wide. Cannot be reasoned with. The market moves when he enters the room."',
     mult: 1.30 },
-  { id: 'salaryman',  name: 'The Salaryman',  role: '12-Hour Loyalty',        icon: '&#128104;&#8205;&#128188;', goldCost: 75, market: 'tokyo',
+  { id: 'salaryman',  name: 'The Salaryman',  role: '12-Hour Loyalty',        icon: '&#128104;&#8205;&#128188;', influenceCost: 10, market: 'tokyo',
     desc: '+15% Tokyo payouts. Never sleeps. Never complains. Drinks too much sake on Fridays.',
     bio: '"Has worked here for 23 years. You\'ve seen him cry once. You will not bring it up."',
     mult: 1.15 },
@@ -1518,9 +1593,9 @@ const LIFESTYLE = [
     desc: 'Your own zip code in international waters. +150% all payouts forever.', mult: 2.50 },
   { id: 'nfl_team',    name: 'NFL Franchise',        icon: '&#127944;', cashCost: 1e14, goldCost: 1000,
     desc: 'You sit in the owner\'s box now. The league hates you. +250% all payouts, -0.2s all cycle floors.', mult: 3.50 },
-  { id: 'moon_colony', name: 'Moon Colony',          icon: '&#127769;', cashCost: 1e15, goldCost: 2500,
+  { id: 'moon_colony', name: 'Moon Colony',          icon: '&#127769;', cashCost: 1e15, megabucksCost: 5,
     desc: 'Low orbit, low taxes. +400% all payouts forever. Tax residency: space.', mult: 5.00 },
-  { id: 'fed_chair',   name: 'Federal Reserve Chair',icon: '&#127970;', cashCost: 1e18, goldCost: 5000,
+  { id: 'fed_chair',   name: 'Federal Reserve Chair',icon: '&#127970;', cashCost: 1e18, megabucksCost: 10,
     desc: 'You ARE the printer now. +800% all payouts forever. Jerome who?', mult: 9.00 },
 ];
 
@@ -1529,7 +1604,7 @@ const LIFESTYLE = [
 // Costs rebalanced 2026-04-26 — should feel like genuine endgame purchases, not session-2 buys.
 const INFLUENCE_SHOP = [
   { id: 'heavens_lottery',     icon: '&#128276;', name: "Heaven's Lottery",  cost: 150,
-    desc: 'Each Influence is worth +4% (was +2%). Doubles your prestige value forever.' },
+    desc: 'Each Influence token is worth +8% (was +4%). Doubles your prestige power forever.' },
   { id: 'fed_friend',          icon: '&#127970;', name: 'Federal Reserve Friend', cost: 200,
     desc: '+50% all payouts forever. Bipartisan but expensive.', mult: 1.5 },
   { id: 'senate_connections',  icon: '&#127963;', name: 'Senate Connections', cost: 125,
@@ -1617,6 +1692,8 @@ let state = {
   influenceShopOwned: {},   // id -> true (permanent shop purchases)
   megaTicketsOwned: {},     // id -> true (per-asset gold-bought mega tickets)
   influenceSpent: 0,        // lifetime total spent in Influence Shop — never resets, used by prestigeGain()
+  megabucks: 0,             // premium currency — earned from Black Swans, milestone IPOs, future IAP
+  skillsOwned: {},          // id -> true (skill tree purchases)
   hftPerksOwned: {},        // id -> true (HFT speed perk purchases)
   totalIPOs: 0,             // lifetime IPO count — never resets
   highLeverageUsed: false,  // true after first 10x+ leverage activation (for Leverage King achievement)
@@ -1771,6 +1848,10 @@ function timeOf(asset) {
   if (asset.market === 'tokyo' && state.premiumOwned?.sensei) t *= 0.90; // The Sensei: 10% faster Tokyo
   // HFT Speed Perks — stacked speed reductions from gold-cost perk purchases
   HFT_PERKS.forEach(p => { if (state.hftPerksOwned?.[p.id]) t *= p.speedMult; });
+  // Skill Tree — Trading Floor speed nodes
+  if (state.skillsOwned?.sk_pre_market)  t *= 0.90;
+  if (state.skillsOwned?.sk_algo_edge)   t *= 0.85;
+  if (state.skillsOwned?.sk_light_speed) t *= 0.80;
   // Lifestyle speed bonuses — permanent cycle time reductions
   LIFESTYLE.forEach(l => { if (state.lifestyleOwned?.[l.id] && l.speedMult) t *= l.speedMult; });
   // NFL Franchise global speed floor: every asset cycle is at least 0.2s faster
@@ -1821,7 +1902,8 @@ function payoutOf(asset) {
 // Global multiplier — applies to BOTH markets. Premium managers without a .market property are global;
 // market-specific premium managers (Tokyo, etc.) are layered on in marketMult() instead.
 function globalMult() {
-  const perInfluence = state.influenceShopOwned?.heavens_lottery ? 0.04 : 0.02;
+  // +4% per banked Influence token (was +2%). Heaven's Lottery doubles to +8%.
+  const perInfluence = state.influenceShopOwned?.heavens_lottery ? 0.08 : 0.04;
   let m = 1 + (state.influence * perInfluence);
   BOOSTS.forEach(b => { if (state.boostsOwned[b.id]) m *= b.mult; });
   UNLOCKS.forEach(u => { if (state.unlocks[u.id]) m *= u.mult; });
@@ -1833,6 +1915,16 @@ function globalMult() {
     m *= 1 + (0.05 * hired);
   }
   m *= (state.blackSwanBonus || 1);
+  // Skill Tree — Capital branch
+  if (state.skillsOwned?.sk_compound) {
+    const ipoBonusPct = Math.min(5, state.totalIPOs || 0) * 0.05; // +5% per IPO, max 5
+    m *= (1 + ipoBonusPct);
+  }
+  if (state.skillsOwned?.sk_portfolio) {
+    const wideAssets = ASSETS.filter(a => (state.assets[a.id]?.owned || 0) >= 10).length;
+    if (wideAssets >= 5) m *= 1.10;
+  }
+  if (state.skillsOwned?.sk_legend) m *= 1.30;
   return m;
 }
 
@@ -1904,13 +1996,11 @@ function totalIncomePerSec() {
   return total;
 }
 function prestigeGain() {
-  // We use $1M as the base and 150 as a multiplier to make the gain feel substantial
+  // Influence is scarce — AdC angel style. Fewer tokens, each worth more.
+  // Formula: 8 * sqrt(Earnings / 1M). First prestige at $1M gives 8 tokens.
+  // $100M → 80, $1B → 253, $10B → 800. Encourages going deep before resetting.
   if (state.lifetimeEarnings < 1e6) return 0;
-  
-  // 150 * sqrt(Earnings / 1M)
-  let totalPossible = Math.floor(150 * Math.sqrt(state.lifetimeEarnings / 1e6));
-  
-  // Subtract what you already have so you only see the NEW tokens
+  let totalPossible = Math.floor(8 * Math.sqrt(state.lifetimeEarnings / 1e6));
   let pending = totalPossible - (state.influence + (state.influenceSpent || 0));
   return Math.max(0, pending);
 }
@@ -1955,6 +2045,11 @@ const MAX_RUG_PULLS = 2;
 // Weighted random pick — picks an event with probability proportional to its weight.
 // Skips rug pull events if the player has already experienced the lifetime cap.
 function pickWeightedEvent() {
+  // Skill: Event Bias — 20% chance to force a positive event
+  if (state.skillsOwned?.sk_bias && Math.random() < 0.20) {
+    const positives = EVENTS.filter(e => !e.bad && !e.rugPull);
+    if (positives.length) return positives[Math.floor(Math.random() * positives.length)];
+  }
   const eligible = EVENTS.filter(e => {
     if (e.rugPull && (state.rugPullsExperienced || 0) >= MAX_RUG_PULLS) return false;
     return true;
@@ -2031,8 +2126,9 @@ function activateBlackSwan(sw) {
   // Grant permanent bonus when the event ends — schedule it
   setTimeout(() => {
     state.blackSwanBonus = (state.blackSwanBonus || 1) * sw.surviveBonus;
-    addNews('SURVIVED: ' + sw.headline, '+25% global mult earned forever.', 'milestone');
-    celebrate('YOU SURVIVED', '+25% all payouts forever (' + state.blackSwansExperienced + '/' + MAX_BLACK_SWANS + ' lifetime)');
+    state.megabucks = (state.megabucks || 0) + 1; // Black Swan survival earns 1 Megabuck
+    addNews('SURVIVED: ' + sw.headline, '+25% global mult + 1 Megabuck earned forever.', 'milestone');
+    celebrate('YOU SURVIVED', '+25% all payouts forever + 1 Megabuck (' + state.blackSwansExperienced + '/' + MAX_BLACK_SWANS + ' lifetime)');
     renderCash();
     save();
   }, sw.dur * 1000 + 200);
@@ -2040,9 +2136,19 @@ function activateBlackSwan(sw) {
 }
 
 function activateEvent(ev) {
+  let dur = ev.dur;
+  if (!ev.bad && !ev.rugPull) {
+    // Skill: Market Scanner — positive events 20% longer
+    if (state.skillsOwned?.sk_scanner) dur *= 1.20;
+    // Skill: Bull Extension — stacks, positive events 40% longer total
+    if (state.skillsOwned?.sk_bull_ext) dur *= (1.40 / 1.20); // net 40% total
+  } else if (ev.bad) {
+    // Skill: Bear Buffer — negative events 25% shorter
+    if (state.skillsOwned?.sk_bear_buf) dur *= 0.75;
+  }
   state.activeEvent = {
     sector: ev.sector, mult: ev.mult,
-    until: Date.now() + ev.dur * 1000,
+    until: Date.now() + dur * 1000,
     headline: ev.headline, detail: ev.detail, bad: ev.bad, rugPull: !!ev.rugPull,
   };
   if (ev.rugPull) state.rugPullsExperienced = (state.rugPullsExperienced || 0) + 1;
@@ -2112,7 +2218,8 @@ function executeTrade(id, evt) {
   const s = state.assets[id];
   if (s.owned === 0) { toast('Buy a position first.'); return; }
   if (s.progress < 1) return; // not ready
-  const gain = payoutOf(asset);
+  let gain = payoutOf(asset);
+  if (state.skillsOwned?.sk_fast_hands) gain *= 1.10; // Skill: Fast Hands — +10% on manual trades
   earnMoney(asset, gain);
   state.totalTrades++;
   state.manualTrades = (state.manualTrades || 0) + 1;
@@ -2182,13 +2289,16 @@ function buyPremiumManager(id) {
   if (state.premiumOwned[id]) return;
   const p = PREMIUM_MANAGERS.find(x => x.id === id);
   if (!p) return;
-  if ((state.gold || 0) < p.goldCost) { toast('Not enough gold.'); return; }
-  state.gold -= p.goldCost;
+  if ((state.influence || 0) < p.influenceCost) { toast('Not enough Influence.'); return; }
+  state.influence -= p.influenceCost;
+  state.influenceSpent = (state.influenceSpent || 0) + p.influenceCost;
   state.premiumOwned[id] = true;
   toast(p.name + ' joins your firm!');
   addNews('HIRED: ' + p.name, p.role + ' — ' + (p.mult ? '+' + Math.round((p.mult-1)*100) + '% global mult' : ''), 'milestone');
+  celebrate('HIRED: ' + p.name, p.role);
   renderCash();
   renderManagersTab();
+  renderPrestige();
   save();
 }
 
@@ -2299,13 +2409,16 @@ function buyLifestyle(id) {
   const l = LIFESTYLE.find(x => x.id === id);
   if (!l) return;
   if (state.cash < l.cashCost) { toast('Not enough cash.'); return; }
-  if ((state.gold || 0) < l.goldCost) { toast('Not enough gold.'); return; }
+  if (l.megabucksCost && (state.megabucks || 0) < l.megabucksCost) { toast('Not enough Megabucks.'); return; }
+  if (l.goldCost && (state.gold || 0) < l.goldCost) { toast('Not enough gold.'); return; }
   state.cash -= l.cashCost;
-  state.gold -= l.goldCost;
+  if (l.megabucksCost) state.megabucks = (state.megabucks || 0) - l.megabucksCost;
+  if (l.goldCost) state.gold -= l.goldCost;
   state.lifestyleOwned[id] = true;
   toast('Acquired: ' + l.name);
   const speedNote = l.speedMult ? ' | -' + Math.round((1 - l.speedMult) * 100) + '% cycle times' : '';
   addNews('LIFESTYLE: ' + l.name, '+' + Math.round((l.mult-1)*100) + '% global mult forever' + speedNote + '.', 'milestone');
+  celebrate(l.name, '+' + Math.round((l.mult-1)*100) + '% all payouts forever');
   renderCash();
   renderPerksTab();
   save();
@@ -2356,6 +2469,67 @@ function buyBoost(id) {
   save();
 }
 
+function buySkill(id) {
+  // Find the node across all branches
+  let node = null, branch = null, nodeIdx = -1;
+  for (const br of SKILL_TREE) {
+    const idx = br.nodes.findIndex(n => n.id === id);
+    if (idx !== -1) { node = br.nodes[idx]; branch = br; nodeIdx = idx; break; }
+  }
+  if (!node || !branch) return;
+  if (state.skillsOwned?.[id]) return;
+  // Must own previous node in branch (if any)
+  if (nodeIdx > 0) {
+    const prev = branch.nodes[nodeIdx - 1];
+    if (!state.skillsOwned?.[prev.id]) { toast('Unlock the previous skill first.'); return; }
+  }
+  if ((state.influence || 0) < node.cost) { toast('Not enough Influence.'); return; }
+  state.influence -= node.cost;
+  state.influenceSpent = (state.influenceSpent || 0) + node.cost;
+  if (!state.skillsOwned) state.skillsOwned = {};
+  state.skillsOwned[id] = true;
+  toast(node.name + ' unlocked!');
+  addNews('SKILL: ' + node.name, node.desc, 'milestone');
+  celebrate('SKILL UNLOCKED', node.name);
+  renderCash();
+  renderSkillTree();
+  save();
+}
+
+function renderSkillTree() {
+  const root = document.getElementById('skillTreeRoot');
+  if (!root) return;
+  let html = '<div class="skill-tree">';
+  SKILL_TREE.forEach(branch => {
+    html += `<div class="skill-branch">`;
+    html += `<div class="skill-branch-header" style="background:${branch.color}22;color:${branch.color};border:1px solid ${branch.color}44;">${branch.icon} ${branch.name}</div>`;
+    branch.nodes.forEach((node, idx) => {
+      const owned = !!state.skillsOwned?.[node.id];
+      const prevOwned = idx === 0 || !!state.skillsOwned?.[branch.nodes[idx-1].id];
+      const canAfford = (state.influence || 0) >= node.cost;
+      const available = !owned && prevOwned;
+      const locked = !owned && !prevOwned;
+      // Connector line between nodes
+      if (idx > 0) {
+        html += `<div class="skill-connector${owned || prevOwned ? ' lit' : ''}"></div>`;
+      }
+      const cls = owned ? 'owned' : locked ? 'locked' : available ? 'available' : '';
+      html += `
+        <div class="skill-node ${cls}" ${available && canAfford ? `onclick="buySkill('${node.id}')"` : ''}>
+          <div class="skill-node-icon">${node.icon}</div>
+          <div class="skill-node-name">${node.name}</div>
+          <div class="skill-node-cost">${owned ? '✓ OWNED' : locked ? '🔒 ' + node.cost + ' ▲' : canAfford ? node.cost + ' ▲ BUY' : node.cost + ' ▲ NEED'}</div>
+          <div class="skill-node-desc">${node.desc}</div>
+        </div>`;
+    });
+    html += `</div>`;
+  });
+  html += '</div>';
+  // Influence balance reminder
+  html += `<div style="text-align:center;padding:8px;font-size:11px;color:var(--text-dim);">You have <b style="color:var(--text);">${fmtNum(state.influence || 0)} Influence</b> to spend. Each token banked = +${state.influenceShopOwned?.heavens_lottery ? 8 : 4}% global payouts.</div>`;
+  root.innerHTML = html;
+}
+
 function buyHFTPerk(id) {
   const p = HFT_PERKS.find(x => x.id === id);
   if (!p) return;
@@ -2383,6 +2557,11 @@ function doPrestige() {
   state.lastEventAt = Date.now();
   state.whistleblowerUsedThisRun = false; // refresh ability per run
   state.totalIPOs = (state.totalIPOs || 0) + 1; // lifetime IPO counter for achievements
+  // Milestone IPOs earn Megabucks: 2 at 3rd IPO, 2 more at 10th, 2 more at 25th
+  if ([3, 10, 25].includes(state.totalIPOs)) {
+    state.megabucks = (state.megabucks || 0) + 2;
+    toast('MILESTONE IPO: +2 Megabucks earned!');
+  }
   ASSETS.forEach(a => {
     state.assets[a.id] = { owned: 0, progress: 0, hired: false, speedLevel: 0, payoutLevel: 0 };
   });
@@ -2430,6 +2609,12 @@ function tick() {
         // Mega Ticket Instant Reset: bar resets to 0 with no carry-over pause
         s.progress = state.megaTicketsOwned?.['mt_' + a.id] ? 0 : s.progress - cycles;
         spawnFloatForAsset(a.id, gain, currencyOf(a)); // 💰 visual feedback on auto-payout
+      } else if (state.skillsOwned?.sk_light_speed) {
+        // Skill: Light Speed — hired assets never idle; non-hired also auto-fire
+        const gain = payoutOf(a) * Math.floor(s.progress);
+        earnMoney(a, gain);
+        state.totalTrades += Math.floor(s.progress);
+        s.progress -= Math.floor(s.progress);
       } else {
         s.progress = 1; // wait for click
       }
@@ -2509,6 +2694,11 @@ function renderCash() {
   document.getElementById('multiplier').textContent = marketMult(state.activeMarket).toFixed(2) + 'x';
   document.getElementById('lifetime').textContent = fmt(lifetime, cur);
   const g = document.getElementById('goldAmount'); if (g) g.textContent = fmtNum(state.gold || 0);
+  const mb = state.megabucks || 0;
+  const mbChip = document.getElementById('megabucksChip');
+  const mbAmt = document.getElementById('megabucksAmount');
+  if (mbChip) mbChip.style.display = mb > 0 ? '' : 'none';
+  if (mbAmt) mbAmt.textContent = fmtNum(mb);
 }
 
 // Switch the active market (Wall Street or Tokyo). Re-renders and saves.
@@ -2704,6 +2894,7 @@ function switchTab(name) {
   if (name === 'unlocks') { state.hasUnseenUnlock = false; renderGoalsTab(); }
   if (name === 'managers') renderManagersTab();
   if (name === 'perks') renderPerksTab();
+  if (name === 'skills') renderSkillTree();
   if (name === 'news')   { state.hasUnseenNews = false; renderNewsTab(); }
   save();
 }
@@ -2795,12 +2986,12 @@ function renderManagersTab() {
   if (!root) return;
   let html = '';
 
-  // Premium managers section (gold-cost, special)
+  // Premium managers section — now cost Influence, not gold
   if (PREMIUM_MANAGERS.length) {
-    html += '<div class="panel-sub" style="padding:0 14px 4px;color:var(--gold);font-family:\'Lilita One\',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;">Premium Roster</div>';
+    html += '<div class="panel-sub" style="padding:0 14px 4px;color:var(--gold);font-family:\'Lilita One\',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;">Premium Roster &middot; costs Influence &#128276;</div>';
     PREMIUM_MANAGERS.forEach(p => {
       const owned = !!state.premiumOwned[p.id];
-      const can = (state.gold || 0) >= p.goldCost;
+      const can = (state.influence || 0) >= p.influenceCost;
       html += `
         <div class="manager-card${owned ? '' : ' unhired'}" style="border-color:${owned ? '#5a3f08' : 'var(--panel-dark)'};${owned ? 'background:linear-gradient(180deg, #2a2030, #1a1424);' : ''}">
           <div class="manager-portrait" style="${owned ? 'background:radial-gradient(circle at 35% 30%, var(--gold), #6a4f0a);' : ''}">${p.icon}</div>
@@ -2816,9 +3007,9 @@ function renderManagersTab() {
                     <span class="price">${state.whistleblowerUsedThisRun ? 'Resets at IPO' : 'Trigger 5x event'}</span>
                   </button>`
                 : `<div class="manager-hire" style="text-align:center;color:var(--gold);font-family:'Lilita One',sans-serif;font-size:14px;">&#10003; ON RETAINER</div>`)
-            : `<button class="buy-btn gold-btn manager-hire" ${can ? '' : 'disabled'} onclick="buyPremiumManager('${p.id}')">
+            : `<button class="buy-btn inf-btn manager-hire" ${can ? '' : 'disabled'} onclick="buyPremiumManager('${p.id}')">
                 <span class="label">HIRE</span>
-                <span class="price">${p.goldCost} &#129689;</span>
+                <span class="price">${p.influenceCost} &#128276;</span>
               </button>`}
         </div>`;
     });
@@ -2906,20 +3097,25 @@ function renderPerksTab() {
     LIFESTYLE.forEach(l => {
       const owned = !!state.lifestyleOwned[l.id];
       const canCash = state.cash >= l.cashCost;
-      const canGold = (state.gold || 0) >= l.goldCost;
-      const can = canCash && canGold;
+      const canGold = !l.goldCost || (state.gold || 0) >= l.goldCost;
+      const canMB = !l.megabucksCost || (state.megabucks || 0) >= l.megabucksCost;
+      const can = canCash && canGold && canMB;
+      const isMBItem = !!l.megabucksCost;
+      const priceLabel = l.megabucksCost
+        ? `${fmt(l.cashCost)} + ${l.megabucksCost}&#128142;`
+        : `${fmt(l.cashCost)} + ${l.goldCost}&#129689;`;
       html += `
         <div class="perk-card${owned ? ' owned' : ''}">
-          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--gold), #6a4f0a);'}">${l.icon || '&#127961;'}</div>
+          <div class="perk-icon" style="${owned ? '' : isMBItem ? 'background:linear-gradient(180deg, #b574d8, #6a1a8a);' : 'background:linear-gradient(180deg, var(--gold), #6a4f0a);'}">${l.icon || '&#127961;'}</div>
           <div>
-            <div class="perk-name">${l.name}</div>
+            <div class="perk-name" style="${isMBItem ? 'color:#d49aff;' : ''}">${l.name}${isMBItem ? ' <span style="font-size:9px;color:#d49aff;">MEGABUCKS</span>' : ''}</div>
             <div class="perk-desc">${l.desc}</div>
           </div>
           ${owned
             ? `<button class="buy-btn" disabled><span class="price">OWNED</span></button>`
-            : `<button class="buy-btn gold-btn" ${can ? '' : 'disabled'} onclick="buyLifestyle('${l.id}')">
+            : `<button class="buy-btn ${isMBItem ? '' : 'gold-btn'}" style="${isMBItem ? 'background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#6a1a8a;' : ''}" ${can ? '' : 'disabled'} onclick="buyLifestyle('${l.id}')">
                 <span class="label">BUY</span>
-                <span class="price">${fmt(l.cashCost)} + ${l.goldCost}&#129689;</span>
+                <span class="price">${priceLabel}</span>
               </button>`}
         </div>`;
     });
@@ -3199,6 +3395,7 @@ function save() {
       influenceShopOwned: state.influenceShopOwned || {},
       megaTicketsOwned: state.megaTicketsOwned || {},
       influenceSpent: state.influenceSpent || 0,
+      megabucks: state.megabucks || 0,
       blackSwansExperienced: state.blackSwansExperienced || 0,
       blackSwanBonus: state.blackSwanBonus || 1,
       manualTrades: state.manualTrades || 0,
@@ -3215,6 +3412,7 @@ function save() {
       totalIPOs: state.totalIPOs || 0,
       highLeverageUsed: !!state.highLeverageUsed,
       maxLeverageUsed: state.maxLeverageUsed || 0,
+      skillsOwned: state.skillsOwned || {},
       lastSavedAt: Date.now(),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(out));
@@ -3245,6 +3443,7 @@ function load() {
     state.influenceShopOwned = data.influenceShopOwned || {};
     state.megaTicketsOwned = data.megaTicketsOwned || {};
     state.influenceSpent = data.influenceSpent || 0;
+    state.megabucks = data.megabucks || 0;
     state.blackSwansExperienced = data.blackSwansExperienced || 0;
     state.blackSwanBonus = data.blackSwanBonus || 1;
     state.manualTrades = data.manualTrades || 0;
@@ -3261,6 +3460,7 @@ function load() {
     state.totalIPOs = data.totalIPOs || 0;
     state.highLeverageUsed = !!data.highLeverageUsed;
     state.maxLeverageUsed = data.maxLeverageUsed || 0;
+    state.skillsOwned = data.skillsOwned || {};
     if (data.assets) {
       ASSETS.forEach(a => {
         if (data.assets[a.id]) {
