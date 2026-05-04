@@ -1421,7 +1421,7 @@ const UNLOCKS = [
   { id: 'yacht_club',    icon: '&#128674;', name: 'Yacht Club Member',   desc: 'Buy your first Offshore Yacht Fund position.',                    mult: 1.10,  check: () => (state.assets.yact?.owned || 0) >= 1 },
   { id: 'ipo_day',       icon: '&#128276;', name: 'IPO Day',             desc: 'Take your firm public for the first time.',                       mult: 1.10,  check: () => (state.influence || 0) >= 1 },
   { id: 'speed_demon',   icon: '&#9889;',   name: 'Pedal to the Metal',  desc: 'Hit the 200-position speed milestone on any asset.',              mult: 1.05,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 200) },
-  { id: 'staffed_up',    icon: '&#128188;', name: 'Fully Staffed',       desc: 'Hire all 6 traders.',                                             mult: 1.20,  check: () => ASSETS.every(a => state.assets[a.id]?.hired) },
+  { id: 'staffed_up',    icon: '&#128188;', name: 'Fully Staffed',       desc: 'Hire all 10 Wall Street traders.',                                mult: 1.20,  check: () => ASSETS.filter(a => a.market === 'wallst').every(a => state.assets[a.id]?.hired) },
   // Mid-game chain — plugs the hour 3-5 engagement gap
   { id: 'century_club',  icon: '&#128176;', name: 'Century Club',         desc: 'Own 100 positions on any single asset.',                           mult: 1.07,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 100) },
   { id: 'tokyo_tourist', icon: '&#127884;', name: 'Tokyo Tourist',        desc: 'Own at least 1 of every Tokyo asset.',                             mult: 1.08,  check: () => ASSETS.filter(a => a.market === 'tokyo').every(a => (state.assets[a.id]?.owned || 0) >= 1) },
@@ -1616,6 +1616,7 @@ let state = {
   dailyStreak: 0,       // consecutive days claimed (resets if >36hr gap)
   influenceShopOwned: {},   // id -> true (permanent shop purchases)
   megaTicketsOwned: {},     // id -> true (per-asset gold-bought mega tickets)
+  influenceSpent: 0,        // lifetime total spent in Influence Shop — never resets, used by prestigeGain()
   hftPerksOwned: {},        // id -> true (HFT speed perk purchases)
   totalIPOs: 0,             // lifetime IPO count — never resets
   highLeverageUsed: false,  // true after first 10x+ leverage activation (for Leverage King achievement)
@@ -2197,6 +2198,7 @@ function buyInfluenceShop(id) {
   if (!item) return;
   if (state.influence < item.cost) { toast('Not enough Influence.'); return; }
   state.influence -= item.cost;
+  state.influenceSpent = (state.influenceSpent || 0) + item.cost; // track lifetime spend so prestigeGain() stays accurate
   if (!state.influenceShopOwned) state.influenceShopOwned = {};
   state.influenceShopOwned[id] = true;
   toast('Acquired: ' + item.name);
@@ -3196,6 +3198,7 @@ function save() {
       dailyStreak: state.dailyStreak || 0,
       influenceShopOwned: state.influenceShopOwned || {},
       megaTicketsOwned: state.megaTicketsOwned || {},
+      influenceSpent: state.influenceSpent || 0,
       blackSwansExperienced: state.blackSwansExperienced || 0,
       blackSwanBonus: state.blackSwanBonus || 1,
       manualTrades: state.manualTrades || 0,
@@ -3241,6 +3244,7 @@ function load() {
     state.dailyStreak = data.dailyStreak || 0;
     state.influenceShopOwned = data.influenceShopOwned || {};
     state.megaTicketsOwned = data.megaTicketsOwned || {};
+    state.influenceSpent = data.influenceSpent || 0;
     state.blackSwansExperienced = data.blackSwansExperienced || 0;
     state.blackSwanBonus = data.blackSwanBonus || 1;
     state.manualTrades = data.manualTrades || 0;
@@ -3267,16 +3271,33 @@ function load() {
         }
       });
     }
-    // Offline earnings (capped at 4 hours, half rate)
+    // Offline earnings (capped at 4 hours, half rate) — computed per-market so both Wall St and Tokyo earn
     if (data.lastSavedAt) {
       const offlineSec = Math.min((Date.now() - data.lastSavedAt) / 1000, 4 * 3600);
       if (offlineSec > 30) {
-        const rate = totalIncomePerSec() * 0.5;
-        const offlineGain = rate * offlineSec;
-        if (offlineGain > 0) {
-          state.cash += offlineGain;
-          state.lifetimeEarnings += offlineGain;
-          setTimeout(() => toast('Offline earnings: ' + fmt(offlineGain)), 700);
+        let wallstRate = 0, tokyoRate = 0;
+        ASSETS.forEach(a => {
+          const s = state.assets[a.id];
+          if (!s || !s.hired || s.owned === 0) return;
+          const rate = payoutOf(a) / timeOf(a);
+          if ((a.market || 'wallst') === 'tokyo') tokyoRate += rate;
+          else wallstRate += rate;
+        });
+        const cashGain = wallstRate * 0.5 * offlineSec;
+        const yenGain  = tokyoRate  * 0.5 * offlineSec;
+        if (cashGain > 0) {
+          state.cash += cashGain;
+          state.lifetimeEarnings += cashGain;
+        }
+        if (yenGain > 0) {
+          state.yen = (state.yen || 0) + yenGain;
+          state.lifetimeYen = (state.lifetimeYen || 0) + yenGain;
+        }
+        if (cashGain > 0 || yenGain > 0) {
+          const parts = [];
+          if (cashGain > 0) parts.push(fmt(cashGain));
+          if (yenGain  > 0) parts.push('¥' + fmt(yenGain));
+          setTimeout(() => toast('Offline earnings: ' + parts.join(' + ')), 700);
         }
       }
     }
