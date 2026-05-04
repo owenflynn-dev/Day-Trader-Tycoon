@@ -784,6 +784,16 @@
     background: linear-gradient(180deg, #ff6b5a 0%, #e74c3c 50%, #a83025 100%);
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.25);
   }
+  /* Quantum Execution HFT perk — electric blue progress bars */
+  .income-fill.quantum-bar {
+    background: linear-gradient(180deg, #7be0ff 0%, #1ec8ff 45%, #0090d4 100%);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -2px 0 rgba(0,0,0,0.2), 0 0 6px rgba(30,200,255,0.5);
+    animation: quantum-pulse 1.1s ease-in-out infinite alternate;
+  }
+  @keyframes quantum-pulse {
+    from { box-shadow: inset 0 2px 0 rgba(255,255,255,0.35), 0 0 4px rgba(30,200,255,0.4); }
+    to   { box-shadow: inset 0 2px 0 rgba(255,255,255,0.5), 0 0 12px rgba(30,200,255,0.8); }
+  }
   .income-label {
     position: relative;
     z-index: 2;
@@ -1197,11 +1207,14 @@
         <div class="panel-title">Premium Perks</div>
         <div class="panel-sub">Firm-wide multipliers. Permanent. Not lost on IPO.</div>
         <div id="perksList"></div>
+        <div class="panel-title" style="margin-top:8px;">HFT Speed</div>
+        <div class="panel-sub">Gold-cost. Permanently reduce <b>all</b> cycle times. Stack multiplicatively. Quantum turns bars electric blue.</div>
+        <div id="hftPerksList"></div>
         <div class="panel-title" style="margin-top:8px;">Lifestyle</div>
         <div class="panel-sub">Big-ticket purchases for the Wall Street lifestyle. Cost cash <i>and</i> <span style="color:var(--gold);">gold</span>. Permanent multipliers.</div>
         <div id="lifestyleList"></div>
         <div class="panel-title" style="margin-top:8px;">Mega Tickets</div>
-        <div class="panel-sub">One-time per asset. Permanent <b>+7.77x</b> multiplier on that asset. Choose wisely.</div>
+        <div class="panel-sub">One-time per asset. Permanent <b>+5x</b> payout AND <b>Instant Reset</b> — hired assets loop non-stop with no pause. Choose wisely.</div>
         <div id="megaTicketsList"></div>
         <div class="panel-title" style="margin-top:8px;">Time Warps</div>
         <div class="panel-sub">Consumable. Instantly grants cash equal to your passive income times the warp duration.</div>
@@ -1365,6 +1378,15 @@ const BOOSTS = [
   { id: 'congressBuddy',  name: 'Congressional Buddy',   desc: 'All payouts +70%',          mult: 1.70,  cost: 25000000000,  icon: '&#127963;' },
 ];
 
+// HFT Speed Perks — gold-cost, permanent cycle time reductions. Stack multiplicatively.
+// Each reduces ALL asset cycle times. Stacks with milestone speed, Quant manager, lifestyle speed, etc.
+const HFT_PERKS = [
+  { id: 'fiber_link',  name: 'Fiber Optic Uplink', icon: '&#128421;', goldCost: 50,   speedMult: 0.90, desc: '-10% all cycle times. You are faster than the retail crowd.' },
+  { id: 'microwave',   name: 'Microwave Relay',    icon: '&#128225;', goldCost: 150,  speedMult: 0.80, desc: '-20% all cycle times. Signal bounced off the building across the street.' },
+  { id: 'colocation',  name: 'Server Co-location', icon: '&#128442;', goldCost: 400,  speedMult: 0.75, desc: '-25% all cycle times. Your racks live inside the exchange itself.' },
+  { id: 'quantum',     name: 'Quantum Execution',  icon: '&#9889;',   goldCost: 1000, speedMult: 0.60, desc: '-40% all cycle times. Progress bars pulse electric blue. Unreal.' },
+];
+
 // Manager personalities — flavor text per asset.
 const MANAGER_BIOS = {
   pnny: { name: 'Chad Pennywise',  role: 'Penny Desk Trader',     bio: '"Eats only ramen. Will trade anything for a 1% commission."' },
@@ -1400,6 +1422,12 @@ const UNLOCKS = [
   { id: 'ipo_day',       icon: '&#128276;', name: 'IPO Day',             desc: 'Take your firm public for the first time.',                       mult: 1.10,  check: () => (state.influence || 0) >= 1 },
   { id: 'speed_demon',   icon: '&#9889;',   name: 'Pedal to the Metal',  desc: 'Hit the 200-position speed milestone on any asset.',              mult: 1.05,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 200) },
   { id: 'staffed_up',    icon: '&#128188;', name: 'Fully Staffed',       desc: 'Hire all 6 traders.',                                             mult: 1.20,  check: () => ASSETS.every(a => state.assets[a.id]?.hired) },
+  // Mid-game chain — plugs the hour 3-5 engagement gap
+  { id: 'century_club',  icon: '&#128176;', name: 'Century Club',         desc: 'Own 100 positions on any single asset.',                           mult: 1.07,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 100) },
+  { id: 'tokyo_tourist', icon: '&#127884;', name: 'Tokyo Tourist',        desc: 'Own at least 1 of every Tokyo asset.',                             mult: 1.08,  check: () => ASSETS.filter(a => a.market === 'tokyo').every(a => (state.assets[a.id]?.owned || 0) >= 1) },
+  { id: 'leverage_king', icon: '&#128640;', name: 'Leverage King',        desc: 'Activate a 10x or higher leverage.',                               mult: 1.06,  check: () => !!(state.highLeverageUsed) },
+  { id: 'ipo_veteran',   icon: '&#127974;', name: 'IPO Veteran',          desc: 'Take your firm public 3 times.',                                   mult: 1.10,  check: () => (state.totalIPOs || 0) >= 3 },
+  { id: 'hft_ready',     icon: '&#9889;',   name: 'HFT Ready',            desc: 'Purchase any HFT Speed Perk.',                                     mult: 1.05,  check: () => Object.keys(state.hftPerksOwned || {}).length >= 1 },
 ];
 const NEWS_MAX = 30;
 
@@ -1424,6 +1452,14 @@ const QUESTS = [
   { id: 'q_time_lord',     icon: '&#9203;',   name: 'Time Lord',           desc: 'Use 3 Time Warps.',                      target: () => 3,   progress: () => state.timeWarpsUsed || 0,                                                      reward: 30 },
   { id: 'q_influencer',    icon: '&#128276;', name: 'Influencer',          desc: 'Own 2+ Influence Shop items.',           target: () => 2,   progress: () => Object.keys(state.influenceShopOwned || {}).length,                            reward: 100 },
   { id: 'q_survivor',      icon: '&#129505;', name: 'Survivor',            desc: 'Survive a Black Swan event.',            target: () => 1,   progress: () => state.blackSwansExperienced || 0,                                              reward: 200 },
+
+  // Mid-game quests — targeted at the hour 3-5 dead zone
+  { id: 'q_power_trader',  icon: '&#128200;', name: 'Power Trader',        desc: 'Own 50+ positions on any single asset.',  target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),                reward: 20 },
+  { id: 'q_diversify_more',icon: '&#128202;', name: 'Going Wide',          desc: 'Own 10+ positions on 5 different assets.',target: () => 5,   progress: () => ASSETS.filter(a => (state.assets[a.id]?.owned || 0) >= 10).length,              reward: 25 },
+  { id: 'q_yen_millionaire',icon: '&#165;',   name: 'Yen Millionaire',     desc: 'Earn ¥1,000,000 lifetime on Tokyo Floor.',target: () => 1e6, progress: () => state.lifetimeYen || 0,                                                        reward: 40 },
+  { id: 'q_mega_holder',   icon: '&#127929;', name: 'Mega Ticket Holder',  desc: 'Purchase any Mega Ticket.',               target: () => 1,   progress: () => Object.keys(state.megaTicketsOwned || {}).length,                              reward: 30 },
+  { id: 'q_speed_freak',   icon: '&#128421;', name: 'Speed Freak',         desc: 'Purchase any HFT Speed Perk.',            target: () => 1,   progress: () => Object.keys(state.hftPerksOwned || {}).length,                                 reward: 35 },
+  { id: 'q_leverage_rush', icon: '&#128640;', name: 'Leverage Rush',       desc: 'Activate a 5x or higher leverage.',       target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 5 ? 1 : 0,                                      reward: 25 },
 
   // Tokyo-specific quests
   { id: 'q_neo_tokyo',     icon: '&#127884;', name: 'Neo-Tokyo Resident',  desc: 'Own 100 $ANIME positions.',              target: () => 100, progress: () => state.assets.t_anime?.owned || 0,                                              reward: 30 },
@@ -1467,20 +1503,25 @@ const PREMIUM_MANAGERS = [
     mult: 1.15 },
 ];
 
-// Lifestyle upgrades — cash + gold. Permanent multipliers.
+// Lifestyle upgrades — cash + gold. Permanent multipliers + speed bonuses.
+// speedMult: reduces all cycle times (stacks with HFT perks, milestones, manager bonuses).
 const LIFESTYLE = [
   { id: 'penthouse',   name: 'Penthouse Apartment',  icon: '&#127961;', cashCost: 1e8,  goldCost: 25,
-    desc: 'Skyline views and private elevator. +25% all payouts forever.', mult: 1.25 },
+    desc: 'Skyline views and private elevator. +25% all payouts, -10% all cycle times.', mult: 1.25, speedMult: 0.90 },
   { id: 'yacht',       name: 'The Yacht',            icon: '&#128674;', cashCost: 1e9,  goldCost: 75,
-    desc: '47 meters of teak deck and contempt. +50% all payouts forever.', mult: 1.50 },
+    desc: '47 meters of teak deck and contempt. +50% all payouts, -15% all cycle times.', mult: 1.50, speedMult: 0.85 },
   { id: 'jet',         name: 'Private Jet',          icon: '&#128747;', cashCost: 1e10, goldCost: 150,
-    desc: 'No more middle seats, ever. +75% all payouts forever.', mult: 1.75 },
+    desc: 'No more middle seats, ever. +75% all payouts, -20% all cycle times.', mult: 1.75, speedMult: 0.80 },
   { id: 'art',         name: 'Modern Art Collection',icon: '&#127912;', cashCost: 1e11, goldCost: 250,
     desc: 'Tax-deductible scribbles by long-dead Europeans. +100% all payouts forever.', mult: 2.00 },
   { id: 'island',      name: 'Private Island',       icon: '&#127965;', cashCost: 1e12, goldCost: 500,
     desc: 'Your own zip code in international waters. +150% all payouts forever.', mult: 2.50 },
   { id: 'nfl_team',    name: 'NFL Franchise',        icon: '&#127944;', cashCost: 1e14, goldCost: 1000,
-    desc: 'You sit in the owner\'s box now. The league hates you. +250% all payouts forever.', mult: 3.50 },
+    desc: 'You sit in the owner\'s box now. The league hates you. +250% all payouts, -0.2s all cycle floors.', mult: 3.50 },
+  { id: 'moon_colony', name: 'Moon Colony',          icon: '&#127769;', cashCost: 1e15, goldCost: 2500,
+    desc: 'Low orbit, low taxes. +400% all payouts forever. Tax residency: space.', mult: 5.00 },
+  { id: 'fed_chair',   name: 'Federal Reserve Chair',icon: '&#127970;', cashCost: 1e18, goldCost: 5000,
+    desc: 'You ARE the printer now. +800% all payouts forever. Jerome who?', mult: 9.00 },
 ];
 
 // Influence Shop — spend Influence (prestige currency) on permanent upgrades.
@@ -1507,8 +1548,9 @@ const INFLUENCE_SHOP = [
     synergy: { sourceId: 'all', threshold: 25, bonusPct: 0.005 } },
 ];
 
-// Mega Tickets — once per asset, gold cost. Permanent x7.77 multiplier on that asset.
-const MEGA_TICKET_MULT = 7.77;
+// Mega Tickets — once per asset, gold cost. +5x payout AND instant reset (bar never pauses).
+// Hired mega-ticket assets loop continuously with no idle pause between cycles.
+const MEGA_TICKET_MULT = 5;
 const MEGA_TICKET_COSTS_WALLST = [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200];
 const MEGA_TICKET_COSTS_TOKYO  = [100, 200, 400, 800, 1600, 3200];
 const MEGA_TICKETS = [
@@ -1574,6 +1616,10 @@ let state = {
   dailyStreak: 0,       // consecutive days claimed (resets if >36hr gap)
   influenceShopOwned: {},   // id -> true (permanent shop purchases)
   megaTicketsOwned: {},     // id -> true (per-asset gold-bought mega tickets)
+  hftPerksOwned: {},        // id -> true (HFT speed perk purchases)
+  totalIPOs: 0,             // lifetime IPO count — never resets
+  highLeverageUsed: false,  // true after first 10x+ leverage activation (for Leverage King achievement)
+  maxLeverageUsed: 0,       // highest leverage multiplier ever activated (for quest tracking)
   blackSwansExperienced: 0, // lifetime — capped at MAX_BLACK_SWANS
   blackSwanBonus: 1,        // permanent multiplier from surviving black swans
   manualTrades: 0,          // count of manual click trades only
@@ -1722,6 +1768,12 @@ function timeOf(asset) {
   let t = asset.baseTime / Math.pow(2, milestoneSpeed + legacySpeed);
   if (state.premiumOwned?.quant) t *= 0.90; // The Quant: 10% faster auto-trades (all markets)
   if (asset.market === 'tokyo' && state.premiumOwned?.sensei) t *= 0.90; // The Sensei: 10% faster Tokyo
+  // HFT Speed Perks — stacked speed reductions from gold-cost perk purchases
+  HFT_PERKS.forEach(p => { if (state.hftPerksOwned?.[p.id]) t *= p.speedMult; });
+  // Lifestyle speed bonuses — permanent cycle time reductions
+  LIFESTYLE.forEach(l => { if (state.lifestyleOwned?.[l.id] && l.speedMult) t *= l.speedMult; });
+  // NFL Franchise global speed floor: every asset cycle is at least 0.2s faster
+  if (state.lifestyleOwned?.nfl_team) t = Math.max(t - 0.2, 0.05);
   // Market Pump: active window gives 5× speed on the targeted asset
   if (state.activePump?.assetId === asset.id && Date.now() < state.activePump.until) t /= 5;
   return t;
@@ -1920,10 +1972,13 @@ function maybeFireEvent() {
   const sinceLast = (Date.now() - state.lastEventAt) / 1000;
   // Don't fire events until player has unlocked at least asset 2
   if (state.assets[ASSETS[1].id].owned === 0) return;
-  // Senate Connections: events fire ~25% more often (cooldown 33s vs 45s, roll 0.0312 vs 0.025)
+  // Senate Connections: events fire ~25% more often
   const senate = !!state.influenceShopOwned?.senate_connections;
-  const cooldown = senate ? 33 : 45;
-  const rollChance = senate ? 0.0312 : 0.025;
+  // The Kaiju: Tokyo events fire 50% more often (reduces cooldown + boosts roll chance)
+  const kaiju = !!state.premiumOwned?.kaiju;
+  let cooldown = senate ? 33 : 45;
+  let rollChance = senate ? 0.0312 : 0.025;
+  if (kaiju) { cooldown = Math.round(cooldown * 0.67); rollChance *= 1.5; }
   if (sinceLast < cooldown) return;
   if (Math.random() < rollChance) {
     fireEvent();
@@ -2197,6 +2252,9 @@ function activateLeverage(id) {
     until: Date.now() + t.minutes * 60 * 1000,
     name: t.name,
   };
+  // Track high leverage use for achievements and quests
+  if (t.mult >= 10) state.highLeverageUsed = true;
+  state.maxLeverageUsed = Math.max(state.maxLeverageUsed || 0, t.mult);
   celebrate(t.name + ' ACTIVE', t.mult + 'x all income for ' + t.minutes + ' minutes');
   addNews('LEVERAGE: ' + t.name, t.mult + 'x income for ' + t.minutes + ' min', 'milestone');
   renderCash();
@@ -2244,7 +2302,8 @@ function buyLifestyle(id) {
   state.gold -= l.goldCost;
   state.lifestyleOwned[id] = true;
   toast('Acquired: ' + l.name);
-  addNews('LIFESTYLE: ' + l.name, '+' + Math.round((l.mult-1)*100) + '% global mult forever.', 'milestone');
+  const speedNote = l.speedMult ? ' | -' + Math.round((1 - l.speedMult) * 100) + '% cycle times' : '';
+  addNews('LIFESTYLE: ' + l.name, '+' + Math.round((l.mult-1)*100) + '% global mult forever' + speedNote + '.', 'milestone');
   renderCash();
   renderPerksTab();
   save();
@@ -2295,6 +2354,23 @@ function buyBoost(id) {
   save();
 }
 
+function buyHFTPerk(id) {
+  const p = HFT_PERKS.find(x => x.id === id);
+  if (!p) return;
+  if (state.hftPerksOwned?.[p.id]) return;
+  if ((state.gold || 0) < p.goldCost) { toast('Not enough gold.'); return; }
+  state.gold -= p.goldCost;
+  if (!state.hftPerksOwned) state.hftPerksOwned = {};
+  state.hftPerksOwned[p.id] = true;
+  toast(p.name + ' activated!');
+  addNews('HFT: ' + p.name, p.desc, 'milestone');
+  if (p.id === 'quantum') celebrate('QUANTUM EXECUTION', 'All bars pulse electric blue. Speed ×0.6.');
+  renderCash();
+  renderPerksTab();
+  renderAll();
+  save();
+}
+
 function doPrestige() {
   const gain = prestigeGain();
   if (gain === 0) { toast('You need more lifetime earnings.'); return; }
@@ -2304,6 +2380,7 @@ function doPrestige() {
   state.activeEvent = null;
   state.lastEventAt = Date.now();
   state.whistleblowerUsedThisRun = false; // refresh ability per run
+  state.totalIPOs = (state.totalIPOs || 0) + 1; // lifetime IPO counter for achievements
   ASSETS.forEach(a => {
     state.assets[a.id] = { owned: 0, progress: 0, hired: false, speedLevel: 0, payoutLevel: 0 };
   });
@@ -2348,7 +2425,8 @@ function tick() {
         const gain = payoutOf(a) * cycles;
         earnMoney(a, gain);
         state.totalTrades += cycles;
-        s.progress -= cycles;
+        // Mega Ticket Instant Reset: bar resets to 0 with no carry-over pause
+        s.progress = state.megaTicketsOwned?.['mt_' + a.id] ? 0 : s.progress - cycles;
         spawnFloatForAsset(a.id, gain, currencyOf(a)); // 💰 visual feedback on auto-payout
       } else {
         s.progress = 1; // wait for click
@@ -2571,6 +2649,13 @@ function renderProgressBars() {
     fill.style.width = (Math.min(1, s.progress) * 100) + '%';
     fill.classList.toggle('boosted', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && !state.activeEvent.bad));
     fill.classList.toggle('crashed', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && state.activeEvent.bad));
+    // Quantum Execution perk: electric blue bars (overridden by boosted/crashed event states)
+    const hasQuantum = !!(state.hftPerksOwned?.quantum);
+    if (hasQuantum && !fill.classList.contains('boosted') && !fill.classList.contains('crashed')) {
+      fill.classList.add('quantum-bar');
+    } else {
+      fill.classList.remove('quantum-bar');
+    }
     // Cycle timer badge
     const timerEl = document.getElementById('timer-' + a.id);
     if (timerEl) {
@@ -2789,6 +2874,29 @@ function renderPerksTab() {
     root.innerHTML = html;
   }
 
+  // HFT Speed Perks (gold-cost speed reductions)
+  const hftroot = document.getElementById('hftPerksList');
+  if (hftroot) {
+    let html = '';
+    HFT_PERKS.forEach(p => {
+      const owned = !!(state.hftPerksOwned?.[p.id]);
+      const can = (state.gold || 0) >= p.goldCost;
+      const pct = Math.round((1 - p.speedMult) * 100);
+      html += `
+        <div class="perk-card${owned ? ' owned' : ''}">
+          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--blue), var(--blue-dark));'}">${p.icon}</div>
+          <div>
+            <div class="perk-name">${p.name}</div>
+            <div class="perk-desc">-${pct}% all cycle times &middot; permanent</div>
+          </div>
+          <button class="buy-btn gold-btn" ${owned || !can ? 'disabled' : ''} onclick="buyHFTPerk('${p.id}')">
+            ${owned ? '<span class="price">OWNED</span>' : '<span class="label">BUY</span><span class="price">' + p.goldCost + '&#129689;</span>'}
+          </button>
+        </div>`;
+    });
+    hftroot.innerHTML = html;
+  }
+
   // Lifestyle upgrades
   const lroot = document.getElementById('lifestyleList');
   if (lroot) {
@@ -2838,7 +2946,7 @@ function renderPerksTab() {
           <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--gold), #6a4f0a);'}">${asset.icon}</div>
           <div>
             <div class="perk-name">${t.ticker} Mega Ticket</div>
-            <div class="perk-desc">+${MEGA_TICKET_MULT}x ${t.ticker} payouts &middot; permanent &middot; one-time</div>
+            <div class="perk-desc">+${MEGA_TICKET_MULT}x ${t.ticker} payouts + Instant Reset &middot; permanent &middot; one-time</div>
           </div>
           ${owned
             ? `<button class="buy-btn" disabled><span class="price">USED</span></button>`
@@ -3100,6 +3208,10 @@ function save() {
       newsLog: state.newsLog || [],
       activeTab: state.activeTab || 'home',
       rugPullsExperienced: state.rugPullsExperienced || 0,
+      hftPerksOwned: state.hftPerksOwned || {},
+      totalIPOs: state.totalIPOs || 0,
+      highLeverageUsed: !!state.highLeverageUsed,
+      maxLeverageUsed: state.maxLeverageUsed || 0,
       lastSavedAt: Date.now(),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(out));
@@ -3141,6 +3253,10 @@ function load() {
     state.newsLog = data.newsLog || [];
     state.activeTab = data.activeTab || 'home';
     state.rugPullsExperienced = data.rugPullsExperienced || 0;
+    state.hftPerksOwned = data.hftPerksOwned || {};
+    state.totalIPOs = data.totalIPOs || 0;
+    state.highLeverageUsed = !!data.highLeverageUsed;
+    state.maxLeverageUsed = data.maxLeverageUsed || 0;
     if (data.assets) {
       ASSETS.forEach(a => {
         if (data.assets[a.id]) {
