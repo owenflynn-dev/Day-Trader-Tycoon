@@ -540,27 +540,35 @@
     position: relative;
     overflow: hidden;
   }
+  .pit-header-row { display:flex; justify-content:space-between; align-items:center; padding:4px 2px 8px; }
+  .pit-combo-badge { background:linear-gradient(90deg,#ff6b00,#ffd700); border-radius:12px; padding:3px 10px; font-size:12px; font-weight:bold; color:#000; letter-spacing:0.05em; animation:comboPulse 0.4s ease infinite alternate; }
+  @keyframes comboPulse { from { transform:scale(1); } to { transform:scale(1.08); box-shadow:0 0 10px #ffd700; } }
   .pit-progress-bar { height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; margin: 8px 0; overflow: hidden; }
   .pit-progress-fill { height: 100%; background: linear-gradient(90deg, #e07c00, #ffd700); border-radius: 6px; transition: width 0.3s; }
   .pit-order {
     display: inline-flex; align-items: center; gap: 6px;
-    background: linear-gradient(180deg, #7a4a00, #4a2c00);
-    border: 2px solid #e07c00;
     border-radius: 8px;
     padding: 10px 14px;
     margin: 5px;
     cursor: pointer;
     font-size: 15px; font-weight: bold;
     color: #fff;
-    transition: transform 0.1s, background 0.1s;
-    box-shadow: 0 3px 0 #3a2000;
+    transition: transform 0.1s;
     user-select: none;
     animation: pitOrderIn 0.2s ease;
+    position: relative;
   }
   .pit-order:active { transform: scale(0.94); }
+  .pit-order.urgent { animation: pitOrderIn 0.2s ease, urgentPulse 0.4s ease infinite alternate !important; }
+  .pit-order.hot { border-width: 3px !important; animation: pitOrderIn 0.2s ease, hotPulse 0.5s ease infinite alternate !important; }
   @keyframes pitOrderIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes urgentPulse { from { opacity:1; } to { opacity:0.6; box-shadow:0 0 8px #ff2222; } }
+  @keyframes hotPulse { from { box-shadow:0 0 8px #ffd700; } to { box-shadow:0 0 20px #ffd700, 0 0 40px #ffaa00; } }
   .pit-order .order-pts { font-size: 11px; color: #ffd700; }
-  .pit-order .order-timer { font-size: 10px; color: rgba(255,255,255,0.6); }
+  .pit-order .order-timer { font-size: 10px; }
+  .pit-order .order-timer.urgent { color:#ff4444; font-weight:bold; }
+  .pit-order .order-timer.normal { color:rgba(255,255,255,0.6); }
+  .pit-hot-label { position:absolute; top:-8px; right:-4px; background:#ffd700; color:#000; font-size:9px; font-weight:bold; border-radius:4px; padding:1px 4px; }
 
   /* Options */
   .options-contract-panel {
@@ -572,6 +580,9 @@
     text-align: center;
   }
   .options-lever-display { font-size: 48px; font-weight: bold; color: #4af; line-height: 1.1; }
+  .options-lever-display.itm  { color: #2ecc71; animation: itmGlow 0.6s ease infinite alternate; }
+  .options-lever-display.otm  { color: #e74c3c; }
+  @keyframes itmGlow { from { text-shadow:0 0 10px #2ecc71; } to { text-shadow:0 0 30px #2ecc71, 0 0 60px #2ecc71; } }
   .options-click-btn {
     width: 100%; padding: 18px; font-size: 18px; font-weight: bold;
     background: linear-gradient(180deg, #1a6a9a, #0a3a5a);
@@ -582,8 +593,24 @@
     margin-top: 10px;
   }
   .options-click-btn:active { transform: scale(0.96); }
+  .options-click-btn.urgent { animation: optionUrgent 0.25s ease infinite alternate; }
+  @keyframes optionUrgent { from { background:linear-gradient(180deg,#1a6a9a,#0a3a5a); } to { background:linear-gradient(180deg,#9a1a1a,#5a0a0a); border-color:#f44; } }
   .options-progress { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 8px 0; overflow: hidden; }
   .options-progress-fill { height: 100%; background: linear-gradient(90deg, #1a6a9a, #4af); transition: width 0.1s; }
+  .options-sentiment { height: 12px; background: rgba(255,255,255,0.08); border-radius: 6px; margin: 8px 0; overflow: hidden; position: relative; }
+  .options-sentiment-fill { height: 100%; border-radius: 6px; transition: width 0.15s ease; }
+  .options-direction-row { display:flex; gap:8px; margin:10px 0; }
+  .options-call-btn, .options-put-btn {
+    flex:1; padding:14px 8px; font-size:16px; font-weight:bold;
+    border-radius:10px; border:2px solid; cursor:pointer; letter-spacing:0.04em;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .options-call-btn { background:linear-gradient(180deg,#0a4a1a,#061510); border-color:#2ecc71; color:#2ecc71; box-shadow:0 3px 0 #021008; }
+  .options-put-btn  { background:linear-gradient(180deg,#4a0a0a,#150606); border-color:#e74c3c; color:#e74c3c; box-shadow:0 3px 0 #100202; }
+  .options-call-btn:active, .options-put-btn:active { transform:scale(0.95); }
+  .options-result-panel { border-radius:10px; padding:18px; margin:8px 6px; text-align:center; }
+  .options-result-panel.itm { background:linear-gradient(180deg,#0a3a1a,#051510); border:2px solid #2ecc71; }
+  .options-result-panel.otm { background:linear-gradient(180deg,#2a0a0a,#150505); border:2px solid #e74c3c; }
 
   /* Rivals */
   .rival-card {
@@ -1592,7 +1619,7 @@ const UNLOCKS = [
   { id: 'first_hire',    icon: '&#128104;&#8205;&#128188;', name: 'Delegated',  desc: 'Hire your first trader.',                                            mult: 1.01,  check: () => Object.values(state.assets).some(a => a.hired) },
   { id: 'penny_pincher', icon: '&#128181;', name: 'Penny Pincher',       desc: 'Own 50 Penny Stock positions.',                                   mult: 1.05,  check: () => (state.assets.pnny?.owned || 0) >= 50 },
   { id: 'meme_lord',     icon: '&#128640;', name: 'Meme Lord',           desc: 'Own 25 Meme Coin positions.',                                     mult: 1.05,  check: () => (state.assets.meme?.owned || 0) >= 25 },
-  { id: 'diversified',   icon: '&#128202;', name: 'Diversified',         desc: 'Own at least 1 of every asset.',                                  mult: 1.10,  check: () => ASSETS.every(a => (state.assets[a.id]?.owned || 0) >= 1) },
+  { id: 'diversified',   icon: '&#128202;', name: 'Diversified',         desc: 'Own at least 1 of every unlocked asset.',                         mult: 1.10,  check: () => ASSETS.filter(a => a.market !== 'london' || state.londonUnlocked).every(a => (state.assets[a.id]?.owned || 0) >= 1) },
   { id: 'first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1M lifetime (this run or any).',                            mult: 1.05,  check: () => (state.allTimeEarnings || 0) >= 1e6 },
   { id: 'wolf_st',       icon: '&#128054;', name: 'Wolf of Wall St',     desc: 'Earn $1B lifetime.',                                              mult: 1.10,  check: () => (state.allTimeEarnings || 0) >= 1e9 },
   { id: 'diamond_hands', icon: '&#128142;', name: 'Diamond Hands',       desc: 'Survive a meme coin rug pull.',                                   mult: 1.15,  check: () => (state.rugPullsExperienced || 0) >= 1 },
@@ -1613,7 +1640,7 @@ const NEWS_MAX = 30;
 const QUESTS = [
   { id: 'q_first_steps',   icon: '&#128181;', name: 'First Steps',         desc: 'Execute 10 trades.',                    target: () => 10,  progress: () => state.totalTrades || 0,                                                       reward: 5 },
   { id: 'q_buying_in',     icon: '&#128722;', name: 'Buying In',           desc: 'Own 25 positions across all assets.',   target: () => 25,  progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),             reward: 10 },
-  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every asset.',               target: () => ASSETS.length, progress: () => ASSETS.filter(a => (state.assets[a.id]?.owned || 0) >= 1).length,        reward: 25 },
+  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every unlocked asset.',      target: () => ASSETS.filter(a => a.market !== 'london' || state.londonUnlocked).length, progress: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 25 },
   { id: 'q_crypto_curious',icon: '&#127852;', name: 'Crypto Curious',      desc: 'Own 5 Candy Crypto positions.',         target: () => 5,   progress: () => state.assets.dogz?.owned || 0,                                                reward: 10 },
   { id: 'q_first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1,000,000 lifetime.',             target: () => 1e6, progress: () => state.allTimeEarnings || 0,                                                   reward: 25 },
   { id: 'q_hedge_mgr',     icon: '&#128188;', name: 'Hedge Fund Manager',  desc: 'Hire 4 traders.',                       target: () => 4,   progress: () => Object.values(state.assets).filter(a => a.hired).length,                      reward: 25 },
@@ -1633,7 +1660,7 @@ const QUESTS = [
 
   // Mid-game quests — targeted at the hour 3-5 dead zone
   { id: 'q_power_trader',  icon: '&#128200;', name: 'Power Trader',        desc: 'Own 50+ positions on any single asset.',  target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),                reward: 20 },
-  { id: 'q_diversify_more',icon: '&#128202;', name: 'Going Wide',          desc: 'Own 10+ positions on 5 different assets.',target: () => 5,   progress: () => ASSETS.filter(a => (state.assets[a.id]?.owned || 0) >= 10).length,              reward: 25 },
+  { id: 'q_diversify_more',icon: '&#128202;', name: 'Going Wide',          desc: 'Own 10+ positions on 5 different assets.',target: () => 5,   progress: () => ASSETS.filter(a => a.market !== 'london' && (state.assets[a.id]?.owned || 0) >= 10).length, reward: 25 },
   { id: 'q_yen_millionaire',icon: '&#165;',   name: 'Yen Millionaire',     desc: 'Earn ¥1,000,000 lifetime on Tokyo Floor.',target: () => 1e6, progress: () => state.lifetimeYen || 0,                                                        reward: 40 },
   { id: 'q_mega_holder',   icon: '&#127929;', name: 'Mega Ticket Holder',  desc: 'Purchase any Mega Ticket.',               target: () => 1,   progress: () => Object.keys(state.megaTicketsOwned || {}).length,                              reward: 30 },
   { id: 'q_speed_freak',   icon: '&#128421;', name: 'Speed Freak',         desc: 'Purchase any HFT Speed Perk.',            target: () => 1,   progress: () => Object.keys(state.hftPerksOwned || {}).length,                                 reward: 35 },
@@ -2881,32 +2908,42 @@ function buyHFTPerk(id) {
 
 // ============ CHICAGO OPEN OUTCRY PIT ============
 const PIT_COMMODITIES = [
-  { id: 'oil',  label: '🛢 OIL',   value: 15, color: '#8a4a00' },
-  { id: 'corn', label: '🌽 CORN',  value: 8,  color: '#7a7a00' },
-  { id: 'gold', label: '🥇 GOLD',  value: 25, color: '#9a7a00' },
-  { id: 'hog',  label: '🐷 PORK',  value: 10, color: '#8a3a3a' },
-  { id: 'wheat',label: '🌾 WHEAT', value: 12, color: '#6a6a00' },
+  { id: 'oil',  label: '🛢 OIL',   value: 15, bg: 'linear-gradient(180deg,#7a3500,#4a1e00)', border: '#e07030' },
+  { id: 'corn', label: '🌽 CORN',  value: 8,  bg: 'linear-gradient(180deg,#4a6a00,#2a3e00)', border: '#a8d050' },
+  { id: 'gold', label: '🥇 GOLD',  value: 25, bg: 'linear-gradient(180deg,#7a6000,#4a3800)', border: '#ffd700' },
+  { id: 'hog',  label: '🐷 PORK',  value: 10, bg: 'linear-gradient(180deg,#6a1a3a,#3e0a22)', border: '#ff69b4' },
+  { id: 'wheat',label: '🌾 WHEAT', value: 12, bg: 'linear-gradient(180deg,#6a4a00,#3a2800)', border: '#d4a030' },
 ];
 const PIT_UNLOCK_THRESHOLD = 1000;
 let _pitOrderCounter = 0;
+// combo tracking (ephemeral, not saved)
+let _pitComboCount = 0;
+let _pitLastFillAt = 0;
 
 function pitTick() {
   if (state.activeTab !== 'pit') return;
   const now = Date.now();
+  // Reset combo if too long since last fill
+  if (_pitComboCount > 0 && (now - _pitLastFillAt) > 4000) {
+    _pitComboCount = 0;
+  }
   // Expire old orders
   state.pitOrders = (state.pitOrders || []).filter(o => o.expiresAt > now);
   // Spawn new orders (target 3-5 active at once, spawn one every 1.5-3s)
   const spawnInterval = 1500 + Math.random() * 1500;
   if ((now - (state._lastPitSpawn || 0)) > spawnInterval && (state.pitOrders.length || 0) < 5) {
     const c = PIT_COMMODITIES[Math.floor(Math.random() * PIT_COMMODITIES.length)];
-    const bonusMult = state.londonUnlocked ? 1.5 : 1; // orders worth 50% more after London unlocked
+    const bonusMult = state.londonUnlocked ? 1.5 : 1;
+    const isHot = Math.random() < 0.12; // 12% chance flash order
     state.pitOrders.push({
       id: ++_pitOrderCounter,
       commodity: c.id,
       label: c.label,
-      value: Math.round(c.value * bonusMult * (0.8 + Math.random() * 0.4)),
-      color: c.color,
-      expiresAt: now + 4000 + Math.random() * 2000,
+      value: Math.round(c.value * bonusMult * (isHot ? 3 : 1) * (0.85 + Math.random() * 0.3)),
+      bg: c.bg,
+      border: c.border,
+      hot: isHot,
+      expiresAt: now + (isHot ? 2500 : 4000 + Math.random() * 2000),
     });
     state._lastPitSpawn = now;
     renderPitTab();
@@ -2917,48 +2954,73 @@ function fillPitOrder(orderId) {
   const order = (state.pitOrders || []).find(o => o.id === orderId);
   if (!order) return;
   state.pitOrders = state.pitOrders.filter(o => o.id !== orderId);
-  state.pitCredits = (state.pitCredits || 0) + order.value;
+  const now = Date.now();
+  // Combo tracking
+  const timeSinceLast = now - _pitLastFillAt;
+  if (timeSinceLast < 4000) {
+    _pitComboCount++;
+  } else {
+    _pitComboCount = 1;
+  }
+  _pitLastFillAt = now;
+  // Combo bonus: 3+ streak = +50% credits on this fill
+  const comboMult = _pitComboCount >= 3 ? 1.5 : 1;
+  const earned = Math.round(order.value * comboMult);
+  state.pitCredits = (state.pitCredits || 0) + earned;
   SFX.buy();
   if (state.londonUnlocked) {
-    // Post-unlock: credits convert to £ cash bonus
-    const gbpBonus = order.value * 500;
+    const gbpBonus = earned * 500;
     state.gbp = (state.gbp || 0) + gbpBonus;
     state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpBonus;
   }
   renderPitTab();
-  renderCash(); // in case London balance updated
+  renderCash();
 }
 
 function renderPitTab() {
   const root = document.getElementById('tab-pit');
   if (!root) return;
+  if (!state.tokyoUnlocked) {
+    root.innerHTML = `<div class="panel-title">&#127963; Chicago Open Outcry Pit</div>
+      <div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);">
+        🔒 Unlocks after your first IPO.<br><span style="font-size:0.85em;margin-top:8px;display:block;">Build up Wall Street first, then take the company public.</span>
+      </div>`;
+    return;
+  }
   const credits = state.pitCredits || 0;
   const pct = Math.min(100, (credits / PIT_UNLOCK_THRESHOLD) * 100);
   const unlocked = state.londonUnlocked;
 
+  const comboActive = _pitComboCount >= 3 && (Date.now() - _pitLastFillAt) < 4000;
   let html = `
     <div class="panel-title">&#127963; Chicago Open Outcry Pit</div>
     <div class="panel-sub">Fill commodity orders before they expire. Earn Pit Credits to unlock London.</div>
     <div style="padding: 8px 10px;">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
-        <span>Pit Credits: <b style="color:#ffd700;">${fmtNum(credits)}</b></span>
-        <span style="color:${unlocked?'#2ecc71':'rgba(255,255,255,0.5)'};">${unlocked ? '✅ LONDON UNLOCKED' : PIT_UNLOCK_THRESHOLD + ' needed'}</span>
+      <div class="pit-header-row">
+        <span style="font-size:12px;">Pit Credits: <b style="color:#ffd700;">${fmtNum(credits)}</b></span>
+        ${comboActive ? `<span class="pit-combo-badge">🔥 ${_pitComboCount}x COMBO! +50%</span>` : ''}
+        <span style="font-size:12px;color:${unlocked?'#2ecc71':'rgba(255,255,255,0.5)'};">${unlocked ? '✅ LONDON' : fmtNum(PIT_UNLOCK_THRESHOLD) + ' needed'}</span>
       </div>
       <div class="pit-progress-bar"><div class="pit-progress-fill" style="width:${pct}%;"></div></div>
-      ${unlocked ? '<div style="font-size:11px;color:#2ecc71;text-align:center;margin-bottom:6px;">Orders now earn £500 per Pit Credit — keep filling!</div>' : ''}
+      ${unlocked ? '<div style="font-size:11px;color:#2ecc71;text-align:center;margin-bottom:4px;">Orders now earn £500 per credit — keep filling!</div>' : ''}
     </div>
     <div class="pit-arena" id="pitOrderZone">
       ${(state.pitOrders || []).length === 0 ? '<div style="color:rgba(255,255,255,0.3);text-align:center;padding-top:60px;font-size:13px;">Waiting for orders…</div>' : ''}
       ${(state.pitOrders || []).map(o => {
         const secsLeft = Math.max(0, Math.ceil((o.expiresAt - Date.now()) / 1000));
-        return `<div class="pit-order" onclick="fillPitOrder(${o.id})">
+        const urgent = secsLeft <= 2;
+        const comboBonus = comboActive ? ` <span style="font-size:9px;color:#ffd700;">+50%</span>` : '';
+        const hotLabel = o.hot ? `<span class="pit-hot-label">⚡ FLASH</span>` : '';
+        return `<div class="pit-order${urgent ? ' urgent' : ''}${o.hot ? ' hot' : ''}" onclick="fillPitOrder(${o.id})"
+          style="background:${o.bg || 'linear-gradient(180deg,#7a4a00,#4a2c00)'};border:${o.hot ? '3px' : '2px'} solid ${o.border || '#e07c00'};box-shadow:0 3px 0 rgba(0,0,0,0.5)${o.hot ? ',0 0 12px ' + (o.border||'#ffd700') : ''};">
+          ${hotLabel}
           <span>${o.label}</span>
-          <span class="order-pts">+${o.value} pts</span>
-          <span class="order-timer">${secsLeft}s</span>
+          <span class="order-pts">+${o.value}${comboBonus}</span>
+          <span class="order-timer ${urgent ? 'urgent' : 'normal'}">${secsLeft}s</span>
         </div>`;
       }).join('')}
     </div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;padding:6px;">Tap orders before they expire • Orders refresh automatically</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;padding:6px;">Tap before expiry • ⚡FLASH orders = 3× value, 2.5s only • 🔥 Fill 3 in a row for +50% combo</div>
   `;
   root.innerHTML = html;
 }
@@ -2974,15 +3036,33 @@ function optionsCooldownRemaining() {
   return Math.max(0, Math.ceil((state.optionsCooldownUntil - Date.now()) / 1000));
 }
 
-function launchOptionsContract(assetId) {
+function openOptionsAsset(assetId) {
+  if (!optionsUnlocked()) return;
+  if (optionsCooldownRemaining() > 0) { toast('Options on cooldown — ' + optionsCooldownRemaining() + 's remaining.'); return; }
+  if (state.optionsContract) { toast('Contract already active.'); return; }
+  // Create a pending contract with no direction yet — show CALL/PUT picker
+  state.optionsContract = { assetId, direction: null, clickCount: 0, startedAt: null, endsAt: null, sentiment: 0.5 };
+  renderOptionsTab();
+}
+function pickOptionsDirection(direction) {
+  if (!state.optionsContract || state.optionsContract.direction) return;
+  state.optionsContract.direction = direction;
+  state.optionsContract.startedAt = Date.now();
+  state.optionsContract.endsAt = Date.now() + 45000;
+  SFX.leverage();
+  renderOptionsTab();
+}
+function launchOptionsContract(assetId, direction) {
   if (!optionsUnlocked()) return;
   if (optionsCooldownRemaining() > 0) { toast('Options on cooldown — ' + optionsCooldownRemaining() + 's remaining.'); return; }
   if (state.optionsContract) { toast('Contract already active.'); return; }
   state.optionsContract = {
     assetId,
+    direction, // 'call' or 'put'
     clickCount: 0,
     startedAt: Date.now(),
     endsAt: Date.now() + 45000,
+    sentiment: 0.5,
   };
   SFX.leverage();
   renderOptionsTab();
@@ -2990,8 +3070,13 @@ function launchOptionsContract(assetId) {
 
 function clickOptionsContract() {
   if (!state.optionsContract) return;
+  if (!state.optionsContract.direction) return; // waiting for CALL/PUT pick
   if (Date.now() > state.optionsContract.endsAt) { commitOptionsContract(); return; }
   state.optionsContract.clickCount = Math.min(63, (state.optionsContract.clickCount || 0) + 1);
+  // Jitter sentiment meter
+  state.optionsContract.sentiment = Math.max(0.05, Math.min(0.95,
+    (state.optionsContract.sentiment || 0.5) + (Math.random() - 0.48) * 0.15
+  ));
   SFX.trade(0);
   renderOptionsTab();
 }
@@ -2999,18 +3084,34 @@ function clickOptionsContract() {
 function commitOptionsContract() {
   if (!state.optionsContract) return;
   const c = state.optionsContract;
-  const mult = 1.0 + c.clickCount * 0.1;
+  const baseMult = 1.0 + c.clickCount * 0.1;
+  // Random market outcome: 50/50 up or down
+  const marketWentUp = Math.random() < 0.5;
+  const calledIt = (c.direction === 'call' && marketWentUp) || (c.direction === 'put' && !marketWentUp);
+  const finalMult = calledIt ? baseMult : Math.max(1.0, baseMult * 0.5); // wrong = half leverage
+  const inTheMoney = calledIt && c.clickCount >= 10;
   state.optionsLeverage = {
     assetId: c.assetId,
-    mult,
-    until: Date.now() + 3 * 60 * 1000, // 3 minutes
+    mult: finalMult,
+    until: Date.now() + 3 * 60 * 1000,
+    inTheMoney,
+    calledIt,
+    direction: c.direction,
+    marketWentUp,
   };
-  state.optionsCooldownUntil = Date.now() + 5 * 60 * 1000; // 5-minute cooldown
+  state.optionsCooldownUntil = Date.now() + 5 * 60 * 1000;
   state.optionsContract = null;
   const asset = ASSETS.find(a => a.id === c.assetId);
-  SFX.milestone();
-  celebrate('OPTIONS CONTRACT FILLED', mult.toFixed(1) + 'x on ' + (asset?.ticker || c.assetId) + ' for 3 minutes');
-  addNews('OPTIONS: ' + (asset?.ticker || c.assetId), mult.toFixed(1) + 'x leverage locked in for 3 min.', 'milestone');
+  const ticker = asset?.ticker || c.assetId;
+  if (calledIt) {
+    SFX.milestone();
+    celebrate('📈 IN THE MONEY!', ticker + ' ' + c.direction.toUpperCase() + ' · ' + finalMult.toFixed(1) + 'x leverage for 3 min');
+    addNews('OPTIONS ITM: ' + ticker, c.direction.toUpperCase() + ' expired in the money. ' + finalMult.toFixed(1) + 'x locked.', 'milestone');
+  } else {
+    SFX.marketEvent(true);
+    toast('📉 Out of the money. Market went ' + (marketWentUp ? 'UP' : 'DOWN') + ' — ' + c.direction.toUpperCase() + ' wrong call. ' + finalMult.toFixed(1) + 'x anyway.');
+    addNews('OPTIONS OTM: ' + ticker, c.direction.toUpperCase() + ' expired worthless. Partial ' + finalMult.toFixed(1) + 'x applied.', 'event');
+  }
   renderOptionsTab();
   save();
 }
@@ -3024,15 +3125,15 @@ function renderOptionsTab() {
   const contract = state.optionsContract;
   const activeLev = state.optionsLeverage && Date.now() < state.optionsLeverage.until ? state.optionsLeverage : null;
 
-  // Expire stale contract
-  if (contract && Date.now() > contract.endsAt) {
+  // Expire stale contract (only if direction was picked and time ran out)
+  if (contract && contract.direction && contract.endsAt && Date.now() > contract.endsAt) {
     setTimeout(commitOptionsContract, 0);
     return;
   }
 
   let html = `
     <div class="panel-title">📈 Options Desk</div>
-    <div class="panel-sub">Level up by trading. Build leverage by clicking rapidly during a live contract.</div>
+    <div class="panel-sub">Pick CALL or PUT. Click to build leverage. Market decides if you're right.</div>
     <div style="padding:8px 10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <span style="color:#4af;font-weight:bold;font-size:14px;">Derivatives Level ${level}</span>
@@ -3040,46 +3141,75 @@ function renderOptionsTab() {
       </div>
   `;
   if (!unlocked) {
-    html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">Options unlock at Level 3 (${1500 - (state.totalTrades||0)} more trades)</div>`;
+    html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">🔒 Options unlock at Level 3<br><span style="font-size:11px;">${Math.max(0,1500-(state.totalTrades||0))} more trades</span></div>`;
   } else if (activeLev) {
     const asset = ASSETS.find(a => a.id === activeLev.assetId);
     const secsLeft = Math.ceil((activeLev.until - Date.now()) / 1000);
+    const itm = activeLev.calledIt;
+    const dirLabel = activeLev.direction ? activeLev.direction.toUpperCase() : '';
+    const marketLabel = activeLev.marketWentUp !== undefined ? (activeLev.marketWentUp ? '📈 Market went UP' : '📉 Market went DOWN') : '';
     html += `
-      <div class="options-contract-panel">
-        <div style="color:#2ecc71;font-size:13px;margin-bottom:4px;">ACTIVE LEVERAGE</div>
-        <div class="options-lever-display">${activeLev.mult.toFixed(1)}x</div>
-        <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:4px;">${asset?.ticker || activeLev.assetId} · expires in ${secsLeft}s</div>
+      <div class="options-result-panel ${itm ? 'itm' : 'otm'}">
+        <div style="font-size:18px;font-weight:bold;color:${itm?'#2ecc71':'#e74c3c'};margin-bottom:6px;">${itm ? '📈 IN THE MONEY!' : '📉 OUT OF THE MONEY'}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:8px;">${dirLabel} · ${marketLabel}</div>
+        <div class="options-lever-display ${itm?'itm':'otm'}">${activeLev.mult.toFixed(1)}x</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:8px;">${asset?.ticker || activeLev.assetId} · expires in ${secsLeft}s</div>
+        ${!itm ? '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">Wrong direction — partial leverage applied</div>' : ''}
       </div>
       ${cooldown > 0 ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.4);padding:6px;">Next contract in ${cooldown}s</div>` : ''}
+    `;
+  } else if (contract && !contract.direction) {
+    // Direction picker — asset chosen, now pick CALL or PUT
+    const asset = ASSETS.find(a => a.id === contract.assetId);
+    html += `
+      <div class="options-contract-panel">
+        <div style="color:#ffd700;font-size:13px;margin-bottom:8px;">CONTRACT: ${asset?.ticker || contract.assetId}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Will this asset go UP or DOWN?<br>Pick right = full leverage. Pick wrong = half.</div>
+        <div class="options-direction-row">
+          <button class="options-call-btn" onclick="pickOptionsDirection('call')">📈 CALL<br><span style="font-size:11px;font-weight:normal;">market goes UP</span></button>
+          <button class="options-put-btn"  onclick="pickOptionsDirection('put')">📉 PUT<br><span style="font-size:11px;font-weight:normal;">market goes DOWN</span></button>
+        </div>
+      </div>
     `;
   } else if (contract) {
     const secsLeft = Math.max(0, Math.ceil((contract.endsAt - Date.now()) / 1000));
     const mult = (1.0 + contract.clickCount * 0.1).toFixed(1);
-    const pct = (secsLeft / 45) * 100;
+    const timePct = (secsLeft / 45) * 100;
+    const sentiment = contract.sentiment || 0.5;
+    const sentColor = sentiment > 0.6 ? '#2ecc71' : sentiment < 0.4 ? '#e74c3c' : '#ffd700';
+    const sentLabel = sentiment > 0.65 ? 'BULLISH' : sentiment < 0.35 ? 'BEARISH' : 'NEUTRAL';
+    const dirIcon = contract.direction === 'call' ? '📈' : '📉';
+    const isUrgent = secsLeft <= 10;
     html += `
       <div class="options-contract-panel">
-        <div style="color:#ffd700;font-size:13px;margin-bottom:4px;">LIVE CONTRACT — CLICK FAST</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="color:#ffd700;font-size:13px;">LIVE CONTRACT</span>
+          <span style="font-size:13px;">${dirIcon} ${contract.direction?.toUpperCase()}</span>
+        </div>
         <div class="options-lever-display">${mult}x</div>
-        <div style="color:rgba(255,255,255,0.5);font-size:12px;">${contract.clickCount} clicks · max 63 · ${secsLeft}s left</div>
-        <div class="options-progress"><div class="options-progress-fill" style="width:${pct}%;"></div></div>
-        <button class="options-click-btn" onclick="clickOptionsContract()">⚡ CLICK TO BUILD LEVERAGE</button>
-        <button onclick="commitOptionsContract()" style="margin-top:8px;padding:8px;width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.7);cursor:pointer;font-size:12px;">COMMIT CONTRACT EARLY</button>
+        <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:4px;">${contract.clickCount} clicks · max 63 · <b style="color:${isUrgent?'#f44':'rgba(255,255,255,0.5)'};">${secsLeft}s left</b></div>
+        <div class="options-progress"><div class="options-progress-fill" style="width:${timePct}%;background:${isUrgent?'linear-gradient(90deg,#9a1a1a,#f44)':'linear-gradient(90deg,#1a6a9a,#4af)'};"></div></div>
+        <div style="margin:6px 0 2px;font-size:11px;color:rgba(255,255,255,0.4);">MARKET MOMENTUM <span style="color:${sentColor};font-weight:bold;">${sentLabel}</span></div>
+        <div class="options-sentiment"><div class="options-sentiment-fill" style="width:${(sentiment*100).toFixed(0)}%;background:linear-gradient(90deg,#e74c3c,${sentColor});"></div></div>
+        <button class="options-click-btn${isUrgent?' urgent':''}" onclick="clickOptionsContract()">⚡ CLICK TO BUILD LEVERAGE</button>
+        <button onclick="commitOptionsContract()" style="margin-top:8px;padding:8px;width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.7);cursor:pointer;font-size:12px;">COMMIT EARLY</button>
       </div>
     `;
   } else {
-    // Asset picker + launch
+    // Asset picker
     const wallstAssets = ASSETS.filter(a => a.market === 'wallst' && (state.assets[a.id]?.owned || 0) > 0);
     if (wallstAssets.length === 0) {
-      html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">Buy some Wall St assets first to trade options on them.</div>`;
+      html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">Buy some Wall St assets first.</div>`;
     } else {
-      html += `<div style="font-size:13px;margin-bottom:8px;">Select an asset to write a contract on:</div>`;
+      html += `<div style="font-size:13px;margin-bottom:8px;color:rgba(255,255,255,0.7);">Select an asset — then call the direction:</div>`;
       html += `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">`;
       wallstAssets.forEach(a => {
-        const cd = cooldown > 0 ? ` disabled title="Cooldown: ${cooldown}s"` : '';
-        html += `<button onclick="launchOptionsContract('${a.id}')" ${cd} style="padding:8px 14px;background:linear-gradient(180deg,#1a4a7a,#0a2a4a);border:2px solid #1a6a9a;border-radius:8px;color:#fff;cursor:pointer;font-size:13px;font-weight:bold;">${a.ticker}</button>`;
+        const cd = cooldown > 0 ? ` disabled` : '';
+        html += `<button onclick="openOptionsAsset('${a.id}')" ${cd} style="padding:8px 14px;background:linear-gradient(180deg,#1a4a7a,#0a2a4a);border:2px solid ${cooldown>0?'rgba(255,255,255,0.1)':'#1a6a9a'};border-radius:8px;color:${cooldown>0?'rgba(255,255,255,0.3)':'#fff'};cursor:${cooldown>0?'not-allowed':'pointer'};font-size:13px;font-weight:bold;">${a.ticker}</button>`;
       });
       html += `</div>`;
-      if (cooldown > 0) html += `<div style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:8px;">Cooldown: ${cooldown}s remaining</div>`;
+      if (cooldown > 0) html += `<div style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:8px;">⏳ Cooldown: ${cooldown}s</div>`;
+      html += `<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:12px;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;">Pick right direction = full leverage · Pick wrong = 50% leverage · 5-min cooldown</div>`;
     }
   }
   html += `</div>`;
@@ -3180,6 +3310,7 @@ function doPrestige() {
   ASSETS.forEach(a => {
     state.assets[a.id] = { owned: 0, progress: 0, hired: false, speedLevel: 0, payoutLevel: 0 };
   });
+  state.activeMarket = 'wallst'; // always land back on Wall St after IPO
   closeModal('prestigeModal');
   hideEvent();
   SFX.ipo();
@@ -4136,6 +4267,8 @@ function load() {
     state.gbp = data.gbp || 0;
     state.lifetimeGbp = data.lifetimeGbp || 0;
     state.londonUnlocked = !!data.londonUnlocked;
+    if (state.activeMarket === 'london' && !state.londonUnlocked) state.activeMarket = 'wallst';
+    if (state.activeMarket === 'tokyo'  && !state.tokyoUnlocked)  state.activeMarket = 'wallst';
     state.pitCredits = data.pitCredits || 0;
     state.optionsCooldownUntil = data.optionsCooldownUntil || 0;
     state.optionsLeverage = data.optionsLeverage || null;
