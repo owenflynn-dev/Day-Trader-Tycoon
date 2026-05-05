@@ -875,7 +875,7 @@
     top: 0; left: 0; bottom: 0;
     background: linear-gradient(180deg, #7ed750 0%, #5cb83a 50%, #3d8a26 100%);
     width: 0%;
-    transition: width 0.12s linear;
+    transition: none;
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.25), inset 0 -2px 0 rgba(0,0,0,0.2);
   }
   .income-fill.boosted {
@@ -3044,26 +3044,16 @@ function openOptionsAsset(assetId) {
   state.optionsContract = { assetId, direction: null, clickCount: 0, startedAt: null, endsAt: null, sentiment: 0.5 };
   renderOptionsTab();
 }
+function cancelOptionsContract() {
+  if (!state.optionsContract || state.optionsContract.direction) return; // only cancel at picker stage
+  state.optionsContract = null;
+  renderOptionsTab();
+}
 function pickOptionsDirection(direction) {
   if (!state.optionsContract || state.optionsContract.direction) return;
   state.optionsContract.direction = direction;
   state.optionsContract.startedAt = Date.now();
   state.optionsContract.endsAt = Date.now() + 45000;
-  SFX.leverage();
-  renderOptionsTab();
-}
-function launchOptionsContract(assetId, direction) {
-  if (!optionsUnlocked()) return;
-  if (optionsCooldownRemaining() > 0) { toast('Options on cooldown — ' + optionsCooldownRemaining() + 's remaining.'); return; }
-  if (state.optionsContract) { toast('Contract already active.'); return; }
-  state.optionsContract = {
-    assetId,
-    direction, // 'call' or 'put'
-    clickCount: 0,
-    startedAt: Date.now(),
-    endsAt: Date.now() + 45000,
-    sentiment: 0.5,
-  };
   SFX.leverage();
   renderOptionsTab();
 }
@@ -3144,27 +3134,30 @@ function renderOptionsTab() {
     html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">🔒 Options unlock at Level 3<br><span style="font-size:11px;">${Math.max(0,1500-(state.totalTrades||0))} more trades</span></div>`;
   } else if (activeLev) {
     const asset = ASSETS.find(a => a.id === activeLev.assetId);
-    const secsLeft = Math.ceil((activeLev.until - Date.now()) / 1000);
+    const secsLeft = Math.max(0, Math.ceil((activeLev.until - Date.now()) / 1000));
     const itm = activeLev.calledIt;
     const dirLabel = activeLev.direction ? activeLev.direction.toUpperCase() : '';
-    const marketLabel = activeLev.marketWentUp !== undefined ? (activeLev.marketWentUp ? '📈 Market went UP' : '📉 Market went DOWN') : '';
+    const marketLabel = activeLev.marketWentUp !== undefined ? (activeLev.marketWentUp ? '📈 UP' : '📉 DOWN') : '';
     html += `
       <div class="options-result-panel ${itm ? 'itm' : 'otm'}">
-        <div style="font-size:18px;font-weight:bold;color:${itm?'#2ecc71':'#e74c3c'};margin-bottom:6px;">${itm ? '📈 IN THE MONEY!' : '📉 OUT OF THE MONEY'}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:8px;">${dirLabel} · ${marketLabel}</div>
+        <div style="font-size:18px;font-weight:bold;color:${itm?'#2ecc71':'#e74c3c'};margin-bottom:4px;">${itm ? '📈 IN THE MONEY!' : '📉 OUT OF THE MONEY'}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:8px;">${dirLabel} · Market went ${marketLabel}</div>
         <div class="options-lever-display ${itm?'itm':'otm'}">${activeLev.mult.toFixed(1)}x</div>
-        <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:8px;">${asset?.ticker || activeLev.assetId} · expires in ${secsLeft}s</div>
-        ${!itm ? '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">Wrong direction — partial leverage applied</div>' : ''}
+        <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:8px;">${asset?.ticker || activeLev.assetId} · leverage expires in ${secsLeft}s</div>
+        ${!itm ? '<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px;">Wrong direction — partial leverage applied</div>' : ''}
       </div>
-      ${cooldown > 0 ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.4);padding:6px;">Next contract in ${cooldown}s</div>` : ''}
+      ${cooldown > 0 ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.4);padding:8px;">Next contract available in ${cooldown}s</div>` : `<div style="text-align:center;font-size:12px;color:#2ecc71;padding:8px;">✅ Cooldown done — next contract ready after leverage expires</div>`}
     `;
   } else if (contract && !contract.direction) {
     // Direction picker — asset chosen, now pick CALL or PUT
     const asset = ASSETS.find(a => a.id === contract.assetId);
     html += `
       <div class="options-contract-panel">
-        <div style="color:#ffd700;font-size:13px;margin-bottom:8px;">CONTRACT: ${asset?.ticker || contract.assetId}</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Will this asset go UP or DOWN?<br>Pick right = full leverage. Pick wrong = half.</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="color:#ffd700;font-size:13px;">CONTRACT: ${asset?.ticker || contract.assetId}</span>
+          <button onclick="cancelOptionsContract()" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:2px 6px;">✕ cancel</button>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px;">Which direction will the market move?<br><span style="font-size:11px;">Right = full leverage · Wrong = 50%</span></div>
         <div class="options-direction-row">
           <button class="options-call-btn" onclick="pickOptionsDirection('call')">📈 CALL<br><span style="font-size:11px;font-weight:normal;">market goes UP</span></button>
           <button class="options-put-btn"  onclick="pickOptionsDirection('put')">📉 PUT<br><span style="font-size:11px;font-weight:normal;">market goes DOWN</span></button>
@@ -3348,7 +3341,7 @@ function tick() {
     state.optionsLeverage = null;
     if (state.activeTab === 'options') renderOptionsTab();
   }
-  if (state.optionsContract && now > state.optionsContract.endsAt) {
+  if (state.optionsContract && state.optionsContract.direction && state.optionsContract.endsAt && now > state.optionsContract.endsAt) {
     commitOptionsContract();
   }
   // Refresh Options + Rivals tabs for live countdowns (every ~1s is fine — throttle with a cheap check)
@@ -3384,7 +3377,6 @@ function tick() {
     }
   });
 
-  renderProgressBars();
   renderCash();
   // Lightweight: refresh button enabled states & unlocks every ~700ms
   state._lastButtonsRefresh = state._lastButtonsRefresh || 0;
@@ -3608,11 +3600,17 @@ function renderAssets() {
 
 function renderProgressBars() {
   const now = Date.now();
+  // Predict progress forward from the last game-logic tick so bars move at 60fps
+  const dtSinceTick = Math.min((now - (state.lastTick || now)) / 1000, 0.5);
   ASSETS.forEach(a => {
     const s = state.assets[a.id];
     const fill = document.getElementById('prog-' + a.id);
     if (!fill) return;
-    fill.style.width = (Math.min(1, s.progress) * 100) + '%';
+    let displayProg = s.progress;
+    if (s.owned > 0 && s.progress < 1) {
+      displayProg = Math.min(1, s.progress + dtSinceTick / timeOf(a));
+    }
+    fill.style.width = (displayProg * 100) + '%';
     fill.classList.toggle('boosted', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && !state.activeEvent.bad));
     fill.classList.toggle('crashed', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && state.activeEvent.bad));
     // Quantum Execution perk: electric blue bars (overridden by boosted/crashed event states)
@@ -3626,7 +3624,7 @@ function renderProgressBars() {
     const timerEl = document.getElementById('timer-' + a.id);
     if (timerEl) {
       if (s.owned > 0) {
-        const remaining = Math.max(0, timeOf(a) * (1 - Math.min(1, s.progress)));
+        const remaining = Math.max(0, timeOf(a) * (1 - displayProg));
         timerEl.textContent = fmtTimer(remaining);
       } else {
         timerEl.textContent = '';
@@ -4373,6 +4371,8 @@ function boot() {
   state.lastTick = Date.now();
   setInterval(tick, 100);
   setInterval(save, 5000);
+  // 60fps render loop for smooth progress bars — game logic stays on the 100ms tick
+  (function rafLoop() { renderProgressBars(); requestAnimationFrame(rafLoop); })();
   window.addEventListener('beforeunload', save);
 }
 boot();
