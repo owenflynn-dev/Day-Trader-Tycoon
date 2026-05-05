@@ -549,19 +549,19 @@
     display: inline-flex; align-items: center; gap: 6px;
     border-radius: 8px;
     padding: 10px 14px;
-    margin: 5px;
     cursor: pointer;
     font-size: 15px; font-weight: bold;
     color: #fff;
-    transition: transform 0.1s;
     user-select: none;
-    animation: pitOrderIn 0.2s ease;
-    position: relative;
+    position: absolute;
+    white-space: nowrap;
+    animation: pitOrderIn 0.25s ease forwards;
+    transition: opacity 0.3s ease;
   }
   .pit-order:active { transform: scale(0.94); }
-  .pit-order.urgent { animation: pitOrderIn 0.2s ease, urgentPulse 0.4s ease infinite alternate !important; }
-  .pit-order.hot { border-width: 3px !important; animation: pitOrderIn 0.2s ease, hotPulse 0.5s ease infinite alternate !important; }
-  @keyframes pitOrderIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .pit-order.urgent { box-shadow: 0 0 8px #ff2222 !important; }
+  .pit-order.hot { border-width: 3px !important; }
+  @keyframes pitOrderIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   @keyframes urgentPulse { from { opacity:1; } to { opacity:0.6; box-shadow:0 0 8px #ff2222; } }
   @keyframes hotPulse { from { box-shadow:0 0 8px #ffd700; } to { box-shadow:0 0 20px #ffd700, 0 0 40px #ffaa00; } }
   .pit-order .order-pts { font-size: 11px; color: #ffd700; }
@@ -611,6 +611,65 @@
   .options-result-panel { border-radius:10px; padding:18px; margin:8px 6px; text-align:center; }
   .options-result-panel.itm { background:linear-gradient(180deg,#0a3a1a,#051510); border:2px solid #2ecc71; }
   .options-result-panel.otm { background:linear-gradient(180deg,#2a0a0a,#150505); border:2px solid #e74c3c; }
+
+  /* Crash Game */
+  .crash-track {
+    position: relative;
+    background: linear-gradient(180deg, #05050f, #0a0a20, #0d0d30);
+    border: 2px solid #1a1a4a;
+    border-radius: 12px;
+    margin: 4px 0 8px;
+    height: 190px;
+    overflow: hidden;
+  }
+  .crash-track::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(180deg, transparent, rgba(68,170,255,0.04));
+  }
+  .crash-mult-display {
+    font-size: 52px; font-weight: bold; color: #4af;
+    text-align: center; line-height: 1;
+    text-shadow: 0 0 20px rgba(68,170,255,0.4);
+    transition: color 0.15s, text-shadow 0.15s;
+  }
+  .crash-mult-display.danger  { color: #ffd700; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+  .crash-mult-display.critical { color: #ff4444; text-shadow: 0 0 20px rgba(255,68,68,0.7); animation: crashMult 0.18s ease infinite alternate; }
+  @keyframes crashMult { from { transform:scale(1); } to { transform:scale(1.05); } }
+  .crash-cashout-btn {
+    width: 100%; padding: 18px; font-size: 19px; font-weight: bold;
+    background: linear-gradient(180deg, #1fa858, #0e5a2e);
+    border: 2px solid #4dff8a; border-radius: 10px;
+    color: #fff; cursor: pointer; letter-spacing: 0.07em;
+    box-shadow: 0 5px 0 #072a14;
+    transition: transform 0.08s;
+    animation: cashoutGlow 0.7s ease infinite alternate;
+  }
+  .crash-cashout-btn:active { transform: scale(0.96) translateY(3px); box-shadow: 0 2px 0 #072a14; }
+  @keyframes cashoutGlow { from { box-shadow: 0 5px 0 #072a14; } to { box-shadow: 0 5px 0 #072a14, 0 0 22px rgba(77,255,138,0.45); } }
+  .crash-boost-btn {
+    width: 100%; margin-top: 8px; padding: 13px; font-size: 16px; font-weight: bold;
+    background: linear-gradient(180deg, #1a4a7a, #0a2a4a);
+    border: 2px solid #4af; border-radius: 10px;
+    color: #fff; cursor: pointer; letter-spacing: 0.05em;
+    box-shadow: 0 4px 0 #051020;
+    transition: transform 0.08s, box-shadow 0.08s;
+  }
+  .crash-boost-btn:active { transform: scale(0.95) translateY(3px); box-shadow: 0 1px 0 #051020; }
+  .crash-result-win {
+    background: linear-gradient(180deg, #0a3a1a, #051510);
+    border: 2px solid #2ecc71; border-radius: 10px;
+    padding: 20px; text-align: center; margin: 4px 0;
+  }
+  .crash-result-lose {
+    background: linear-gradient(180deg, #3a0a0a, #150505);
+    border: 2px solid #e74c3c; border-radius: 10px;
+    padding: 20px; text-align: center; margin: 4px 0;
+    animation: crashShake 0.12s ease 4;
+  }
+  @keyframes crashShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
 
   /* Rivals */
   .rival-card {
@@ -2034,7 +2093,7 @@ let state = {
   // Options
   optionsCooldownUntil: 0,  // ms — can open next contract after this
   optionsLeverage: null,    // { assetId, mult, until } — per-asset leverage from Options
-  optionsContract: null,    // { assetId, clickCount, startedAt, endsAt } — active 45s session
+  optionsCrash: null,       // { assetId, direction, crashAt, startedAt, result, cashedMult, clickBonus }
   // Rivals
   secComplaints: {},        // rivalId -> ms timestamp when complaint expires
   rivalBuff: null,          // { mult, until } — active SEC complaint buff
@@ -2967,7 +3026,7 @@ function pitTick() {
       expiresAt: now + (isHot ? 2500 : 4000 + Math.random() * 2000),
     });
     state._lastPitSpawn = now;
-    renderPitTab();
+    syncPitArena();
   }
 }
 
@@ -2995,7 +3054,7 @@ function fillPitOrder(orderId) {
     state.gbp = (state.gbp || 0) + gbpBonus;
     state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpBonus;
   }
-  renderPitTab();
+  syncPitArena();
   renderCash();
 }
 
@@ -3029,6 +3088,166 @@ function launchCommoditySqueeze(assetId) {
   save();
 }
 
+// ============ PIT BOUNCE ANIMATION ============
+let _pitBounce  = {};   // orderId → {x, y, vx, vy, w, h}
+let _pitAnimId  = null;
+let _pitAnimTs  = 0;
+
+function initPitOrderBounce(orderId, arena) {
+  const aw = (arena ? arena.clientWidth  : 300) - 10;
+  const ah = (arena ? arena.clientHeight : 220) - 10;
+  const speed = 55 + Math.random() * 65;
+  const angle = Math.random() * 2 * Math.PI;
+  _pitBounce[orderId] = {
+    x: 10 + Math.random() * Math.max(0, aw - 130),
+    y: 10 + Math.random() * Math.max(0, ah - 55),
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    w: 0, h: 0,
+  };
+}
+
+function pitAnimFrame(ts) {
+  if (state.activeTab !== 'pit') { _pitAnimId = null; return; }
+  const arena = document.getElementById('pitOrderZone');
+  if (!arena) { _pitAnimId = null; return; }
+
+  const dt = Math.min((ts - _pitAnimTs) / 1000, 0.05);
+  _pitAnimTs = ts;
+  const now  = Date.now();
+  const aw   = arena.clientWidth  || 300;
+  const ah   = arena.clientHeight || 220;
+
+  // Expire orders from DOM
+  const liveIds = new Set((state.pitOrders || []).map(o => o.id));
+  arena.querySelectorAll('.pit-order[data-oid]').forEach(el => {
+    const id = parseInt(el.dataset.oid);
+    if (!liveIds.has(id)) { el.remove(); delete _pitBounce[id]; }
+  });
+
+  (state.pitOrders || []).forEach(o => {
+    let el = document.getElementById('po-' + o.id);
+    if (!el) return; // will be added by syncPitArena
+
+    let b = _pitBounce[o.id];
+    if (!b) { initPitOrderBounce(o.id, arena); b = _pitBounce[o.id]; }
+    if (!b.w) { b.w = el.offsetWidth || 115; b.h = el.offsetHeight || 50; }
+
+    // Move
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+
+    // Bounce off walls
+    if (b.x < 0)              { b.x = 0;        b.vx =  Math.abs(b.vx); }
+    if (b.x + b.w > aw)       { b.x = aw - b.w; b.vx = -Math.abs(b.vx); }
+    if (b.y < 0)              { b.y = 0;        b.vy =  Math.abs(b.vy); }
+    if (b.y + b.h > ah)       { b.y = ah - b.h; b.vy = -Math.abs(b.vy); }
+
+    el.style.left = b.x.toFixed(1) + 'px';
+    el.style.top  = b.y.toFixed(1) + 'px';
+
+    // Timer text
+    const msLeft   = o.expiresAt - now;
+    const secsLeft = Math.max(0, Math.ceil(msLeft / 1000));
+    const timerEl  = el.querySelector('.order-timer');
+    if (timerEl && timerEl.textContent !== secsLeft + 's') {
+      timerEl.textContent = secsLeft + 's';
+      const isUrgent = secsLeft <= 2;
+      if (isUrgent && !timerEl.classList.contains('urgent')) {
+        timerEl.className = 'order-timer urgent';
+        el.classList.add('urgent');
+      } else if (!isUrgent && timerEl.classList.contains('urgent')) {
+        timerEl.className = 'order-timer normal';
+        el.classList.remove('urgent');
+      }
+    }
+
+    // Smooth fade-out in last 2 seconds
+    if (msLeft < 2000) {
+      el.style.opacity = Math.max(0, msLeft / 2000).toFixed(3);
+    } else {
+      el.style.opacity = '';
+    }
+  });
+
+  _pitAnimId = requestAnimationFrame(pitAnimFrame);
+}
+
+function startPitAnimation() {
+  if (_pitAnimId) return;
+  _pitAnimTs = performance.now();
+  _pitAnimId = requestAnimationFrame(pitAnimFrame);
+}
+
+function stopPitAnimation() {
+  if (_pitAnimId) { cancelAnimationFrame(_pitAnimId); _pitAnimId = null; }
+}
+
+// Add new order elements (DOM diff — never removes, RAF handles removal)
+function syncPitArena() {
+  const arena = document.getElementById('pitOrderZone');
+  if (!arena) return;
+  const now = Date.now();
+  const comboActive = _pitComboCount >= 3 && (now - _pitLastFillAt) < 4000;
+  const orders = state.pitOrders || [];
+
+  // Empty state label
+  let emptyEl = arena.querySelector('.pit-empty');
+  if (orders.length === 0) {
+    if (!emptyEl) {
+      arena.innerHTML = '';
+      const d = document.createElement('div');
+      d.className = 'pit-empty';
+      d.style.cssText = 'color:rgba(255,255,255,0.3);text-align:center;padding-top:60px;font-size:13px;pointer-events:none;';
+      d.textContent = 'Waiting for orders…';
+      arena.appendChild(d);
+    }
+    return;
+  }
+  if (emptyEl) emptyEl.remove();
+
+  // Add elements for new orders only
+  orders.forEach(o => {
+    if (document.getElementById('po-' + o.id)) return;
+    const secsLeft  = Math.max(0, Math.ceil((o.expiresAt - now) / 1000));
+    const comboBonus = comboActive ? ' <span style="font-size:9px;color:#ffd700;">+50%</span>' : '';
+    const hotLabel   = o.hot ? '<span class="pit-hot-label">⚡ FLASH</span>' : '';
+
+    const el = document.createElement('div');
+    el.className  = 'pit-order' + (o.hot ? ' hot' : '');
+    el.id         = 'po-' + o.id;
+    el.dataset.oid = String(o.id);
+    el.style.cssText = 'left:20px;top:20px;background:' + (o.bg || 'linear-gradient(180deg,#7a4a00,#4a2c00)') +
+      ';border:' + (o.hot ? '3px' : '2px') + ' solid ' + (o.border || '#e07c00') +
+      ';box-shadow:0 3px 0 rgba(0,0,0,0.5)' + (o.hot ? ',0 0 12px ' + (o.border || '#ffd700') : '') + ';';
+    el.onclick = () => fillPitOrder(o.id);
+    el.innerHTML = hotLabel + '<span>' + o.label + '</span><span class="order-pts">+' + o.value + comboBonus + '</span><span class="order-timer normal">' + secsLeft + 's</span>';
+    arena.appendChild(el);
+    // Init bounce after appending (so arena dimensions are known)
+    initPitOrderBounce(o.id, arena);
+  });
+}
+
+// Lightweight shell update — just refreshes credits/combo/squeeze counters
+function updatePitShell() {
+  const credEl = document.getElementById('pit-credits-val');
+  if (credEl) credEl.textContent = fmtNum(state.pitCredits || 0);
+
+  const comboActive = _pitComboCount >= 3 && (Date.now() - _pitLastFillAt) < 4000;
+  const comboEl = document.getElementById('pit-combo-badge');
+  if (comboEl) {
+    comboEl.style.display = comboActive ? '' : 'none';
+    comboEl.textContent = '🔥 ' + _pitComboCount + 'x COMBO! +50%';
+  }
+
+  // Squeeze countdown
+  const squeezeEl = document.getElementById('pit-squeeze-secs');
+  if (squeezeEl && state.activeSqueeze) {
+    const s = Math.ceil((state.activeSqueeze.until - Date.now()) / 1000);
+    squeezeEl.textContent = s + 's remaining';
+  }
+}
+
 function renderPitTab() {
   const root = document.getElementById('tab-pit');
   if (!root) return;
@@ -3039,49 +3258,41 @@ function renderPitTab() {
       </div>`;
     return;
   }
-  const credits = state.pitCredits || 0;
-  const pct = Math.min(100, (credits / PIT_UNLOCK_THRESHOLD) * 100);
-  const unlocked = state.londonUnlocked;
 
+  const credits     = state.pitCredits || 0;
+  const pct         = Math.min(100, (credits / PIT_UNLOCK_THRESHOLD) * 100);
+  const unlocked    = state.londonUnlocked;
   const comboActive = _pitComboCount >= 3 && (Date.now() - _pitLastFillAt) < 4000;
+
+  const wallstOwned   = ASSETS.filter(a => a.market === 'wallst' && (state.assets[a.id]?.owned || 0) > 0);
+  const squeezeActive = state.activeSqueeze && Date.now() < state.activeSqueeze.until;
+  const squeezeCooldown = state.squeezeCooldownUntil && Date.now() < state.squeezeCooldownUntil
+    ? Math.ceil((state.squeezeCooldownUntil - Date.now()) / 1000) : 0;
+  const canAfford = credits >= SQUEEZE_COST;
+
   let html = `
     <div class="panel-title">&#127963; Chicago Open Outcry Pit</div>
     <div class="panel-sub">Fill commodity orders before they expire. Earn Pit Credits to unlock London.</div>
     <div style="padding: 8px 10px;">
       <div class="pit-header-row">
-        <span style="font-size:12px;">Pit Credits: <b style="color:#ffd700;">${fmtNum(credits)}</b></span>
-        ${comboActive ? `<span class="pit-combo-badge">🔥 ${_pitComboCount}x COMBO! +50%</span>` : ''}
+        <span style="font-size:12px;">Pit Credits: <b id="pit-credits-val" style="color:#ffd700;">${fmtNum(credits)}</b></span>
+        <span id="pit-combo-badge" class="pit-combo-badge" style="display:${comboActive?'':'none'};">🔥 ${_pitComboCount}x COMBO! +50%</span>
         <span style="font-size:12px;color:${unlocked?'#2ecc71':'rgba(255,255,255,0.5)'};">${unlocked ? '✅ LONDON' : fmtNum(PIT_UNLOCK_THRESHOLD) + ' needed'}</span>
       </div>
       <div class="pit-progress-bar"><div class="pit-progress-fill" style="width:${pct}%;"></div></div>
       ${unlocked ? '<div style="font-size:11px;color:#2ecc71;text-align:center;margin-bottom:4px;">Orders now earn £500 per credit — keep filling!</div>' : ''}
     </div>
-    <div class="pit-arena" id="pitOrderZone">
-      ${(state.pitOrders || []).length === 0 ? '<div style="color:rgba(255,255,255,0.3);text-align:center;padding-top:60px;font-size:13px;">Waiting for orders…</div>' : ''}
-      ${(state.pitOrders || []).map(o => {
-        const secsLeft = Math.max(0, Math.ceil((o.expiresAt - Date.now()) / 1000));
-        const urgent = secsLeft <= 2;
-        const comboBonus = comboActive ? ` <span style="font-size:9px;color:#ffd700;">+50%</span>` : '';
-        const hotLabel = o.hot ? `<span class="pit-hot-label">⚡ FLASH</span>` : '';
-        return `<div class="pit-order${urgent ? ' urgent' : ''}${o.hot ? ' hot' : ''}" onclick="fillPitOrder(${o.id})"
-          style="background:${o.bg || 'linear-gradient(180deg,#7a4a00,#4a2c00)'};border:${o.hot ? '3px' : '2px'} solid ${o.border || '#e07c00'};box-shadow:0 3px 0 rgba(0,0,0,0.5)${o.hot ? ',0 0 12px ' + (o.border||'#ffd700') : ''};">
-          ${hotLabel}
-          <span>${o.label}</span>
-          <span class="order-pts">+${o.value}${comboBonus}</span>
-          <span class="order-timer ${urgent ? 'urgent' : 'normal'}">${secsLeft}s</span>
-        </div>`;
-      }).join('')}
-    </div>
+    <div class="pit-arena" id="pitOrderZone" style="height:220px;"></div>
     <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;padding:6px;">Tap before expiry • ⚡FLASH = 3× value, 2.5s • 🔥 3-in-a-row = +50% combo</div>
   `;
 
-  // ── Pit Milestones ──
+  // Pit Milestones
   html += `<div style="padding:6px 10px 4px;">
     <div style="font-size:12px;font-weight:bold;color:rgba(255,255,255,0.5);margin-bottom:6px;letter-spacing:0.05em;">PIT MILESTONES</div>
     <div style="display:flex;flex-direction:column;gap:4px;">`;
   PIT_MILESTONES.forEach(ms => {
     const reached = !!state.pitMilestonesReached[ms.credits];
-    const pct = Math.min(100, (credits / ms.credits) * 100);
+    const msPct   = Math.min(100, (credits / ms.credits) * 100);
     html += `<div style="display:flex;align-items:center;gap:8px;">
       <div style="width:26px;text-align:center;font-size:14px;">${reached ? '✅' : '🏅'}</div>
       <div style="flex:1;">
@@ -3090,20 +3301,14 @@ function renderPitTab() {
           <span style="color:rgba(255,255,255,0.4);">${reached ? 'EARNED' : fmtNum(ms.credits) + ' pts'}</span>
         </div>
         <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${reached?'#2ecc71':'linear-gradient(90deg,#e07c00,#ffd700)'};border-radius:3px;transition:width 0.3s;"></div>
+          <div style="height:100%;width:${msPct}%;background:${reached?'#2ecc71':'linear-gradient(90deg,#e07c00,#ffd700)'};border-radius:3px;transition:width 0.3s;"></div>
         </div>
       </div>
     </div>`;
   });
   html += `</div></div>`;
 
-  // ── Commodity Squeeze ──
-  const wallstOwned = ASSETS.filter(a => a.market === 'wallst' && (state.assets[a.id]?.owned || 0) > 0);
-  const squeezeActive = state.activeSqueeze && Date.now() < state.activeSqueeze.until;
-  const squeezeCooldown = state.squeezeCooldownUntil && Date.now() < state.squeezeCooldownUntil
-    ? Math.ceil((state.squeezeCooldownUntil - Date.now()) / 1000) : 0;
-  const canAfford = credits >= SQUEEZE_COST;
-
+  // Commodity Squeeze
   html += `<div style="padding:8px 10px;border-top:1px solid rgba(255,255,255,0.07);margin-top:6px;">
     <div style="font-size:12px;font-weight:bold;color:rgba(255,255,255,0.5);margin-bottom:6px;letter-spacing:0.05em;">COMMODITY SQUEEZE</div>`;
 
@@ -3113,7 +3318,7 @@ function renderPitTab() {
     html += `<div style="background:linear-gradient(180deg,#2a4a00,#1a3000);border:2px solid #7ed750;border-radius:8px;padding:10px;text-align:center;">
       <div style="color:#7ed750;font-weight:bold;font-size:14px;">🌽 SQUEEZE ACTIVE</div>
       <div style="font-size:22px;font-weight:bold;color:#ffd700;margin:4px 0;">×2.5</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.6);">${squeezedAsset?.ticker || ''} · ${secsLeft}s remaining</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.6);">${squeezedAsset?.ticker || ''} · <span id="pit-squeeze-secs">${secsLeft}s remaining</span></div>
     </div>`;
   } else if (wallstOwned.length === 0) {
     html += `<div style="font-size:12px;color:rgba(255,255,255,0.35);padding:6px 0;">Buy Wall St assets to unlock squeezes.</div>`;
@@ -3129,15 +3334,18 @@ function renderPitTab() {
         font-size:12px;font-weight:bold;">${a.ticker}</button>`;
     });
     html += `</div>`;
-    if (!canAfford) html += `<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:5px;">Need ${SQUEEZE_COST} credits (you have ${fmtNum(credits)})</div>`;
+    if (!canAfford)     html += `<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:5px;">Need ${SQUEEZE_COST} credits (you have ${fmtNum(credits)})</div>`;
     if (squeezeCooldown > 0) html += `<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:5px;">⏳ Cooldown: ${squeezeCooldown}s</div>`;
   }
   html += `</div>`;
 
   root.innerHTML = html;
+  syncPitArena();
+  startPitAnimation();
 }
 
 // ============ OPTIONS MINI-GAME ============
+function optionsLevel() {
 function optionsLevel() {
   return Math.floor((state.totalTrades || 0) / 500);
 }
@@ -3148,177 +3356,231 @@ function optionsCooldownRemaining() {
   return Math.max(0, Math.ceil((state.optionsCooldownUntil - Date.now()) / 1000));
 }
 
+// ============ OPTIONS CRASH GAME ============
+let _crashInterval = null;
+
 function openOptionsAsset(assetId) {
   if (!optionsUnlocked()) return;
   if (optionsCooldownRemaining() > 0) { toast('Options on cooldown — ' + optionsCooldownRemaining() + 's remaining.'); return; }
-  if (state.optionsContract) { toast('Contract already active.'); return; }
-  // Create a pending contract with no direction yet — show CALL/PUT picker
-  state.optionsContract = { assetId, direction: null, clickCount: 0, startedAt: null, endsAt: null, sentiment: 0.5 };
-  renderOptionsTab();
-}
-function cancelOptionsContract() {
-  if (!state.optionsContract || state.optionsContract.direction) return; // only cancel at picker stage
-  state.optionsContract = null;
-  renderOptionsTab();
-}
-function pickOptionsDirection(direction) {
-  if (!state.optionsContract || state.optionsContract.direction) return;
-  state.optionsContract.direction = direction;
-  state.optionsContract.startedAt = Date.now();
-  state.optionsContract.endsAt = Date.now() + 45000;
-  SFX.leverage();
+  stopCrashInterval();
+  state.optionsCrash = { assetId, direction: null, crashAt: 0, startedAt: 0, result: null, cashedMult: 0, clickBonus: 0 };
   renderOptionsTab();
 }
 
-function clickOptionsContract() {
-  if (!state.optionsContract) return;
-  if (!state.optionsContract.direction) return; // waiting for CALL/PUT pick
-  if (Date.now() > state.optionsContract.endsAt) { commitOptionsContract(); return; }
-  state.optionsContract.clickCount = Math.min(63, (state.optionsContract.clickCount || 0) + 1);
-  // Jitter sentiment meter
-  state.optionsContract.sentiment = Math.max(0.05, Math.min(0.95,
-    (state.optionsContract.sentiment || 0.5) + (Math.random() - 0.48) * 0.15
-  ));
-  SFX.trade(0);
+function cancelCrash() {
+  if (!state.optionsCrash || state.optionsCrash.direction) return;
+  stopCrashInterval();
+  state.optionsCrash = null;
   renderOptionsTab();
 }
 
-function commitOptionsContract() {
-  if (!state.optionsContract) return;
-  const c = state.optionsContract;
-  const baseMult = 1.0 + c.clickCount * 0.1;
-  // Random market outcome: 50/50 up or down
-  const marketWentUp = Math.random() < 0.5;
-  const calledIt = (c.direction === 'call' && marketWentUp) || (c.direction === 'put' && !marketWentUp);
-  const finalMult = calledIt ? baseMult : Math.max(1.0, baseMult * 0.5); // wrong = half leverage
-  const inTheMoney = calledIt && c.clickCount >= 10;
-  state.optionsLeverage = {
-    assetId: c.assetId,
-    mult: finalMult,
-    until: Date.now() + 3 * 60 * 1000,
-    inTheMoney,
-    calledIt,
-    direction: c.direction,
-    marketWentUp,
-  };
-  state.optionsCooldownUntil = Date.now() + 5 * 60 * 1000;
-  state.optionsContract = null;
-  const asset = ASSETS.find(a => a.id === c.assetId);
-  const ticker = asset?.ticker || c.assetId;
-  if (calledIt) {
-    SFX.milestone();
-    celebrate('📈 IN THE MONEY!', ticker + ' ' + c.direction.toUpperCase() + ' · ' + finalMult.toFixed(1) + 'x leverage for 3 min');
-    addNews('OPTIONS ITM: ' + ticker, c.direction.toUpperCase() + ' expired in the money. ' + finalMult.toFixed(1) + 'x locked.', 'milestone');
+function pickCrashDirection(dir) {
+  if (!state.optionsCrash || state.optionsCrash.direction) return;
+  // Generate hidden crash point: ~15% chance of early crash (<1.6x), rest 1.6–15x
+  let crashAt;
+  if (Math.random() < 0.15) {
+    crashAt = 1.10 + Math.random() * 0.50;
   } else {
-    SFX.marketEvent(true);
-    toast('📉 Out of the money. Market went ' + (marketWentUp ? 'UP' : 'DOWN') + ' — ' + c.direction.toUpperCase() + ' wrong call. ' + finalMult.toFixed(1) + 'x anyway.');
-    addNews('OPTIONS OTM: ' + ticker, c.direction.toUpperCase() + ' expired worthless. Partial ' + finalMult.toFixed(1) + 'x applied.', 'event');
+    crashAt = 1.60 + Math.pow(Math.random(), 1.4) * 13.4;
   }
+  state.optionsCrash.direction = dir;
+  state.optionsCrash.crashAt   = crashAt;
+  state.optionsCrash.startedAt = Date.now();
+  renderOptionsTab();
+  startCrashInterval();
+}
+
+function getCurrentCrashMult() {
+  if (!state.optionsCrash || !state.optionsCrash.startedAt) return 1.0;
+  const elapsed = (Date.now() - state.optionsCrash.startedAt) / 1000;
+  return 1.0 + (elapsed * 0.08) + (state.optionsCrash.clickBonus || 0);
+}
+
+function boostCrash() {
+  if (!state.optionsCrash || state.optionsCrash.result || !state.optionsCrash.direction) return;
+  state.optionsCrash.clickBonus = (state.optionsCrash.clickBonus || 0) + 0.12;
+  state.totalTrades = (state.totalTrades || 0) + 1;
+  const btn = document.getElementById('crash-boost-btn');
+  if (btn) {
+    btn.style.transform = 'scale(0.92) translateY(3px)';
+    btn.style.boxShadow = '0 1px 0 #051020';
+    setTimeout(() => { if (btn) { btn.style.transform = ''; btn.style.boxShadow = ''; } }, 90);
+  }
+}
+
+function cashOutCrash() {
+  if (!state.optionsCrash || state.optionsCrash.result || !state.optionsCrash.direction) return;
+  const mult = getCurrentCrashMult();
+  state.optionsCrash.result     = 'cashout';
+  state.optionsCrash.cashedMult = mult;
+  stopCrashInterval();
+  state.optionsLeverage = { assetId: state.optionsCrash.assetId, mult: parseFloat(mult.toFixed(2)), until: Date.now() + 3 * 60 * 1000 };
+  state.optionsCooldownUntil = Date.now() + 5 * 60 * 1000;
+  const asset = ASSETS.find(a => a.id === state.optionsCrash.assetId);
+  SFX.milestone();
+  celebrate('\ud83d\ude80 CASHED OUT!', (asset?.ticker || state.optionsCrash.assetId) + ' · ' + mult.toFixed(2) + 'x leverage for 3 min');
+  addNews('OPTIONS CASHOUT', (asset?.ticker || '') + ' cashed at ' + mult.toFixed(2) + 'x · ' + (state.optionsCrash.direction?.toUpperCase() || '') + ' · leverage active 3 min', 'milestone');
   renderOptionsTab();
   save();
+}
+
+function startCrashInterval() {
+  if (_crashInterval) return;
+  _crashInterval = setInterval(() => {
+    const c = state.optionsCrash;
+    if (!c || c.result || !c.direction) { stopCrashInterval(); return; }
+    const mult = getCurrentCrashMult();
+
+    // Instant crash — no delay, no reveal
+    if (mult >= c.crashAt) {
+      c.result     = 'crashed';
+      c.cashedMult = 0;
+      state.optionsCooldownUntil = Date.now() + 2 * 60 * 1000;
+      stopCrashInterval();
+      SFX.marketEvent(true);
+      renderOptionsTab();
+      save();
+      return;
+    }
+
+    // Live display — direct DOM update, no full re-render
+    const multEl   = document.getElementById('crash-mult-live');
+    const rocketEl = document.getElementById('crash-rocket');
+    if (multEl) {
+      multEl.textContent = mult.toFixed(2) + 'x';
+      const vDanger = Math.min(1, (mult - 1) / 5);
+      multEl.className = 'crash-mult-display' + (vDanger > 0.7 ? ' critical' : vDanger > 0.35 ? ' danger' : '');
+    }
+    if (rocketEl) {
+      const pct = Math.min(86, ((mult - 1) / 7) * 86);
+      rocketEl.style.bottom = pct + '%';
+    }
+  }, 80);
+}
+
+function stopCrashInterval() {
+  if (_crashInterval) { clearInterval(_crashInterval); _crashInterval = null; }
 }
 
 function renderOptionsTab() {
   const root = document.getElementById('tab-options');
   if (!root) return;
-  const level = optionsLevel();
+  const level    = optionsLevel();
   const unlocked = optionsUnlocked();
   const cooldown = optionsCooldownRemaining();
-  const contract = state.optionsContract;
+  const crash    = state.optionsCrash;
   const activeLev = state.optionsLeverage && Date.now() < state.optionsLeverage.until ? state.optionsLeverage : null;
 
-  // Expire stale contract (only if direction was picked and time ran out)
-  if (contract && contract.direction && contract.endsAt && Date.now() > contract.endsAt) {
-    setTimeout(commitOptionsContract, 0);
-    return;
-  }
-
   let html = `
-    <div class="panel-title">📈 Options Desk</div>
-    <div class="panel-sub">Pick CALL or PUT. Click to build leverage. Market decides if you're right.</div>
+    <div class="panel-title">\ud83d\ude80 Options Desk</div>
+    <div class="panel-sub">Pick CALL or PUT · click BOOST to push the multiplier · cash out before the ship crashes. Crash = 0x leverage.</div>
     <div style="padding:8px 10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <span style="color:#4af;font-weight:bold;font-size:14px;">Derivatives Level ${level}</span>
         <span style="font-size:11px;color:rgba(255,255,255,0.4);">${state.totalTrades||0} trades · ${500 - ((state.totalTrades||0)%500)} to next level</span>
       </div>
   `;
+
   if (!unlocked) {
-    html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">🔒 Options unlock at Level 3<br><span style="font-size:11px;">${Math.max(0,1500-(state.totalTrades||0))} more trades</span></div>`;
-  } else if (activeLev) {
-    const asset = ASSETS.find(a => a.id === activeLev.assetId);
-    const secsLeft = Math.max(0, Math.ceil((activeLev.until - Date.now()) / 1000));
-    const itm = activeLev.calledIt;
-    const dirLabel = activeLev.direction ? activeLev.direction.toUpperCase() : '';
-    const marketLabel = activeLev.marketWentUp !== undefined ? (activeLev.marketWentUp ? '📈 UP' : '📉 DOWN') : '';
+    html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">\ud83d\udd12 Options unlock at Level 3<br><span style="font-size:11px;">${Math.max(0,1500-(state.totalTrades||0))} more trades</span></div>`;
+
+  } else if (crash && crash.result === 'crashed') {
+    const asset = ASSETS.find(a => a.id === crash.assetId);
     html += `
-      <div class="options-result-panel ${itm ? 'itm' : 'otm'}">
-        <div style="font-size:18px;font-weight:bold;color:${itm?'#2ecc71':'#e74c3c'};margin-bottom:4px;">${itm ? '📈 IN THE MONEY!' : '📉 OUT OF THE MONEY'}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:8px;">${dirLabel} · Market went ${marketLabel}</div>
-        <div class="options-lever-display ${itm?'itm':'otm'}">${activeLev.mult.toFixed(1)}x</div>
-        <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:8px;">${asset?.ticker || activeLev.assetId} · leverage expires in ${secsLeft}s</div>
-        ${!itm ? '<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px;">Wrong direction — partial leverage applied</div>' : ''}
-      </div>
-      ${cooldown > 0 ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.4);padding:8px;">Next contract available in ${cooldown}s</div>` : `<div style="text-align:center;font-size:12px;color:#2ecc71;padding:8px;">✅ Cooldown done — next contract ready after leverage expires</div>`}
-    `;
-  } else if (contract && !contract.direction) {
-    // Direction picker — asset chosen, now pick CALL or PUT
-    const asset = ASSETS.find(a => a.id === contract.assetId);
+      <div class="crash-result-lose">
+        <div style="font-size:44px;line-height:1.1;">\ud83d\udca5</div>
+        <div style="font-size:22px;font-weight:bold;color:#ff4444;margin:6px 0;letter-spacing:0.05em;">CRASHED</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.55);">${asset?.ticker||crash.assetId} · ${crash.direction?.toUpperCase()} · 0x leverage</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:8px;">${cooldown > 0 ? '\u23f3 Cooldown: ' + cooldown + 's' : '\u2705 Ready for next launch'}</div>
+      </div>`;
+
+  } else if (crash && crash.result === 'cashout') {
+    const asset = ASSETS.find(a => a.id === crash.assetId);
+    html += `
+      <div class="crash-result-win">
+        <div style="font-size:44px;line-height:1.1;">\ud83d\ude80</div>
+        <div style="font-size:22px;font-weight:bold;color:#2ecc71;margin:6px 0;letter-spacing:0.05em;">CASHED OUT!</div>
+        <div class="options-lever-display itm">${crash.cashedMult.toFixed(2)}x</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:6px;">${asset?.ticker||crash.assetId} · ${crash.direction?.toUpperCase()}</div>
+        ${activeLev ? `<div style="font-size:12px;color:#2ecc71;margin-top:6px;">\u26a1 Leverage active · ${Math.max(0,Math.ceil((activeLev.until - Date.now())/1000))}s remaining</div>` : ''}
+        ${cooldown > 0 ? `<div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:4px;">\u23f3 Cooldown: ${cooldown}s</div>` : ''}
+      </div>`;
+
+  } else if (crash && !crash.direction) {
+    const asset = ASSETS.find(a => a.id === crash.assetId);
     html += `
       <div class="options-contract-panel">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="color:#ffd700;font-size:13px;">CONTRACT: ${asset?.ticker || contract.assetId}</span>
-          <button onclick="cancelOptionsContract()" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:2px 6px;">✕ cancel</button>
+          <span style="color:#ffd700;font-size:13px;">\ud83d\ude80 LAUNCH PAD: ${asset?.ticker||crash.assetId}</span>
+          <button onclick="cancelCrash()" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:2px 6px;">✕ abort</button>
         </div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px;">Which direction will the market move?<br><span style="font-size:11px;">Right = full leverage · Wrong = 50%</span></div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px;">Which direction is the market moving?<br><span style="font-size:11px;">Boost the multiplier, cash out before crash — 5-min cooldown after launch.</span></div>
         <div class="options-direction-row">
-          <button class="options-call-btn" onclick="pickOptionsDirection('call')">📈 CALL<br><span style="font-size:11px;font-weight:normal;">market goes UP</span></button>
-          <button class="options-put-btn"  onclick="pickOptionsDirection('put')">📉 PUT<br><span style="font-size:11px;font-weight:normal;">market goes DOWN</span></button>
+          <button class="options-call-btn" onclick="pickCrashDirection('call')">\ud83d\udcc8 CALL<br><span style="font-size:11px;font-weight:normal;">market goes UP</span></button>
+          <button class="options-put-btn"  onclick="pickCrashDirection('put')">\ud83d\udcc9 PUT<br><span style="font-size:11px;font-weight:normal;">market goes DOWN</span></button>
         </div>
-      </div>
-    `;
-  } else if (contract) {
-    const secsLeft = Math.max(0, Math.ceil((contract.endsAt - Date.now()) / 1000));
-    const mult = (1.0 + contract.clickCount * 0.1).toFixed(1);
-    const timePct = (secsLeft / 45) * 100;
-    const sentiment = contract.sentiment || 0.5;
-    const sentColor = sentiment > 0.6 ? '#2ecc71' : sentiment < 0.4 ? '#e74c3c' : '#ffd700';
-    const sentLabel = sentiment > 0.65 ? 'BULLISH' : sentiment < 0.35 ? 'BEARISH' : 'NEUTRAL';
-    const dirIcon = contract.direction === 'call' ? '📈' : '📉';
-    const isUrgent = secsLeft <= 10;
+      </div>`;
+
+  } else if (crash && !crash.result) {
+    // ── LIVE CRASH GAME ──
+    const asset = ASSETS.find(a => a.id === crash.assetId);
+    const currentMult = getCurrentCrashMult();
+    const vDanger = Math.min(1, (currentMult - 1) / 5);
+    const multClass = vDanger > 0.7 ? 'critical' : vDanger > 0.35 ? 'danger' : '';
+    const dirIcon = crash.direction === 'call' ? '\ud83d\udcc8' : '\ud83d\udcc9';
+    const clickCount = Math.round((crash.clickBonus || 0) / 0.12);
+    const rocketPct = Math.min(86, ((currentMult - 1) / 7) * 86);
     html += `
-      <div class="options-contract-panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <span style="color:#ffd700;font-size:13px;">LIVE CONTRACT</span>
-          <span style="font-size:13px;">${dirIcon} ${contract.direction?.toUpperCase()}</span>
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:12px;">
+          <span style="color:#ffd700;">${dirIcon} ${crash.direction?.toUpperCase()} · ${asset?.ticker||crash.assetId}</span>
+          <span style="color:rgba(255,255,255,0.4);">${clickCount} boost${clickCount!==1?'s':''}</span>
         </div>
-        <div class="options-lever-display">${mult}x</div>
-        <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:4px;">${contract.clickCount} clicks · max 63 · <b style="color:${isUrgent?'#f44':'rgba(255,255,255,0.5)'};">${secsLeft}s left</b></div>
-        <div class="options-progress"><div class="options-progress-fill" style="width:${timePct}%;background:${isUrgent?'linear-gradient(90deg,#9a1a1a,#f44)':'linear-gradient(90deg,#1a6a9a,#4af)'};"></div></div>
-        <div style="margin:6px 0 2px;font-size:11px;color:rgba(255,255,255,0.4);">MARKET MOMENTUM <span style="color:${sentColor};font-weight:bold;">${sentLabel}</span></div>
-        <div class="options-sentiment"><div class="options-sentiment-fill" style="width:${(sentiment*100).toFixed(0)}%;background:linear-gradient(90deg,#e74c3c,${sentColor});"></div></div>
-        <button class="options-click-btn${isUrgent?' urgent':''}" onclick="clickOptionsContract()">⚡ CLICK TO BUILD LEVERAGE</button>
-        <button onclick="commitOptionsContract()" style="margin-top:8px;padding:8px;width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.7);cursor:pointer;font-size:12px;">COMMIT EARLY</button>
+        <div class="crash-track">
+          <div id="crash-rocket" style="position:absolute;left:50%;transform:translateX(-50%);bottom:${rocketPct}%;font-size:30px;line-height:1;transition:bottom 0.08s linear;">\ud83d\ude80</div>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+            <div id="crash-mult-live" class="crash-mult-display ${multClass}">${currentMult.toFixed(2)}x</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-top:2px;letter-spacing:0.08em;">MULTIPLIER</div>
+          </div>
+          <div style="position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:9px;color:rgba(255,255,255,0.12);letter-spacing:0.1em;">ALTITUDE</div>
+        </div>
+        <button class="crash-cashout-btn" onclick="cashOutCrash()">\ud83d\udcb0 CASH OUT</button>
+        <button id="crash-boost-btn" class="crash-boost-btn" onclick="boostCrash()">\u26a1 BOOST  (+0.12x per click)</button>
+        <div style="font-size:10px;color:rgba(255,255,255,0.22);text-align:center;margin-top:5px;">Boost pushes the multiplier · crash = 0x · cash out to lock in leverage</div>
+      </div>`;
+
+  } else if (activeLev) {
+    const asset = ASSETS.find(a => a.id === activeLev.assetId);
+    const secsLeft = Math.max(0, Math.ceil((activeLev.until - Date.now()) / 1000));
+    html += `
+      <div class="crash-result-win">
+        <div class="options-lever-display itm">${activeLev.mult.toFixed(2)}x</div>
+        <div style="color:#2ecc71;font-size:14px;font-weight:bold;margin-top:6px;">LEVERAGE ACTIVE</div>
+        <div style="color:rgba(255,255,255,0.55);font-size:12px;margin-top:4px;">${asset?.ticker||activeLev.assetId} · expires in ${secsLeft}s</div>
       </div>
-    `;
+      ${cooldown > 0 ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.4);padding:8px;">\u23f3 Next launch in ${cooldown}s</div>` : ''}`;
+
   } else {
-    // Asset picker
     const wallstAssets = ASSETS.filter(a => a.market === 'wallst' && (state.assets[a.id]?.owned || 0) > 0);
     if (wallstAssets.length === 0) {
       html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">Buy some Wall St assets first.</div>`;
     } else {
-      html += `<div style="font-size:13px;margin-bottom:8px;color:rgba(255,255,255,0.7);">Select an asset — then call the direction:</div>`;
+      html += `<div style="font-size:13px;margin-bottom:8px;color:rgba(255,255,255,0.7);">Select an asset to launch on:</div>`;
       html += `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">`;
       wallstAssets.forEach(a => {
-        const cd = cooldown > 0 ? ` disabled` : '';
+        const cd = cooldown > 0 ? ' disabled' : '';
         html += `<button onclick="openOptionsAsset('${a.id}')" ${cd} style="padding:8px 14px;background:linear-gradient(180deg,#1a4a7a,#0a2a4a);border:2px solid ${cooldown>0?'rgba(255,255,255,0.1)':'#1a6a9a'};border-radius:8px;color:${cooldown>0?'rgba(255,255,255,0.3)':'#fff'};cursor:${cooldown>0?'not-allowed':'pointer'};font-size:13px;font-weight:bold;">${a.ticker}</button>`;
       });
-      html += `</div>`;
-      if (cooldown > 0) html += `<div style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:8px;">⏳ Cooldown: ${cooldown}s</div>`;
-      html += `<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:12px;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;">Pick right direction = full leverage · Pick wrong = 50% leverage · 5-min cooldown</div>`;
+      html += '</div>';
+      if (cooldown > 0) html += `<div style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:8px;">\u23f3 Cooldown: ${cooldown}s</div>`;
+      html += `<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:12px;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;">\ud83d\ude80 Boost to push mult · \ud83d\udcb0 Cash out to lock leverage · \ud83d\udca5 Crash = 0x · 5-min cooldown</div>`;
     }
   }
-  html += `</div>`;
+
+  html += '</div>';
   root.innerHTML = html;
+  // Restart interval after DOM rebuild if game is live
+  if (crash && crash.direction && !crash.result) startCrashInterval();
 }
 
 // ============ AI RIVALS ============
@@ -3448,7 +3710,7 @@ function tick() {
   // Chicago Pit — spawn/expire orders when PIT tab is active
   pitTick();
 
-  // Options — expire active leverage & contract timer
+  // Options — expire active leverage
   if (state.optionsLeverage && now > state.optionsLeverage.until) {
     state.optionsLeverage = null;
     if (state.activeTab === 'options') renderOptionsTab();
@@ -3457,13 +3719,12 @@ function tick() {
     state.activeSqueeze = null;
     if (state.activeTab === 'pit') renderPitTab();
   }
-  if (state.optionsContract && state.optionsContract.direction && state.optionsContract.endsAt && now > state.optionsContract.endsAt) {
-    commitOptionsContract();
-  }
-  // Refresh Options + Rivals tabs for live countdowns (every ~1s is fine — throttle with a cheap check)
-  if (state.activeTab === 'options' && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderOptionsTab();
+  // Options: crash interval handles live game; only re-render for cooldown/result countdowns
+  const _crashLive = state.optionsCrash && state.optionsCrash.direction && !state.optionsCrash.result;
+  if (state.activeTab === 'options' && !_crashLive && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderOptionsTab();
   if (state.activeTab === 'rivals'  && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderRivalsTab();
-  if (state.activeTab === 'pit'     && Math.floor(now / 500)  !== Math.floor((now - dt * 1000) / 500))  renderPitTab();
+  // Pit arena: RAF animation handles bouncing; only refresh shell (credits/squeeze) every 2s
+  if (state.activeTab === 'pit' && Math.floor(now / 2000) !== Math.floor((now - dt * 1000) / 2000)) updatePitShell();
 
   // Per-asset progress
   ASSETS.forEach(a => {
@@ -3784,6 +4045,8 @@ function switchTab(name) {
   if (name === 'perks') renderPerksTab();
   if (name === 'skills') renderSkillTree();
   if (name === 'news')   { state.hasUnseenNews = false; renderNewsTab(); }
+  stopPitAnimation();           // stop before any tab change; renderPitTab restarts it
+  if (name !== 'options') stopCrashInterval();
   if (name === 'pit')     renderPitTab();
   if (name === 'options') renderOptionsTab();
   if (name === 'rivals')  renderRivalsTab();
