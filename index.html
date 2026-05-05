@@ -2028,6 +2028,9 @@ let state = {
   pitCredits: 0,            // total earned (never resets)
   pitOrders: [],            // active tappable orders [{id, commodity, value, expiresAt}]
   _lastPitSpawn: 0,         // ms timestamp of last order spawn
+  pitMilestonesReached: {}, // credit threshold -> true when crossed
+  activeSqueeze: null,      // { assetId, until } — Commodity Squeeze buff
+  squeezeCooldownUntil: 0,  // ms — when next squeeze is available
   // Options
   optionsCooldownUntil: 0,  // ms — can open next contract after this
   optionsLeverage: null,    // { assetId, mult, until } — per-asset leverage from Options
@@ -2236,6 +2239,10 @@ function payoutOf(asset) {
   if (state.rivalBuff && Date.now() < state.rivalBuff.until) {
     p *= state.rivalBuff.mult;
   }
+  // Commodity Squeeze — per-asset ×2.5 for 90s
+  if (state.activeSqueeze && state.activeSqueeze.assetId === asset.id && Date.now() < state.activeSqueeze.until) {
+    p *= SQUEEZE_MULT;
+  }
   return p;
 }
 // Global multiplier — applies to BOTH markets. Premium managers without a .market property are global;
@@ -2264,6 +2271,8 @@ function globalMult() {
     if (wideAssets >= 5) m *= 1.10;
   }
   if (state.skillsOwned?.sk_legend) m *= 1.30;
+  // Pit Milestones — permanent global payout multipliers from credit thresholds
+  PIT_MILESTONES.forEach(ms => { if (state.pitMilestonesReached?.[ms.credits]) m *= ms.mult; });
   return m;
 }
 
@@ -2907,6 +2916,18 @@ function buyHFTPerk(id) {
 }
 
 // ============ CHICAGO OPEN OUTCRY PIT ============
+const PIT_MILESTONES = [
+  { credits:     5000, mult: 1.05, label: '+5% all payouts'  },
+  { credits:    25000, mult: 1.08, label: '+8% all payouts'  },
+  { credits:   100000, mult: 1.12, label: '+12% all payouts' },
+  { credits:   500000, mult: 1.20, label: '+20% all payouts' },
+  { credits:  2500000, mult: 1.30, label: '+30% all payouts' },
+];
+const SQUEEZE_COST     = 500;    // Pit Credits
+const SQUEEZE_MULT     = 2.5;    // ×2.5 on the chosen asset
+const SQUEEZE_DURATION = 90000;  // 90 seconds
+const SQUEEZE_COOLDOWN = 300000; // 5 minutes
+
 const PIT_COMMODITIES = [
   { id: 'oil',  label: '🛢 OIL',   value: 15, bg: 'linear-gradient(180deg,#7a3500,#4a1e00)', border: '#e07030' },
   { id: 'corn', label: '🌽 CORN',  value: 8,  bg: 'linear-gradient(180deg,#4a6a00,#2a3e00)', border: '#a8d050' },
@@ -2967,6 +2988,7 @@ function fillPitOrder(orderId) {
   const comboMult = _pitComboCount >= 3 ? 1.5 : 1;
   const earned = Math.round(order.value * comboMult);
   state.pitCredits = (state.pitCredits || 0) + earned;
+  checkPitMilestones();
   SFX.buy();
   if (state.londonUnlocked) {
     const gbpBonus = earned * 500;
@@ -2975,6 +2997,36 @@ function fillPitOrder(orderId) {
   }
   renderPitTab();
   renderCash();
+}
+
+function checkPitMilestones() {
+  const credits = state.pitCredits || 0;
+  PIT_MILESTONES.forEach(ms => {
+    if (credits >= ms.credits && !state.pitMilestonesReached[ms.credits]) {
+      state.pitMilestonesReached[ms.credits] = true;
+      SFX.milestone();
+      celebrate('🏅 PIT MILESTONE!', fmtNum(ms.credits) + ' credits — ' + ms.label + ' (permanent)');
+      addNews('PIT MILESTONE', fmtNum(ms.credits) + ' Pit Credits earned. ' + ms.label + ' unlocked forever.', 'milestone');
+    }
+  });
+}
+
+function launchCommoditySqueeze(assetId) {
+  if ((state.pitCredits || 0) < SQUEEZE_COST) { toast('Need ' + SQUEEZE_COST + ' Pit Credits.'); return; }
+  if (state.squeezeCooldownUntil && Date.now() < state.squeezeCooldownUntil) {
+    toast('Squeeze on cooldown — ' + Math.ceil((state.squeezeCooldownUntil - Date.now()) / 1000) + 's remaining.');
+    return;
+  }
+  state.pitCredits -= SQUEEZE_COST;
+  state.activeSqueeze = { assetId, until: Date.now() + SQUEEZE_DURATION };
+  state.squeezeCooldownUntil = Date.now() + SQUEEZE_COOLDOWN;
+  const asset = ASSETS.find(a => a.id === assetId);
+  SFX.leverage();
+  celebrate('🌽 COMMODITY SQUEEZE!', asset.ticker + ' ×2.5 payouts for 90 seconds');
+  addNews('SQUEEZE: ' + asset.ticker, '×2.5 payouts for 90s. Corner the market.', 'milestone');
+  renderPitTab();
+  renderCash();
+  save();
 }
 
 function renderPitTab() {
@@ -3020,8 +3072,68 @@ function renderPitTab() {
         </div>`;
       }).join('')}
     </div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;padding:6px;">Tap before expiry • ⚡FLASH orders = 3× value, 2.5s only • 🔥 Fill 3 in a row for +50% combo</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;padding:6px;">Tap before expiry • ⚡FLASH = 3× value, 2.5s • 🔥 3-in-a-row = +50% combo</div>
   `;
+
+  // ── Pit Milestones ──
+  html += `<div style="padding:6px 10px 4px;">
+    <div style="font-size:12px;font-weight:bold;color:rgba(255,255,255,0.5);margin-bottom:6px;letter-spacing:0.05em;">PIT MILESTONES</div>
+    <div style="display:flex;flex-direction:column;gap:4px;">`;
+  PIT_MILESTONES.forEach(ms => {
+    const reached = !!state.pitMilestonesReached[ms.credits];
+    const pct = Math.min(100, (credits / ms.credits) * 100);
+    html += `<div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:26px;text-align:center;font-size:14px;">${reached ? '✅' : '🏅'}</div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;">
+          <span style="color:${reached?'#2ecc71':'rgba(255,255,255,0.6)'};">${ms.label}</span>
+          <span style="color:rgba(255,255,255,0.4);">${reached ? 'EARNED' : fmtNum(ms.credits) + ' pts'}</span>
+        </div>
+        <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${reached?'#2ecc71':'linear-gradient(90deg,#e07c00,#ffd700)'};border-radius:3px;transition:width 0.3s;"></div>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  // ── Commodity Squeeze ──
+  const wallstOwned = ASSETS.filter(a => a.market === 'wallst' && (state.assets[a.id]?.owned || 0) > 0);
+  const squeezeActive = state.activeSqueeze && Date.now() < state.activeSqueeze.until;
+  const squeezeCooldown = state.squeezeCooldownUntil && Date.now() < state.squeezeCooldownUntil
+    ? Math.ceil((state.squeezeCooldownUntil - Date.now()) / 1000) : 0;
+  const canAfford = credits >= SQUEEZE_COST;
+
+  html += `<div style="padding:8px 10px;border-top:1px solid rgba(255,255,255,0.07);margin-top:6px;">
+    <div style="font-size:12px;font-weight:bold;color:rgba(255,255,255,0.5);margin-bottom:6px;letter-spacing:0.05em;">COMMODITY SQUEEZE</div>`;
+
+  if (squeezeActive) {
+    const squeezedAsset = ASSETS.find(a => a.id === state.activeSqueeze.assetId);
+    const secsLeft = Math.ceil((state.activeSqueeze.until - Date.now()) / 1000);
+    html += `<div style="background:linear-gradient(180deg,#2a4a00,#1a3000);border:2px solid #7ed750;border-radius:8px;padding:10px;text-align:center;">
+      <div style="color:#7ed750;font-weight:bold;font-size:14px;">🌽 SQUEEZE ACTIVE</div>
+      <div style="font-size:22px;font-weight:bold;color:#ffd700;margin:4px 0;">×2.5</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.6);">${squeezedAsset?.ticker || ''} · ${secsLeft}s remaining</div>
+    </div>`;
+  } else if (wallstOwned.length === 0) {
+    html += `<div style="font-size:12px;color:rgba(255,255,255,0.35);padding:6px 0;">Buy Wall St assets to unlock squeezes.</div>`;
+  } else {
+    html += `<div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:8px;">Spend ${SQUEEZE_COST} credits → ×2.5 payouts on one Wall St asset for 90s</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">`;
+    wallstOwned.forEach(a => {
+      const disabled = !canAfford || squeezeCooldown > 0;
+      html += `<button onclick="launchCommoditySqueeze('${a.id}')" ${disabled ? 'disabled' : ''}
+        style="padding:6px 12px;background:${disabled?'rgba(255,255,255,0.05)':'linear-gradient(180deg,#4a7a00,#2a4a00)'};
+        border:2px solid ${disabled?'rgba(255,255,255,0.1)':'#7ed750'};border-radius:7px;
+        color:${disabled?'rgba(255,255,255,0.3)':'#fff'};cursor:${disabled?'not-allowed':'pointer'};
+        font-size:12px;font-weight:bold;">${a.ticker}</button>`;
+    });
+    html += `</div>`;
+    if (!canAfford) html += `<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:5px;">Need ${SQUEEZE_COST} credits (you have ${fmtNum(credits)})</div>`;
+    if (squeezeCooldown > 0) html += `<div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:5px;">⏳ Cooldown: ${squeezeCooldown}s</div>`;
+  }
+  html += `</div>`;
+
   root.innerHTML = html;
 }
 
@@ -3340,6 +3452,10 @@ function tick() {
   if (state.optionsLeverage && now > state.optionsLeverage.until) {
     state.optionsLeverage = null;
     if (state.activeTab === 'options') renderOptionsTab();
+  }
+  if (state.activeSqueeze && now > state.activeSqueeze.until) {
+    state.activeSqueeze = null;
+    if (state.activeTab === 'pit') renderPitTab();
   }
   if (state.optionsContract && state.optionsContract.direction && state.optionsContract.endsAt && now > state.optionsContract.endsAt) {
     commitOptionsContract();
@@ -4208,6 +4324,9 @@ function save() {
       londonUnlocked: !!state.londonUnlocked,
       // Chicago
       pitCredits: state.pitCredits || 0,
+      pitMilestonesReached: state.pitMilestonesReached || {},
+      activeSqueeze: state.activeSqueeze || null,
+      squeezeCooldownUntil: state.squeezeCooldownUntil || 0,
       // Options
       optionsCooldownUntil: state.optionsCooldownUntil || 0,
       optionsLeverage: state.optionsLeverage || null,
@@ -4268,6 +4387,9 @@ function load() {
     if (state.activeMarket === 'london' && !state.londonUnlocked) state.activeMarket = 'wallst';
     if (state.activeMarket === 'tokyo'  && !state.tokyoUnlocked)  state.activeMarket = 'wallst';
     state.pitCredits = data.pitCredits || 0;
+    state.pitMilestonesReached = data.pitMilestonesReached || {};
+    state.activeSqueeze = data.activeSqueeze || null;
+    state.squeezeCooldownUntil = data.squeezeCooldownUntil || 0;
     state.optionsCooldownUntil = data.optionsCooldownUntil || 0;
     state.optionsLeverage = data.optionsLeverage || null;
     state.secComplaints = data.secComplaints || {};
