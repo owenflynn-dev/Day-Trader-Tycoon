@@ -524,6 +524,81 @@
     text-shadow: 0 1px 0 rgba(0,0,0,0.4);
     box-shadow: 0 2px 0 #0c2654, inset 0 1px 0 rgba(255,255,255,0.2);
   }
+  .market-tab.locked-tab {
+    opacity: 0.45; cursor: default;
+    background: rgba(255,255,255,0.06);
+  }
+
+  /* Chicago Pit */
+  .pit-arena {
+    background: linear-gradient(180deg, #3a2000, #1e1000);
+    border: 2px solid #7a4a00;
+    border-radius: 12px;
+    padding: 12px;
+    margin: 8px 6px;
+    min-height: 220px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pit-progress-bar { height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; margin: 8px 0; overflow: hidden; }
+  .pit-progress-fill { height: 100%; background: linear-gradient(90deg, #e07c00, #ffd700); border-radius: 6px; transition: width 0.3s; }
+  .pit-order {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(180deg, #7a4a00, #4a2c00);
+    border: 2px solid #e07c00;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 5px;
+    cursor: pointer;
+    font-size: 15px; font-weight: bold;
+    color: #fff;
+    transition: transform 0.1s, background 0.1s;
+    box-shadow: 0 3px 0 #3a2000;
+    user-select: none;
+    animation: pitOrderIn 0.2s ease;
+  }
+  .pit-order:active { transform: scale(0.94); }
+  @keyframes pitOrderIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .pit-order .order-pts { font-size: 11px; color: #ffd700; }
+  .pit-order .order-timer { font-size: 10px; color: rgba(255,255,255,0.6); }
+
+  /* Options */
+  .options-contract-panel {
+    background: linear-gradient(180deg, #0a1a2a, #051015);
+    border: 2px solid #1a6a9a;
+    border-radius: 10px;
+    padding: 14px;
+    margin: 8px 6px;
+    text-align: center;
+  }
+  .options-lever-display { font-size: 48px; font-weight: bold; color: #4af; line-height: 1.1; }
+  .options-click-btn {
+    width: 100%; padding: 18px; font-size: 18px; font-weight: bold;
+    background: linear-gradient(180deg, #1a6a9a, #0a3a5a);
+    border: 2px solid #4af; border-radius: 10px;
+    color: #fff; cursor: pointer; letter-spacing: 0.05em;
+    box-shadow: 0 4px 0 #051020;
+    transition: transform 0.08s;
+    margin-top: 10px;
+  }
+  .options-click-btn:active { transform: scale(0.96); }
+  .options-progress { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 8px 0; overflow: hidden; }
+  .options-progress-fill { height: 100%; background: linear-gradient(90deg, #1a6a9a, #4af); transition: width 0.1s; }
+
+  /* Rivals */
+  .rival-card {
+    background: linear-gradient(180deg, #150a25, #0a0515);
+    border: 2px solid #4a1a7a;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 6px;
+  }
+  .rival-card.investigated { border-color: #e04040; }
+  .rival-name { font-size: 15px; font-weight: bold; color: #c888ff; }
+  .rival-val { font-size: 13px; color: #ffd700; }
+  .rival-tag { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; }
+  .rival-btn { padding: 7px 14px; font-size: 12px; background: linear-gradient(180deg, #4a1a7a, #2a0a4a); border: 1px solid #7a3a9a; border-radius: 6px; color: #fff; cursor: pointer; margin-top: 8px; }
+  .rival-btn:disabled { opacity: 0.4; cursor: default; }
 
   .gold-chip {
     display: inline-flex;
@@ -1267,6 +1342,10 @@
         <div class="panel-sub">A log of the chaos.</div>
         <div id="newsList"></div>
       </div>
+
+      <div class="tab-panel" id="tab-pit"></div>
+      <div class="tab-panel" id="tab-options"></div>
+      <div class="tab-panel" id="tab-rivals"></div>
     </div>
 
     <div class="tab-strip" id="tabStrip">
@@ -1285,6 +1364,15 @@
       </button>
       <button class="tab-btn" data-tab="skills" onclick="switchTab('skills')">
         <span class="tab-icon">&#127795;</span>SKILLS
+      </button>
+      <button class="tab-btn" data-tab="pit" onclick="switchTab('pit')">
+        <span class="tab-icon">&#127963;</span>PIT
+      </button>
+      <button class="tab-btn" data-tab="options" onclick="switchTab('options')">
+        <span class="tab-icon">&#128202;</span>OPTIONS
+      </button>
+      <button class="tab-btn" data-tab="rivals" onclick="switchTab('rivals')">
+        <span class="tab-icon">&#127942;</span>RIVALS
       </button>
       <button class="tab-btn" data-tab="news" onclick="switchTab('news')">
         <span class="tab-icon">&#128240;</span>NEWS
@@ -1384,6 +1472,14 @@ const ASSETS = [
   { id: 't_neko',    ticker: '¥RAIL',  name: 'Bullet Train Network',    icon: '&#128646;', baseCost: 216000,   basePayout: 101250,     baseTime: 12,  hireCost: 5400000,   sector: 't_industry', market: 'tokyo' },
   { id: 't_sumo',    ticker: '¥MECHA', name: 'Mecha Patents Inc.',      icon: '&#129302;', baseCost: 2592000,  basePayout: 1518750,    baseTime: 24,  hireCost: 64800000,  sector: 't_industry', market: 'tokyo' },
   { id: 't_toyota',  ticker: '¥KAIJU', name: 'Kaiju IP Holdings',       icon: '&#128050;', baseCost: 31104000, basePayout: 22781250,   baseTime: 60,  hireCost: 777600000, sector: 't_industry', market: 'tokyo' },
+
+  // ——— LONDON ———
+  { id: 'l_sterling', ticker: '£GBP',   name: 'Sterling Bonds',         icon: '&#127981;', baseCost: 10000,       basePayout: 3000,         baseTime: 1.5, hireCost: 250000,       sector: 'l_forex',     market: 'london' },
+  { id: 'l_tea',      ticker: '£TEA',   name: 'Global Tea Trade',       icon: '&#127861;', baseCost: 150000,      basePayout: 55000,        baseTime: 3,   hireCost: 3750000,      sector: 'l_commodity', market: 'london' },
+  { id: 'l_bank',     ticker: '£LLOY',  name: 'Big Five Banking',       icon: '&#127981;', baseCost: 1800000,     basePayout: 810000,       baseTime: 6,   hireCost: 45000000,     sector: 'l_finance',   market: 'london' },
+  { id: 'l_crown',    ticker: '£CRWN',  name: 'Sovereign Debt',         icon: '&#128081;', baseCost: 21000000,    basePayout: 11025000,     baseTime: 12,  hireCost: 525000000,    sector: 'l_finance',   market: 'london' },
+  { id: 'l_oil',      ticker: '£BRENT', name: 'Brent Crude Futures',    icon: '&#128739;', baseCost: 260000000,   basePayout: 162500000,    baseTime: 24,  hireCost: 6500000000,   sector: 'l_energy',    market: 'london' },
+  { id: 'l_palace',   ticker: '£REIT',  name: 'Royal Estate REIT',      icon: '&#127984;', baseCost: 3100000000,  basePayout: 2325000000,   baseTime: 60,  hireCost: 77500000000,  sector: 'l_property',  market: 'london' },
 ];
 
 const COST_GROWTH = 1.12;  // each unit costs 12% more (rebalanced 2026-04-27 — extended ladder to 10 tiers does the heavy lifting; AdC uses 1.07)
@@ -1481,6 +1577,13 @@ const MANAGER_BIOS = {
   t_neko:    { name: 'Conductor Tetsuya', role: 'Rail Operations Lead',   bio: '"Punctual to the second. Has never been late, even by accident. Will judge you for being five seconds early."' },
   t_sumo:    { name: 'Engineer Hideo',    role: 'Chief Mecha Architect',  bio: '"Builds his own arms in the basement. Three patents pending. Replaces his coffee with motor oil on weekends."' },
   t_toyota:  { name: 'Producer Megumi',   role: 'Kaiju IP Director',      bio: '"Owns the rights to 47 monster franchises. Considers Godzilla a personal friend. Office is shaped like Mt. Fuji."' },
+  // London roster
+  l_sterling: { name: 'Nigel "Pips" Sterling', role: 'Sterling Desk Director',  bio: '"Considers anything under 100x leverage a hobby. Cufflinks are gold. Smells of old money and new smoke."' },
+  l_tea:      { name: 'Earl Grey',              role: 'Commodities Floor Buyer', bio: '"Hasn\'t seen sunlight in 12 years. Drinks 14 cups per session. Gets angry at the word \'herbal.\'"' },
+  l_bank:     { name: 'Lady Barclays',          role: 'Institutional Desk Chair',bio: '"Five banks merged to form her. Technically a separate legal entity. Excellent at golf."' },
+  l_crown:    { name: 'Lady Sovereign',         role: 'Debt Sovereign Advisor',  bio: '"Negotiates with world leaders for fun. Refers to the IMF as \'those people.\' Has a horse named \'Yield.\'"' },
+  l_oil:      { name: 'Sir Brent Crude',        role: 'Energy Futures Principal', bio: '"Named after the oil field. Claims it is a coincidence. It is not a coincidence."' },
+  l_palace:   { name: 'Duke of REIT',           role: 'Royal Estates Manager',   bio: '"Owns property in 14 postcodes he has never visited. The palaces run themselves. So does the Duke."' },
 };
 
 // Achievement unlocks — permanent multipliers, persist across IPO.
@@ -1577,6 +1680,15 @@ const PREMIUM_MANAGERS = [
     desc: '+15% Tokyo payouts. Never sleeps. Never complains. Drinks too much sake on Fridays.',
     bio: '"Has worked here for 23 years. You\'ve seen him cry once. You will not bring it up."',
     mult: 1.15 },
+  // London premium managers — goldCost (endgame gold sink)
+  { id: 'governor',   name: 'The Governor',   role: 'Central Bank Chief',     icon: '&#127981;', goldCost: 250, market: 'london',
+    desc: '+40% London payouts. Controls interest rates personally. You are just borrowing his market.',
+    bio: '"Speaks in compound sentences only. Has never said the word \'inflation\' out loud. Just gestures vaguely."',
+    mult: 1.40 },
+  { id: 'knight',     name: 'The Knight',     role: 'HFT Floor Commander',    icon: '&#9876;',   goldCost: 300, market: 'london',
+    desc: '+20% London payouts. All London assets 20% faster. Was knighted for "services to velocity."',
+    bio: '"Was a derivatives trader before derivatives existed. Invented three of the four instruments he uses."',
+    mult: 1.20, speedMult: 0.80 },
 ];
 
 // Lifestyle upgrades — cash + gold. Permanent multipliers + speed bonuses.
@@ -1881,6 +1993,21 @@ let state = {
   activeEvent: null, // {sector, mult, until, headline, detail, bad, rugPull}
   activePump: null,  // { assetId, until: ms } — single-asset 5× speed window
   _nextPumpAt: 0,    // ms timestamp after which the next pump may fire
+  // London
+  gbp: 0,                   // London currency
+  lifetimeGbp: 0,
+  londonUnlocked: false,
+  // Chicago Pit
+  pitCredits: 0,            // total earned (never resets)
+  pitOrders: [],            // active tappable orders [{id, commodity, value, expiresAt}]
+  _lastPitSpawn: 0,         // ms timestamp of last order spawn
+  // Options
+  optionsCooldownUntil: 0,  // ms — can open next contract after this
+  optionsLeverage: null,    // { assetId, mult, until } — per-asset leverage from Options
+  optionsContract: null,    // { assetId, clickCount, startedAt, endsAt } — active 45s session
+  // Rivals
+  secComplaints: {},        // rivalId -> ms timestamp when complaint expires
+  rivalBuff: null,          // { mult, until } — active SEC complaint buff
 };
 
 // Initialize state for every asset (both Wall Street and Tokyo).
@@ -1895,7 +2022,7 @@ function activeMarketAssets() {
 
 // ============ HELPERS ============
 function fmt(n, currency) {
-  const sym = currency === 'yen' ? '¥' : '$';
+  const sym = currency === 'yen' ? '¥' : currency === 'gbp' ? '£' : '$';
   if (n < 1000) return sym + n.toFixed(2);
   const units = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
   let i = 0;
@@ -1903,16 +2030,28 @@ function fmt(n, currency) {
   return sym + n.toFixed(2) + units[i];
 }
 // Per-asset currency helpers — Tokyo assets use yen, Wall Street uses cash.
-function currencyOf(asset) { return asset.market === 'tokyo' ? 'yen' : 'cash'; }
-function getMoney(asset) { return asset.market === 'tokyo' ? state.yen : state.cash; }
+function currencyOf(asset) {
+  if (asset.market === 'tokyo') return 'yen';
+  if (asset.market === 'london') return 'gbp';
+  return 'cash';
+}
+function getMoney(asset) {
+  if (asset.market === 'tokyo') return state.yen;
+  if (asset.market === 'london') return state.gbp || 0;
+  return state.cash;
+}
 function spendMoney(asset, amt) {
   if (asset.market === 'tokyo') state.yen -= amt;
+  else if (asset.market === 'london') state.gbp -= amt;
   else state.cash -= amt;
 }
 function earnMoney(asset, amt) {
   if (asset.market === 'tokyo') {
     state.yen += amt;
     state.lifetimeYen = (state.lifetimeYen || 0) + amt;
+  } else if (asset.market === 'london') {
+    state.gbp = (state.gbp || 0) + amt;
+    state.lifetimeGbp = (state.lifetimeGbp || 0) + amt;
   } else {
     state.cash += amt;
     state.lifetimeEarnings += amt;
@@ -2010,6 +2149,7 @@ function timeOf(asset) {
   let t = asset.baseTime / Math.pow(2, milestoneSpeed + legacySpeed);
   if (state.premiumOwned?.quant) t *= 0.90; // The Quant: 10% faster auto-trades (all markets)
   if (asset.market === 'tokyo' && state.premiumOwned?.sensei) t *= 0.90; // The Sensei: 10% faster Tokyo
+  if (asset.market === 'london' && state.premiumOwned?.knight) t *= 0.80; // The Knight: 20% faster London
   // HFT Speed Perks — stacked speed reductions from gold-cost perk purchases
   HFT_PERKS.forEach(p => { if (state.hftPerksOwned?.[p.id]) t *= p.speedMult; });
   // Skill Tree — Trading Floor speed nodes
@@ -2060,6 +2200,14 @@ function payoutOf(asset) {
   // Active leverage multiplier (consumable, time-limited) — applies to all markets
   if (state.activeLeverage && Date.now() < state.activeLeverage.until) {
     p *= state.activeLeverage.mult;
+  }
+  // Options leverage — per-asset, from the Options Desk mini-game
+  if (state.optionsLeverage && state.optionsLeverage.assetId === asset.id && Date.now() < state.optionsLeverage.until) {
+    p *= state.optionsLeverage.mult;
+  }
+  // Rival SEC buff — temporary global payout boost
+  if (state.rivalBuff && Date.now() < state.rivalBuff.until) {
+    p *= state.rivalBuff.mult;
   }
   return p;
 }
@@ -2460,9 +2608,15 @@ function buyPremiumManager(id) {
   if (state.premiumOwned[id]) return;
   const p = PREMIUM_MANAGERS.find(x => x.id === id);
   if (!p) return;
-  if ((state.influence || 0) < p.influenceCost) { toast('Not enough Influence.'); return; }
-  state.influence -= p.influenceCost;
-  state.influenceSpent = (state.influenceSpent || 0) + p.influenceCost;
+  // London premium managers cost gold; others cost influence
+  if (p.goldCost) {
+    if ((state.gold || 0) < p.goldCost) { toast('Not enough gold.'); return; }
+    state.gold -= p.goldCost;
+  } else {
+    if ((state.influence || 0) < p.influenceCost) { toast('Not enough Influence.'); return; }
+    state.influence -= p.influenceCost;
+    state.influenceSpent = (state.influenceSpent || 0) + p.influenceCost;
+  }
   state.premiumOwned[id] = true;
   SFX.hire();
   toast(p.name + ' joins your firm!');
@@ -2725,6 +2879,289 @@ function buyHFTPerk(id) {
   save();
 }
 
+// ============ CHICAGO OPEN OUTCRY PIT ============
+const PIT_COMMODITIES = [
+  { id: 'oil',  label: '🛢 OIL',   value: 15, color: '#8a4a00' },
+  { id: 'corn', label: '🌽 CORN',  value: 8,  color: '#7a7a00' },
+  { id: 'gold', label: '🥇 GOLD',  value: 25, color: '#9a7a00' },
+  { id: 'hog',  label: '🐷 PORK',  value: 10, color: '#8a3a3a' },
+  { id: 'wheat',label: '🌾 WHEAT', value: 12, color: '#6a6a00' },
+];
+const PIT_UNLOCK_THRESHOLD = 1000;
+let _pitOrderCounter = 0;
+
+function pitTick() {
+  if (state.activeTab !== 'pit') return;
+  const now = Date.now();
+  // Expire old orders
+  state.pitOrders = (state.pitOrders || []).filter(o => o.expiresAt > now);
+  // Spawn new orders (target 3-5 active at once, spawn one every 1.5-3s)
+  const spawnInterval = 1500 + Math.random() * 1500;
+  if ((now - (state._lastPitSpawn || 0)) > spawnInterval && (state.pitOrders.length || 0) < 5) {
+    const c = PIT_COMMODITIES[Math.floor(Math.random() * PIT_COMMODITIES.length)];
+    const bonusMult = state.londonUnlocked ? 1.5 : 1; // orders worth 50% more after London unlocked
+    state.pitOrders.push({
+      id: ++_pitOrderCounter,
+      commodity: c.id,
+      label: c.label,
+      value: Math.round(c.value * bonusMult * (0.8 + Math.random() * 0.4)),
+      color: c.color,
+      expiresAt: now + 4000 + Math.random() * 2000,
+    });
+    state._lastPitSpawn = now;
+    renderPitTab();
+  }
+}
+
+function fillPitOrder(orderId) {
+  const order = (state.pitOrders || []).find(o => o.id === orderId);
+  if (!order) return;
+  state.pitOrders = state.pitOrders.filter(o => o.id !== orderId);
+  state.pitCredits = (state.pitCredits || 0) + order.value;
+  SFX.buy();
+  if (state.londonUnlocked) {
+    // Post-unlock: credits convert to £ cash bonus
+    const gbpBonus = order.value * 500;
+    state.gbp = (state.gbp || 0) + gbpBonus;
+    state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpBonus;
+  }
+  renderPitTab();
+  renderCash(); // in case London balance updated
+}
+
+function renderPitTab() {
+  const root = document.getElementById('tab-pit');
+  if (!root) return;
+  const credits = state.pitCredits || 0;
+  const pct = Math.min(100, (credits / PIT_UNLOCK_THRESHOLD) * 100);
+  const unlocked = state.londonUnlocked;
+
+  let html = `
+    <div class="panel-title">&#127963; Chicago Open Outcry Pit</div>
+    <div class="panel-sub">Fill commodity orders before they expire. Earn Pit Credits to unlock London.</div>
+    <div style="padding: 8px 10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+        <span>Pit Credits: <b style="color:#ffd700;">${fmtNum(credits)}</b></span>
+        <span style="color:${unlocked?'#2ecc71':'rgba(255,255,255,0.5)'};">${unlocked ? '✅ LONDON UNLOCKED' : PIT_UNLOCK_THRESHOLD + ' needed'}</span>
+      </div>
+      <div class="pit-progress-bar"><div class="pit-progress-fill" style="width:${pct}%;"></div></div>
+      ${unlocked ? '<div style="font-size:11px;color:#2ecc71;text-align:center;margin-bottom:6px;">Orders now earn £500 per Pit Credit — keep filling!</div>' : ''}
+    </div>
+    <div class="pit-arena" id="pitOrderZone">
+      ${(state.pitOrders || []).length === 0 ? '<div style="color:rgba(255,255,255,0.3);text-align:center;padding-top:60px;font-size:13px;">Waiting for orders…</div>' : ''}
+      ${(state.pitOrders || []).map(o => {
+        const secsLeft = Math.max(0, Math.ceil((o.expiresAt - Date.now()) / 1000));
+        return `<div class="pit-order" onclick="fillPitOrder(${o.id})">
+          <span>${o.label}</span>
+          <span class="order-pts">+${o.value} pts</span>
+          <span class="order-timer">${secsLeft}s</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;padding:6px;">Tap orders before they expire • Orders refresh automatically</div>
+  `;
+  root.innerHTML = html;
+}
+
+// ============ OPTIONS MINI-GAME ============
+function optionsLevel() {
+  return Math.floor((state.totalTrades || 0) / 500);
+}
+function optionsUnlocked() {
+  return optionsLevel() >= 3;
+}
+function optionsCooldownRemaining() {
+  return Math.max(0, Math.ceil((state.optionsCooldownUntil - Date.now()) / 1000));
+}
+
+function launchOptionsContract(assetId) {
+  if (!optionsUnlocked()) return;
+  if (optionsCooldownRemaining() > 0) { toast('Options on cooldown — ' + optionsCooldownRemaining() + 's remaining.'); return; }
+  if (state.optionsContract) { toast('Contract already active.'); return; }
+  state.optionsContract = {
+    assetId,
+    clickCount: 0,
+    startedAt: Date.now(),
+    endsAt: Date.now() + 45000,
+  };
+  SFX.leverage();
+  renderOptionsTab();
+}
+
+function clickOptionsContract() {
+  if (!state.optionsContract) return;
+  if (Date.now() > state.optionsContract.endsAt) { commitOptionsContract(); return; }
+  state.optionsContract.clickCount = Math.min(63, (state.optionsContract.clickCount || 0) + 1);
+  SFX.trade(0);
+  renderOptionsTab();
+}
+
+function commitOptionsContract() {
+  if (!state.optionsContract) return;
+  const c = state.optionsContract;
+  const mult = 1.0 + c.clickCount * 0.1;
+  state.optionsLeverage = {
+    assetId: c.assetId,
+    mult,
+    until: Date.now() + 3 * 60 * 1000, // 3 minutes
+  };
+  state.optionsCooldownUntil = Date.now() + 5 * 60 * 1000; // 5-minute cooldown
+  state.optionsContract = null;
+  const asset = ASSETS.find(a => a.id === c.assetId);
+  SFX.milestone();
+  celebrate('OPTIONS CONTRACT FILLED', mult.toFixed(1) + 'x on ' + (asset?.ticker || c.assetId) + ' for 3 minutes');
+  addNews('OPTIONS: ' + (asset?.ticker || c.assetId), mult.toFixed(1) + 'x leverage locked in for 3 min.', 'milestone');
+  renderOptionsTab();
+  save();
+}
+
+function renderOptionsTab() {
+  const root = document.getElementById('tab-options');
+  if (!root) return;
+  const level = optionsLevel();
+  const unlocked = optionsUnlocked();
+  const cooldown = optionsCooldownRemaining();
+  const contract = state.optionsContract;
+  const activeLev = state.optionsLeverage && Date.now() < state.optionsLeverage.until ? state.optionsLeverage : null;
+
+  // Expire stale contract
+  if (contract && Date.now() > contract.endsAt) {
+    setTimeout(commitOptionsContract, 0);
+    return;
+  }
+
+  let html = `
+    <div class="panel-title">📈 Options Desk</div>
+    <div class="panel-sub">Level up by trading. Build leverage by clicking rapidly during a live contract.</div>
+    <div style="padding:8px 10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="color:#4af;font-weight:bold;font-size:14px;">Derivatives Level ${level}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.4);">${state.totalTrades||0} trades · ${500 - ((state.totalTrades||0)%500)} to next level</span>
+      </div>
+  `;
+  if (!unlocked) {
+    html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">Options unlock at Level 3 (${1500 - (state.totalTrades||0)} more trades)</div>`;
+  } else if (activeLev) {
+    const asset = ASSETS.find(a => a.id === activeLev.assetId);
+    const secsLeft = Math.ceil((activeLev.until - Date.now()) / 1000);
+    html += `
+      <div class="options-contract-panel">
+        <div style="color:#2ecc71;font-size:13px;margin-bottom:4px;">ACTIVE LEVERAGE</div>
+        <div class="options-lever-display">${activeLev.mult.toFixed(1)}x</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:4px;">${asset?.ticker || activeLev.assetId} · expires in ${secsLeft}s</div>
+      </div>
+      ${cooldown > 0 ? `<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.4);padding:6px;">Next contract in ${cooldown}s</div>` : ''}
+    `;
+  } else if (contract) {
+    const secsLeft = Math.max(0, Math.ceil((contract.endsAt - Date.now()) / 1000));
+    const mult = (1.0 + contract.clickCount * 0.1).toFixed(1);
+    const pct = (secsLeft / 45) * 100;
+    html += `
+      <div class="options-contract-panel">
+        <div style="color:#ffd700;font-size:13px;margin-bottom:4px;">LIVE CONTRACT — CLICK FAST</div>
+        <div class="options-lever-display">${mult}x</div>
+        <div style="color:rgba(255,255,255,0.5);font-size:12px;">${contract.clickCount} clicks · max 63 · ${secsLeft}s left</div>
+        <div class="options-progress"><div class="options-progress-fill" style="width:${pct}%;"></div></div>
+        <button class="options-click-btn" onclick="clickOptionsContract()">⚡ CLICK TO BUILD LEVERAGE</button>
+        <button onclick="commitOptionsContract()" style="margin-top:8px;padding:8px;width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.7);cursor:pointer;font-size:12px;">COMMIT CONTRACT EARLY</button>
+      </div>
+    `;
+  } else {
+    // Asset picker + launch
+    const wallstAssets = ASSETS.filter(a => a.market === 'wallst' && (state.assets[a.id]?.owned || 0) > 0);
+    if (wallstAssets.length === 0) {
+      html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">Buy some Wall St assets first to trade options on them.</div>`;
+    } else {
+      html += `<div style="font-size:13px;margin-bottom:8px;">Select an asset to write a contract on:</div>`;
+      html += `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">`;
+      wallstAssets.forEach(a => {
+        const cd = cooldown > 0 ? ` disabled title="Cooldown: ${cooldown}s"` : '';
+        html += `<button onclick="launchOptionsContract('${a.id}')" ${cd} style="padding:8px 14px;background:linear-gradient(180deg,#1a4a7a,#0a2a4a);border:2px solid #1a6a9a;border-radius:8px;color:#fff;cursor:pointer;font-size:13px;font-weight:bold;">${a.ticker}</button>`;
+      });
+      html += `</div>`;
+      if (cooldown > 0) html += `<div style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:8px;">Cooldown: ${cooldown}s remaining</div>`;
+    }
+  }
+  html += `</div>`;
+  root.innerHTML = html;
+}
+
+// ============ AI RIVALS ============
+const RIVALS = [
+  { id: 'r_bear', name: 'Bearish Capital LLC',   icon: '🐻', strategy: 'Short Everything',     pctOfPlayer: 0.08, desc: 'Shorting your positions since day one. You\'re still up.' },
+  { id: 'r_bro',  name: 'WallStBros Fund',        icon: '🚀', strategy: 'Meme Momentum',        pctOfPlayer: 0.15, desc: '"To the moon!" — filed for bankruptcy twice. Still here.' },
+  { id: 'r_algo', name: 'QuantMatrix Alpha',      icon: '🤖', strategy: 'ML Algo Trading',      pctOfPlayer: 0.30, desc: 'Their model has 4,000 parameters. Nobody knows what it does.' },
+  { id: 'r_old',  name: 'Worthington & Sons',     icon: '🎩', strategy: 'Old Money Value',      pctOfPlayer: 0.55, desc: 'Founded 1887. The sons are in their 70s. The money is patient.' },
+  { id: 'r_dark', name: 'Dark Pool Partners',     icon: '🌑', strategy: 'Invisible Execution',  pctOfPlayer: 0.85, desc: 'You\'ve never seen their trades. Regulators haven\'t either.' },
+];
+const SEC_COMPLAINT_COST = 25; // gold
+const RIVAL_BUFF_DURATION = 10 * 60 * 1000; // 10 minutes
+const RIVAL_BUFF_MULT = 1.05; // +5% global payouts
+
+function fileSecComplaint(rivalId) {
+  if ((state.gold || 0) < SEC_COMPLAINT_COST) { toast('Not enough gold.'); return; }
+  if (state.secComplaints?.[rivalId] && Date.now() < state.secComplaints[rivalId]) { toast('Already under investigation.'); return; }
+  state.gold -= SEC_COMPLAINT_COST;
+  if (!state.secComplaints) state.secComplaints = {};
+  state.secComplaints[rivalId] = Date.now() + 30 * 60 * 1000; // investigated for 30 min
+  state.rivalBuff = { mult: RIVAL_BUFF_MULT, until: Date.now() + RIVAL_BUFF_DURATION };
+  const rival = RIVALS.find(r => r.id === rivalId);
+  SFX.achievement();
+  toast('SEC complaint filed against ' + rival.name + '. +5% payouts for 10 min.');
+  addNews('SEC: ' + rival.name, '+5% global payout buff for 10 minutes. Investigations take time.', 'milestone');
+  renderCash();
+  renderRivalsTab();
+  save();
+}
+
+function renderRivalsTab() {
+  const root = document.getElementById('tab-rivals');
+  if (!root) return;
+  const playerVal = state.allTimeEarnings || 0;
+  let html = `
+    <div class="panel-title">🏆 Rival Firms</div>
+    <div class="panel-sub">Your competition. File SEC complaints to hamstring them and earn a temporary buff.</div>
+  `;
+  // Active buff display
+  if (state.rivalBuff && Date.now() < state.rivalBuff.until) {
+    const secsLeft = Math.ceil((state.rivalBuff.until - Date.now()) / 1000);
+    html += `<div style="text-align:center;background:rgba(46,204,113,0.15);border:1px solid #2ecc71;border-radius:8px;padding:8px;margin:6px 8px;font-size:13px;color:#2ecc71;">⚖️ SEC Buff Active: +5% payouts · ${secsLeft}s remaining</div>`;
+  }
+  // Your own rank card
+  html += `<div class="rival-card" style="border-color:#4af;margin-bottom:10px;">
+    <div class="rival-name" style="color:#4af;">🏢 Your Firm</div>
+    <div class="rival-val">${fmt(playerVal)} all-time</div>
+    <div class="rival-tag">THAT'S YOU</div>
+  </div>`;
+  // Sort rivals by valuation (closest to player = most threatening)
+  const sorted = RIVALS.map(r => ({
+    ...r,
+    val: playerVal * r.pctOfPlayer,
+    investigated: state.secComplaints?.[r.id] && Date.now() < state.secComplaints[r.id],
+  })).sort((a, b) => b.pctOfPlayer - a.pctOfPlayer);
+
+  sorted.forEach(r => {
+    const canComplain = (state.gold || 0) >= SEC_COMPLAINT_COST && !r.investigated;
+    html += `<div class="rival-card ${r.investigated ? 'investigated' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="rival-name">${r.icon} ${r.name}</div>
+          <div class="rival-tag">${r.strategy}</div>
+          <div class="rival-val">${fmt(r.val)} AUM</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;font-style:italic;">${r.desc}</div>
+        </div>
+        <div style="text-align:right;">
+          ${r.investigated
+            ? `<div style="color:#e04040;font-size:11px;font-weight:bold;">🔍 UNDER INVESTIGATION</div>`
+            : `<button class="rival-btn" onclick="fileSecComplaint('${r.id}')" ${canComplain?'':'disabled'}>SEC Complaint<br><span style="font-size:10px;color:#ffd700;">25 🥇</span></button>`
+          }
+        </div>
+      </div>
+    </div>`;
+  });
+  root.innerHTML = html;
+}
+
 function doPrestige() {
   const gain = prestigeGain();
   if (gain === 0) { toast('You need more lifetime earnings.'); return; }
@@ -2771,6 +3208,22 @@ function tick() {
 
   maybeFireEvent();
   maybeFirePump();
+
+  // Chicago Pit — spawn/expire orders when PIT tab is active
+  pitTick();
+
+  // Options — expire active leverage & contract timer
+  if (state.optionsLeverage && now > state.optionsLeverage.until) {
+    state.optionsLeverage = null;
+    if (state.activeTab === 'options') renderOptionsTab();
+  }
+  if (state.optionsContract && now > state.optionsContract.endsAt) {
+    commitOptionsContract();
+  }
+  // Refresh Options + Rivals tabs for live countdowns (every ~1s is fine — throttle with a cheap check)
+  if (state.activeTab === 'options' && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderOptionsTab();
+  if (state.activeTab === 'rivals'  && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderRivalsTab();
+  if (state.activeTab === 'pit'     && Math.floor(now / 500)  !== Math.floor((now - dt * 1000) / 500))  renderPitTab();
 
   // Per-asset progress
   ASSETS.forEach(a => {
@@ -2863,10 +3316,11 @@ function renderAll() {
 }
 function renderCash() {
   // Header shows the currency of the currently-viewed market
-  const isTokyo = state.activeMarket === 'tokyo';
-  const displayMoney = isTokyo ? state.yen : state.cash;
-  const lifetime = isTokyo ? (state.lifetimeYen || 0) : state.lifetimeEarnings;
-  const cur = isTokyo ? 'yen' : 'cash';
+  const isLondon = state.activeMarket === 'london';
+  const isTokyo  = state.activeMarket === 'tokyo';
+  const cur = isLondon ? 'gbp' : isTokyo ? 'yen' : 'cash';
+  const displayMoney = isLondon ? (state.gbp || 0) : isTokyo ? state.yen : state.cash;
+  const lifetime = isLondon ? (state.lifetimeGbp || 0) : isTokyo ? (state.lifetimeYen || 0) : state.lifetimeEarnings;
   document.getElementById('cash').textContent = fmt(displayMoney, cur);
   document.getElementById('incomeRate').textContent = fmt(totalIncomePerSec(), cur) + '/sec passive';
   document.getElementById('influence').textContent = fmtNum(state.influence);
@@ -2882,8 +3336,9 @@ function renderCash() {
 
 // Switch the active market (Wall Street or Tokyo). Re-renders and saves.
 function switchMarket(market) {
-  if (market !== 'wallst' && market !== 'tokyo') return;
+  if (!['wallst','tokyo','london'].includes(market)) return;
   if (market === 'tokyo' && !state.tokyoUnlocked) { toast('Tokyo unlocks after your first IPO.'); return; }
+  if (market === 'london' && !state.londonUnlocked) { toast('London unlocks after the Chicago Pit challenge.'); return; }
   state.activeMarket = market;
   renderAll();
   save();
@@ -2892,12 +3347,20 @@ function renderAssets() {
   const list = document.getElementById('assetList');
   list.innerHTML = '';
 
-  // Market switcher at top of HOME — only show the Tokyo button if unlocked
+  // Market switcher at top of HOME
   const tokyoUnlockedNow = state.tokyoUnlocked || (state.influence || 0) >= 1;
   if (tokyoUnlockedNow && !state.tokyoUnlocked) {
     state.tokyoUnlocked = true;
-    state.yen = (state.yen || 0) + 100; // welcome bonus to bootstrap Tokyo
+    state.yen = (state.yen || 0) + 100;
     addNews('TOKYO UNLOCKED', 'Welcome to the Tokyo Trading Floor. +100 ¥ starter bonus.', 'milestone');
+  }
+  // London unlock trigger — 1000 Pit Credits
+  if (!state.londonUnlocked && (state.pitCredits || 0) >= 1000) {
+    state.londonUnlocked = true;
+    state.gbp = (state.gbp || 0) + 10000; // £10k welcome bonus
+    addNews('LONDON UNLOCKED', 'The City awaits. +£10,000 starter bonus. Welcome to the Square Mile.', 'milestone');
+    celebrate('LONDON OPEN', 'The Square Mile is yours. +£10,000 to get started.');
+    SFX.ipo();
   }
   if (tokyoUnlockedNow) {
     const sw = document.createElement('div');
@@ -2905,6 +3368,7 @@ function renderAssets() {
     sw.innerHTML = `
       <button class="market-tab ${state.activeMarket === 'wallst' ? 'active' : ''}" onclick="switchMarket('wallst')">$ WALL ST</button>
       <button class="market-tab ${state.activeMarket === 'tokyo' ? 'active' : ''}" onclick="switchMarket('tokyo')">¥ TOKYO</button>
+      ${state.londonUnlocked ? `<button class="market-tab ${state.activeMarket === 'london' ? 'active' : ''}" onclick="switchMarket('london')">£ LONDON</button>` : `<button class="market-tab locked-tab" title="Complete the Chicago Pit to unlock">🔒 LONDON</button>`}
     `;
     list.appendChild(sw);
   }
@@ -3075,6 +3539,9 @@ function switchTab(name) {
   if (name === 'perks') renderPerksTab();
   if (name === 'skills') renderSkillTree();
   if (name === 'news')   { state.hasUnseenNews = false; renderNewsTab(); }
+  if (name === 'pit')     renderPitTab();
+  if (name === 'options') renderOptionsTab();
+  if (name === 'rivals')  renderRivalsTab();
   save();
 }
 
@@ -3165,33 +3632,44 @@ function renderManagersTab() {
   if (!root) return;
   let html = '';
 
-  // Premium managers section — now cost Influence, not gold
+  // Premium managers — Wall St + Tokyo cost Influence; London managers cost Gold
   if (PREMIUM_MANAGERS.length) {
-    html += '<div class="panel-sub" style="padding:0 14px 4px;color:var(--gold);font-family:\'Lilita One\',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;">Premium Roster &middot; costs Influence &#128276;</div>';
-    PREMIUM_MANAGERS.forEach(p => {
-      const owned = !!state.premiumOwned[p.id];
-      const can = (state.influence || 0) >= p.influenceCost;
-      html += `
-        <div class="manager-card${owned ? '' : ' unhired'}" style="border-color:${owned ? '#5a3f08' : 'var(--panel-dark)'};${owned ? 'background:linear-gradient(180deg, #2a2030, #1a1424);' : ''}">
-          <div class="manager-portrait" style="${owned ? 'background:radial-gradient(circle at 35% 30%, var(--gold), #6a4f0a);' : ''}">${p.icon}</div>
-          <div>
-            <div class="manager-name" style="color:var(--gold);">${p.name}</div>
-            <div class="manager-role">${p.role} &middot; ${p.desc}</div>
-            <div class="manager-bio">${p.bio}</div>
-          </div>
-          ${owned
-            ? (p.hasAbility
-                ? `<button class="buy-btn gold-btn manager-hire" ${state.whistleblowerUsedThisRun ? 'disabled' : ''} onclick="useWhistleblower()">
-                    <span class="label">${state.whistleblowerUsedThisRun ? 'USED' : 'USE LEAK'}</span>
-                    <span class="price">${state.whistleblowerUsedThisRun ? 'Resets at IPO' : 'Trigger 5x event'}</span>
-                  </button>`
-                : `<div class="manager-hire" style="text-align:center;color:var(--gold);font-family:'Lilita One',sans-serif;font-size:14px;">&#10003; ON RETAINER</div>`)
-            : `<button class="buy-btn inf-btn manager-hire" ${can ? '' : 'disabled'} onclick="buyPremiumManager('${p.id}')">
-                <span class="label">HIRE</span>
-                <span class="price">${p.influenceCost} &#128276;</span>
-              </button>`}
-        </div>`;
-    });
+    const wallstTokyo = PREMIUM_MANAGERS.filter(p => !p.goldCost);
+    const londonPrem  = PREMIUM_MANAGERS.filter(p =>  p.goldCost);
+    const renderPremBlock = (list, label, labelColor) => {
+      if (!list.length) return '';
+      let s = `<div class="panel-sub" style="padding:0 14px 4px;color:${labelColor};font-family:'Lilita One',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;">${label}</div>`;
+      list.forEach(p => {
+        const owned = !!state.premiumOwned[p.id];
+        const isGold = !!p.goldCost;
+        const can = isGold ? (state.gold || 0) >= p.goldCost : (state.influence || 0) >= p.influenceCost;
+        const priceLabel = isGold ? p.goldCost + ' 🥇' : p.influenceCost + ' 🔔';
+        const btnClass = isGold ? 'gold-btn' : 'inf-btn';
+        s += `
+          <div class="manager-card${owned ? '' : ' unhired'}" style="border-color:${owned ? '#5a3f08' : 'var(--panel-dark)'};${owned ? 'background:linear-gradient(180deg, #2a2030, #1a1424);' : ''}">
+            <div class="manager-portrait" style="${owned ? 'background:radial-gradient(circle at 35% 30%, var(--gold), #6a4f0a);' : ''}">${p.icon}</div>
+            <div>
+              <div class="manager-name" style="color:var(--gold);">${p.name}</div>
+              <div class="manager-role">${p.role} &middot; ${p.desc}</div>
+              <div class="manager-bio">${p.bio}</div>
+            </div>
+            ${owned
+              ? (p.hasAbility
+                  ? `<button class="buy-btn gold-btn manager-hire" ${state.whistleblowerUsedThisRun ? 'disabled' : ''} onclick="useWhistleblower()">
+                      <span class="label">${state.whistleblowerUsedThisRun ? 'USED' : 'USE LEAK'}</span>
+                      <span class="price">${state.whistleblowerUsedThisRun ? 'Resets at IPO' : 'Trigger 5x event'}</span>
+                    </button>`
+                  : `<div class="manager-hire" style="text-align:center;color:var(--gold);font-family:'Lilita One',sans-serif;font-size:14px;">&#10003; ON RETAINER</div>`)
+              : `<button class="buy-btn ${btnClass} manager-hire" ${can ? '' : 'disabled'} onclick="buyPremiumManager('${p.id}')">
+                  <span class="label">HIRE</span>
+                  <span class="price">${priceLabel}</span>
+                </button>`}
+          </div>`;
+      });
+      return s;
+    };
+    html += renderPremBlock(wallstTokyo, 'Premium Roster · costs Influence 🔔', 'var(--gold)');
+    if (state.londonUnlocked) html += renderPremBlock(londonPrem, 'London Premium · costs Gold 🥇', '#4af');
     html += '<div class="panel-sub" style="padding:8px 14px 4px;font-family:\'Lilita One\',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);">Standard Roster</div>';
   }
 
@@ -3199,9 +3677,12 @@ function renderManagersTab() {
     const s = state.assets[a.id];
     const bio = MANAGER_BIOS[a.id];
     if (!bio) return;
+    if (a.market === 'london' && !state.londonUnlocked) return; // hide London until unlocked
     const hired = !!s.hired;
     const owned = s.owned > 0;
-    const canHire = state.cash >= a.hireCost && !hired && owned;
+    const isLondon = a.market === 'london';
+    const moneyAvail = isLondon ? (state.gbp || 0) : a.market === 'tokyo' ? state.yen : state.cash;
+    const canHire = moneyAvail >= a.hireCost && !hired && owned;
     html += `
       <div class="manager-card${hired ? '' : ' unhired'}">
         <div class="manager-portrait">${a.icon}</div>
@@ -3216,7 +3697,7 @@ function renderManagersTab() {
               ? `<div class="manager-hire" style="text-align:center;color:var(--text-dim);font-size:11px;font-weight:800;">Buy a ${a.ticker} position to enable hiring.</div>`
               : `<button class="buy-btn manager-hire" ${canHire ? '' : 'disabled'} onclick="hireTrader('${a.id}'); renderManagersTab();">
                   <span class="label">HIRE</span>
-                  <span class="price">${fmt(a.hireCost)}</span>
+                  <span class="price">${fmt(a.hireCost, currencyOf(a))}</span>
                 </button>`)}
       </div>`;
   });
@@ -3592,6 +4073,18 @@ function save() {
       highLeverageUsed: !!state.highLeverageUsed,
       maxLeverageUsed: state.maxLeverageUsed || 0,
       skillsOwned: state.skillsOwned || {},
+      // London
+      gbp: state.gbp || 0,
+      lifetimeGbp: state.lifetimeGbp || 0,
+      londonUnlocked: !!state.londonUnlocked,
+      // Chicago
+      pitCredits: state.pitCredits || 0,
+      // Options
+      optionsCooldownUntil: state.optionsCooldownUntil || 0,
+      optionsLeverage: state.optionsLeverage || null,
+      // Rivals
+      secComplaints: state.secComplaints || {},
+      rivalBuff: state.rivalBuff || null,
       lastSavedAt: Date.now(),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(out));
@@ -3640,6 +4133,14 @@ function load() {
     state.highLeverageUsed = !!data.highLeverageUsed;
     state.maxLeverageUsed = data.maxLeverageUsed || 0;
     state.skillsOwned = data.skillsOwned || {};
+    state.gbp = data.gbp || 0;
+    state.lifetimeGbp = data.lifetimeGbp || 0;
+    state.londonUnlocked = !!data.londonUnlocked;
+    state.pitCredits = data.pitCredits || 0;
+    state.optionsCooldownUntil = data.optionsCooldownUntil || 0;
+    state.optionsLeverage = data.optionsLeverage || null;
+    state.secComplaints = data.secComplaints || {};
+    state.rivalBuff = data.rivalBuff || null;
     if (data.assets) {
       ASSETS.forEach(a => {
         if (data.assets[a.id]) {
@@ -3654,28 +4155,26 @@ function load() {
     if (data.lastSavedAt) {
       const offlineSec = Math.min((Date.now() - data.lastSavedAt) / 1000, 4 * 3600);
       if (offlineSec > 30) {
-        let wallstRate = 0, tokyoRate = 0;
+        let wallstRate = 0, tokyoRate = 0, londonRate = 0;
         ASSETS.forEach(a => {
           const s = state.assets[a.id];
           if (!s || !s.hired || s.owned === 0) return;
           const rate = payoutOf(a) / timeOf(a);
-          if ((a.market || 'wallst') === 'tokyo') tokyoRate += rate;
+          if (a.market === 'tokyo')  tokyoRate  += rate;
+          else if (a.market === 'london') londonRate += rate;
           else wallstRate += rate;
         });
-        const cashGain = wallstRate * 0.5 * offlineSec;
-        const yenGain  = tokyoRate  * 0.5 * offlineSec;
-        if (cashGain > 0) {
-          state.cash += cashGain;
-          state.lifetimeEarnings += cashGain;
-        }
-        if (yenGain > 0) {
-          state.yen = (state.yen || 0) + yenGain;
-          state.lifetimeYen = (state.lifetimeYen || 0) + yenGain;
-        }
-        if (cashGain > 0 || yenGain > 0) {
+        const cashGain   = wallstRate * 0.5 * offlineSec;
+        const yenGain    = tokyoRate  * 0.5 * offlineSec;
+        const gbpGain    = londonRate * 0.5 * offlineSec;
+        if (cashGain > 0) { state.cash += cashGain; state.lifetimeEarnings += cashGain; }
+        if (yenGain  > 0) { state.yen = (state.yen || 0) + yenGain; state.lifetimeYen = (state.lifetimeYen || 0) + yenGain; }
+        if (gbpGain  > 0) { state.gbp = (state.gbp || 0) + gbpGain; state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpGain; }
+        if (cashGain > 0 || yenGain > 0 || gbpGain > 0) {
           const parts = [];
           if (cashGain > 0) parts.push(fmt(cashGain));
           if (yenGain  > 0) parts.push('¥' + fmt(yenGain));
+          if (gbpGain  > 0) parts.push('£' + fmt(gbpGain));
           setTimeout(() => toast('Offline earnings: ' + parts.join(' + ')), 700);
         }
       }
