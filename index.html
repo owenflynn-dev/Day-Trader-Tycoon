@@ -2335,6 +2335,11 @@ function basePayoutOf(asset) {
 }
 function payoutOf(asset) {
   let p = basePayoutOf(asset);
+  // Black Market is fully isolated from Wall St multipliers — only milestones + skill bonus apply.
+  if (asset.market === 'blackmkt') {
+    if (state.skillsOwned?.sk_dark_terminal) p *= 1.20;
+    return p;
+  }
   // Per-market multipliers (includes globals + market-specific premium managers)
   p *= marketMult(asset.market || 'wallst');
   // event multiplier
@@ -2357,19 +2362,17 @@ function payoutOf(asset) {
   if (state.activeSqueeze && state.activeSqueeze.assetId === asset.id && Date.now() < state.activeSqueeze.until) {
     p *= SQUEEZE_MULT;
   }
-  // Dark Web Terminal skill — +20% on all Black Market assets
-  if (asset.market === 'blackmkt' && state.skillsOwned?.sk_dark_terminal) p *= 1.20;
   return p;
 }
 // Global multiplier — applies to all markets. Premium managers without a .market property are global;
 // market-specific premium managers (Tokyo, etc.) are layered on in marketMult() instead.
-// Pass market='blackmkt' to strip out influence-based bonuses (Black Market has its own scarce economy).
+// Black Market is fully isolated from Wall St progression — return 1 immediately so gold stays scarce.
+// BM-specific bonuses (sk_dark_terminal +20%, milestones) are applied directly in payoutOf().
 function globalMult(market) {
-  const isBlackMkt = market === 'blackmkt';
+  if (market === 'blackmkt') return 1;
   // +4% per banked Influence token (was +2%). Heaven's Lottery doubles to +8%.
-  // Black Market is immune — influence would make gold trivially cheap.
   const perInfluence = state.influenceShopOwned?.heavens_lottery ? 0.08 : 0.04;
-  let m = isBlackMkt ? 1 : 1 + (state.influence * perInfluence);
+  let m = 1 + (state.influence * perInfluence);
   BOOSTS.forEach(b => { if (state.boostsOwned[b.id]) m *= b.mult; });
   UNLOCKS.forEach(u => { if (state.unlocks[u.id]) m *= u.mult; });
   PREMIUM_MANAGERS.forEach(p => { if (!p.market && state.premiumOwned[p.id]) m *= (p.mult || 1); });
@@ -2393,8 +2396,7 @@ function globalMult(market) {
   if (state.skillsOwned?.sk_dynasty)   m *= 1.60;
   if (state.skillsOwned?.sk_sentiment) m *= 1.40;
   // Influence Investing — stacking +0.5% per investment (unlocked by sk_dynasty)
-  // Not applied to Black Market — influence-powered bonuses don't touch gold.
-  const invCount = isBlackMkt ? 0 : (state.influenceInvested || 0);
+  const invCount = state.influenceInvested || 0;
   if (invCount > 0) m *= (1 + invCount * 0.005);
   // Pit Milestones — permanent global payout multipliers from credit thresholds
   PIT_MILESTONES.forEach(ms => { if (state.pitMilestonesReached?.[ms.credits]) m *= ms.mult; });
