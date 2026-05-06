@@ -526,6 +526,18 @@
     opacity: 0.45; cursor: default;
     background: rgba(255,255,255,0.06);
   }
+  .market-tab.blackmkt-tab {
+    background: linear-gradient(180deg, #2a0a0a, #1a0505);
+    border-color: #5c1010;
+    color: #c44;
+  }
+  .market-tab.blackmkt-tab.active {
+    background: linear-gradient(180deg, #7a0000, #4a0000);
+    border-color: #300;
+    color: #ffaaaa;
+    text-shadow: 0 0 6px rgba(255,80,80,0.7);
+    box-shadow: 0 2px 0 #300, inset 0 1px 0 rgba(255,80,80,0.2);
+  }
 
   /* Chicago Pit */
   .pit-arena {
@@ -1488,6 +1500,7 @@
     <h2 style="margin-top:16px;">Influence Shop</h2>
     <p style="font-size:12px;">Spend Influence on permanent upgrades. These survive every IPO. Current Influence: <b id="influenceCurrent" style="color:var(--gold);">0</b></p>
     <div id="influenceShopList"></div>
+    <div id="influenceInvestSection" style="display:none;"></div>
     <button class="modal-btn secondary" onclick="closeModal('prestigeModal')">Close</button>
   </div>
 </div>
@@ -1563,6 +1576,12 @@ const ASSETS = [
   { id: 'l_crown',    ticker: '£CRWN',  name: 'Sovereign Debt',         icon: '&#128081;', baseCost: 21000000,    basePayout: 11025000,     baseTime: 12,  hireCost: 525000000,    sector: 'l_finance',   market: 'london' },
   { id: 'l_oil',      ticker: '£BRENT', name: 'Brent Crude Futures',    icon: '&#128739;', baseCost: 260000000,   basePayout: 162500000,    baseTime: 24,  hireCost: 6500000000,   sector: 'l_energy',    market: 'london' },
   { id: 'l_palace',   ticker: '£REIT',  name: 'Royal Estate REIT',      icon: '&#127984;', baseCost: 3100000000,  basePayout: 2325000000,   baseTime: 60,  hireCost: 77500000000,  sector: 'l_property',  market: 'london' },
+
+  // ── BLACK MARKET — currency: gold. Unlocks after London. Slow, expensive, but passively earns gold. ──
+  { id: 'bm_smug',   ticker: '&#9899;SMUG',  name: 'Contraband ETF',     icon: '&#129523;', baseCost: 3,    basePayout: 0.015, baseTime: 12,  hireCost: 15,   sector: 'bm_hustle', market: 'blackmkt' },
+  { id: 'bm_laund',  ticker: '&#9899;LAUND', name: 'Shell Corp Laundry', icon: '&#127968;', baseCost: 20,   basePayout: 0.08,  baseTime: 35,  hireCost: 80,   sector: 'bm_hustle', market: 'blackmkt' },
+  { id: 'bm_cartel', ticker: '&#9899;CRTL',  name: 'Algo Cartel',        icon: '&#129302;', baseCost: 120,  basePayout: 0.4,   baseTime: 90,  hireCost: 350,  sector: 'bm_ops',    market: 'blackmkt' },
+  { id: 'bm_ghost',  ticker: '&#9899;GHST',  name: 'Ghost Corporation',  icon: '&#128123;', baseCost: 750,  basePayout: 2.0,   baseTime: 300, hireCost: 1500, sector: 'bm_ops',    market: 'blackmkt' },
 ];
 
 const COST_GROWTH = 1.12;  // each unit costs 12% more (rebalanced 2026-04-27 — extended ladder to 10 tiers does the heavy lifting; AdC uses 1.07)
@@ -1615,28 +1634,31 @@ const SKILL_TREE = [
   {
     id: 'speed', name: 'Trading Floor', icon: '&#9889;', color: '#4a90e2',
     nodes: [
-      { id: 'sk_fast_hands',  name: 'Fast Hands',        icon: '&#128075;', cost: 2,   desc: '+10% payout on every manual trade you click.' },
-      { id: 'sk_pre_market',  name: 'Pre-Market Access', icon: '&#128338;', cost: 8,   desc: '-10% all asset cycle times.' },
-      { id: 'sk_algo_edge',   name: 'Algorithmic Edge',  icon: '&#129302;', cost: 25,  desc: '-15% all cycle times (stacks).' },
-      { id: 'sk_light_speed', name: 'Light Speed',       icon: '&#128640;', cost: 75,  desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
+      { id: 'sk_fast_hands',  name: 'Fast Hands',        icon: '&#128075;', cost: 5,    desc: '+10% payout on every manual trade you click.' },
+      { id: 'sk_pre_market',  name: 'Pre-Market Access', icon: '&#128338;', cost: 20,   desc: '-10% all asset cycle times.' },
+      { id: 'sk_algo_edge',   name: 'Algorithmic Edge',  icon: '&#129302;', cost: 75,   desc: '-15% all cycle times (stacks).' },
+      { id: 'sk_light_speed', name: 'Light Speed',       icon: '&#128640;', cost: 200,  desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
+      { id: 'sk_dark_terminal',name: 'Dark Web Terminal',icon: '&#9899;',   cost: 500,  desc: 'Unlocks the Black Market. +20% Black Market payouts. The less said, the better.' },
     ]
   },
   {
     id: 'intel', name: 'Market Intel', icon: '&#128225;', color: '#f3c74b',
     nodes: [
-      { id: 'sk_scanner',    name: 'Market Scanner',  icon: '&#128202;', cost: 3,   desc: 'Positive events last 20% longer.' },
-      { id: 'sk_bull_ext',   name: 'Bull Extension',  icon: '&#128994;', cost: 10,  desc: 'Positive events last 40% longer total.' },
-      { id: 'sk_bear_buf',   name: 'Bear Buffer',     icon: '&#128308;', cost: 30,  desc: 'Negative events end 25% sooner.' },
-      { id: 'sk_bias',       name: 'Event Bias',      icon: '&#127775;', cost: 90,  desc: 'Each event roll has a 20% chance of being forced positive.' },
+      { id: 'sk_scanner',    name: 'Market Scanner',    icon: '&#128202;', cost: 8,    desc: 'Positive events last 20% longer.' },
+      { id: 'sk_bull_ext',   name: 'Bull Extension',    icon: '&#128994;', cost: 30,   desc: 'Positive events last 40% longer total.' },
+      { id: 'sk_bear_buf',   name: 'Bear Buffer',       icon: '&#128308;', cost: 80,   desc: 'Negative events end 25% sooner.' },
+      { id: 'sk_bias',       name: 'Event Bias',        icon: '&#127775;', cost: 200,  desc: 'Each event roll has a 20% chance of being forced positive.' },
+      { id: 'sk_sentiment',  name: 'Sentiment Engine',  icon: '&#129504;', cost: 500,  desc: '+40% all payouts permanently. Events fire 50% more often. You feel the market.' },
     ]
   },
   {
     id: 'capital', name: 'Capital', icon: '&#128176;', color: '#2ecc71',
     nodes: [
-      { id: 'sk_compound',   name: 'Compounding',      icon: '&#128200;', cost: 5,   desc: '+5% all payouts per completed IPO (max bonus at 5 IPOs = +25%).' },
-      { id: 'sk_portfolio',  name: 'Portfolio Spread', icon: '&#128203;', cost: 15,  desc: '+10% payouts when 5+ assets each have 10+ positions.' },
-      { id: 'sk_ms_amp',     name: 'Milestone Amp',    icon: '&#127942;', cost: 45,  desc: 'Each milestone multiplier is 20% stronger.' },
-      { id: 'sk_legend',     name: 'Wall St. Legend',  icon: '&#127775;', cost: 120, desc: '+30% all payouts permanently. You made it.' },
+      { id: 'sk_compound',   name: 'Compounding',       icon: '&#128200;', cost: 10,   desc: '+5% all payouts per completed IPO (max bonus at 5 IPOs = +25%).' },
+      { id: 'sk_portfolio',  name: 'Portfolio Spread',  icon: '&#128203;', cost: 35,   desc: '+10% payouts when 5+ assets each have 10+ positions.' },
+      { id: 'sk_ms_amp',     name: 'Milestone Amp',     icon: '&#127942;', cost: 100,  desc: 'Each milestone multiplier is 20% stronger.' },
+      { id: 'sk_legend',     name: 'Wall St. Legend',   icon: '&#127775;', cost: 250,  desc: '+30% all payouts permanently. You made it.' },
+      { id: 'sk_dynasty',    name: 'Dynasty Protocol',  icon: '&#128081;', cost: 750,  desc: '+60% all payouts permanently. Unlock Influence Investing in the IPO menu.' },
     ]
   },
 ];
@@ -1667,6 +1689,11 @@ const MANAGER_BIOS = {
   l_crown:    { name: 'Lady Sovereign',         role: 'Debt Sovereign Advisor',  bio: '"Negotiates with world leaders for fun. Refers to the IMF as \'those people.\' Has a horse named \'Yield.\'"' },
   l_oil:      { name: 'Sir Brent Crude',        role: 'Energy Futures Principal', bio: '"Named after the oil field. Claims it is a coincidence. It is not a coincidence."' },
   l_palace:   { name: 'Duke of REIT',           role: 'Royal Estates Manager',   bio: '"Owns property in 14 postcodes he has never visited. The palaces run themselves. So does the Duke."' },
+  // Black Market roster
+  bm_smug:   { name: 'Vinnie Two-Bags',   role: 'Contraband Portfolio Lead', bio: '"Technically a logistics consultant. Has never seen the inside of a warehouse. Excellent handshake."' },
+  bm_laund:  { name: 'Madeleine Rinse',   role: 'Shell Corp Architect',      bio: '"Has seventeen companies named after her dog. Officially retired since 1994. Still billing by the hour."' },
+  bm_cartel: { name: 'El Algo',           role: 'Cartel Systems Engineer',   bio: '"The algorithm has never been audited. The algorithm cannot be audited. The algorithm is fine."' },
+  bm_ghost:  { name: 'Nobody',            role: 'Ghost Corp Director',       bio: '"No LinkedIn. No address. No record of employment. Sends very good quarterly reports. You have never met Nobody."' },
 };
 
 // Achievement unlocks — permanent multipliers, persist across IPO.
@@ -1675,7 +1702,7 @@ const UNLOCKS = [
   { id: 'first_hire',    icon: '&#128104;&#8205;&#128188;', name: 'Delegated',  desc: 'Hire your first trader.',                                            mult: 1.01,  check: () => Object.values(state.assets).some(a => a.hired) },
   { id: 'penny_pincher', icon: '&#128181;', name: 'Penny Pincher',       desc: 'Own 50 Penny Stock positions.',                                   mult: 1.05,  check: () => (state.assets.pnny?.owned || 0) >= 50 },
   { id: 'meme_lord',     icon: '&#128640;', name: 'Meme Lord',           desc: 'Own 25 Meme Coin positions.',                                     mult: 1.05,  check: () => (state.assets.meme?.owned || 0) >= 25 },
-  { id: 'diversified',   icon: '&#128202;', name: 'Diversified',         desc: 'Own at least 1 of every unlocked asset.',                         mult: 1.10,  check: () => ASSETS.filter(a => a.market !== 'london' || state.londonUnlocked).every(a => (state.assets[a.id]?.owned || 0) >= 1) },
+  { id: 'diversified',   icon: '&#128202;', name: 'Diversified',         desc: 'Own at least 1 of every unlocked asset.',                         mult: 1.10,  check: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked)).every(a => (state.assets[a.id]?.owned || 0) >= 1) },
   { id: 'first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1M lifetime (this run or any).',                            mult: 1.05,  check: () => (state.allTimeEarnings || 0) >= 1e6 },
   { id: 'wolf_st',       icon: '&#128054;', name: 'Wolf of Wall St',     desc: 'Earn $1B lifetime.',                                              mult: 1.10,  check: () => (state.allTimeEarnings || 0) >= 1e9 },
   { id: 'diamond_hands', icon: '&#128142;', name: 'Diamond Hands',       desc: 'Survive a meme coin rug pull.',                                   mult: 1.15,  check: () => (state.rugPullsExperienced || 0) >= 1 },
@@ -1696,7 +1723,7 @@ const NEWS_MAX = 30;
 const QUESTS = [
   { id: 'q_first_steps',   icon: '&#128181;', name: 'First Steps',         desc: 'Execute 10 trades.',                    target: () => 10,  progress: () => state.totalTrades || 0,                                                       reward: 5 },
   { id: 'q_buying_in',     icon: '&#128722;', name: 'Buying In',           desc: 'Own 25 positions across all assets.',   target: () => 25,  progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),             reward: 10 },
-  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every unlocked asset.',      target: () => ASSETS.filter(a => a.market !== 'london' || state.londonUnlocked).length, progress: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 25 },
+  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every unlocked asset.',      target: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked)).length, progress: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked) && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 25 },
   { id: 'q_crypto_curious',icon: '&#127852;', name: 'Crypto Curious',      desc: 'Own 5 Candy Crypto positions.',         target: () => 5,   progress: () => state.assets.dogz?.owned || 0,                                                reward: 10 },
   { id: 'q_first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1,000,000 lifetime.',             target: () => 1e6, progress: () => state.allTimeEarnings || 0,                                                   reward: 25 },
   { id: 'q_hedge_mgr',     icon: '&#128188;', name: 'Hedge Fund Manager',  desc: 'Hire 4 traders.',                       target: () => 4,   progress: () => Object.values(state.assets).filter(a => a.hired).length,                      reward: 25 },
@@ -2081,6 +2108,10 @@ let state = {
   gbp: 0,                   // London currency
   lifetimeGbp: 0,
   londonUnlocked: false,
+  // Black Market
+  lifetimeGold: 0,          // total gold earned from black market (never resets)
+  blackmktUnlocked: false,  // unlocks after sk_dark_terminal skill
+  influenceInvested: 0,     // repeatable influence sink; each +1 = +0.5% global payout (unlocked by sk_dynasty)
   // Chicago Pit
   pitCredits: 0,            // total earned (never resets)
   pitOrders: [],            // active tappable orders [{id, commodity, value, expiresAt}]
@@ -2109,6 +2140,12 @@ function activeMarketAssets() {
 
 // ============ HELPERS ============
 function fmt(n, currency) {
+  if (currency === 'gold') {
+    if (n < 0.01) return '~0g';
+    if (n < 10)   return n.toFixed(2) + 'g';
+    if (n < 1000) return n.toFixed(1) + 'g';
+    return fmtNum(Math.floor(n)) + 'g';
+  }
   const sym = currency === 'yen' ? '¥' : currency === 'gbp' ? '£' : '$';
   if (n < 1000) return sym + n.toFixed(2);
   const units = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
@@ -2116,20 +2153,23 @@ function fmt(n, currency) {
   while (n >= 1000 && i < units.length - 1) { n /= 1000; i++; }
   return sym + n.toFixed(2) + units[i];
 }
-// Per-asset currency helpers — Tokyo assets use yen, Wall Street uses cash.
+// Per-asset currency helpers — Tokyo uses yen, London uses gbp, Black Market uses gold.
 function currencyOf(asset) {
-  if (asset.market === 'tokyo') return 'yen';
-  if (asset.market === 'london') return 'gbp';
+  if (asset.market === 'tokyo')    return 'yen';
+  if (asset.market === 'london')   return 'gbp';
+  if (asset.market === 'blackmkt') return 'gold';
   return 'cash';
 }
 function getMoney(asset) {
-  if (asset.market === 'tokyo') return state.yen;
-  if (asset.market === 'london') return state.gbp || 0;
+  if (asset.market === 'tokyo')    return state.yen;
+  if (asset.market === 'london')   return state.gbp || 0;
+  if (asset.market === 'blackmkt') return state.gold || 0;
   return state.cash;
 }
 function spendMoney(asset, amt) {
-  if (asset.market === 'tokyo') state.yen -= amt;
-  else if (asset.market === 'london') state.gbp -= amt;
+  if (asset.market === 'tokyo')    state.yen -= amt;
+  else if (asset.market === 'london')   state.gbp -= amt;
+  else if (asset.market === 'blackmkt') state.gold = (state.gold || 0) - amt;
   else state.cash -= amt;
 }
 function earnMoney(asset, amt) {
@@ -2139,6 +2179,9 @@ function earnMoney(asset, amt) {
   } else if (asset.market === 'london') {
     state.gbp = (state.gbp || 0) + amt;
     state.lifetimeGbp = (state.lifetimeGbp || 0) + amt;
+  } else if (asset.market === 'blackmkt') {
+    state.gold = (state.gold || 0) + amt;
+    state.lifetimeGold = (state.lifetimeGold || 0) + amt;
   } else {
     state.cash += amt;
     state.lifetimeEarnings += amt;
@@ -2309,6 +2352,8 @@ function payoutOf(asset) {
   if (state.activeSqueeze && state.activeSqueeze.assetId === asset.id && Date.now() < state.activeSqueeze.until) {
     p *= SQUEEZE_MULT;
   }
+  // Dark Web Terminal skill — +20% on all Black Market assets
+  if (asset.market === 'blackmkt' && state.skillsOwned?.sk_dark_terminal) p *= 1.20;
   return p;
 }
 // Global multiplier — applies to BOTH markets. Premium managers without a .market property are global;
@@ -2336,7 +2381,12 @@ function globalMult() {
     const wideAssets = ASSETS.filter(a => (state.assets[a.id]?.owned || 0) >= 10).length;
     if (wideAssets >= 5) m *= 1.10;
   }
-  if (state.skillsOwned?.sk_legend) m *= 1.30;
+  if (state.skillsOwned?.sk_legend)    m *= 1.30;
+  if (state.skillsOwned?.sk_dynasty)   m *= 1.60;
+  if (state.skillsOwned?.sk_sentiment) m *= 1.40;
+  // Influence Investing — stacking +0.5% per investment (unlocked by sk_dynasty)
+  const invCount = state.influenceInvested || 0;
+  if (invCount > 0) m *= (1 + invCount * 0.005);
   // Pit Milestones — permanent global payout multipliers from credit thresholds
   PIT_MILESTONES.forEach(ms => { if (state.pitMilestonesReached?.[ms.credits]) m *= ms.mult; });
   return m;
@@ -2493,9 +2543,12 @@ function maybeFireEvent() {
   const senate = !!state.influenceShopOwned?.senate_connections;
   // The Kaiju: Tokyo events fire 50% more often (reduces cooldown + boosts roll chance)
   const kaiju = !!state.premiumOwned?.kaiju;
+  // Sentiment Engine skill: events fire 50% more often
+  const sentiment = !!state.skillsOwned?.sk_sentiment;
   let cooldown = senate ? 33 : 45;
   let rollChance = senate ? 0.0312 : 0.025;
-  if (kaiju) { cooldown = Math.round(cooldown * 0.67); rollChance *= 1.5; }
+  if (kaiju)     { cooldown = Math.round(cooldown * 0.67); rollChance *= 1.5; }
+  if (sentiment) { cooldown = Math.round(cooldown * 0.67); rollChance *= 1.5; }
   if (sinceLast < cooldown) return;
   if (Math.random() < rollChance) {
     fireEvent();
@@ -2952,13 +3005,62 @@ function buySkill(id) {
   state.influenceSpent = (state.influenceSpent || 0) + node.cost;
   if (!state.skillsOwned) state.skillsOwned = {};
   state.skillsOwned[id] = true;
+  // Dark Web Terminal — unlock the Black Market and give a gold starter bonus
+  if (id === 'sk_dark_terminal' && !state.blackmktUnlocked) {
+    state.blackmktUnlocked = true;
+    state.gold = (state.gold || 0) + 5;
+    state.lifetimeGold = (state.lifetimeGold || 0) + 5;
+    addNews('BLACK MARKET UNLOCKED', 'The Dark Web Terminal is active. +5g starter. Keep it quiet.', 'milestone');
+    celebrate('⚫ DARK MARKET OPEN', 'The terminal is live. +5 Gold to get started.');
+  }
   SFX.skill();
   toast(node.name + ' unlocked!');
   addNews('SKILL: ' + node.name, node.desc, 'milestone');
-  celebrate('SKILL UNLOCKED', node.name);
+  if (id !== 'sk_dark_terminal') celebrate('SKILL UNLOCKED', node.name); // BM already celebrated above
   renderCash();
   renderSkillTree();
   save();
+}
+
+// Influence Investing — repeatable sink (unlocked by sk_dynasty). Each investment costs 10k influence → +0.5% global payout.
+const INFLUENCE_INVEST_COST = 10000;
+function investInfluence() {
+  if (!state.skillsOwned?.sk_dynasty) { toast('Requires Dynasty Protocol skill.'); return; }
+  if ((state.influence || 0) < INFLUENCE_INVEST_COST) { toast('Need ' + fmtNum(INFLUENCE_INVEST_COST) + ' Influence to invest.'); return; }
+  state.influence -= INFLUENCE_INVEST_COST;
+  state.influenceSpent = (state.influenceSpent || 0) + INFLUENCE_INVEST_COST;
+  state.influenceInvested = (state.influenceInvested || 0) + 1;
+  const newBonus = state.influenceInvested * 0.5;
+  toast('Influence Invested! Total bonus: +' + newBonus.toFixed(1) + '% global payouts');
+  renderCash();
+  renderPrestigeModal();
+  save();
+}
+function renderPrestigeModal() {
+  const gain = prestigeGain();
+  const gainEl = document.getElementById('prestigeGain');
+  const btnEl  = document.getElementById('prestigeBtn');
+  const infEl  = document.getElementById('influenceCurrent');
+  if (gainEl) gainEl.textContent = '+' + fmtNum(gain) + ' Influence';
+  if (btnEl)  btnEl.disabled = gain === 0;
+  if (infEl)  infEl.textContent = fmtNum(state.influence);
+  const investSection = document.getElementById('influenceInvestSection');
+  if (investSection) {
+    const count = state.influenceInvested || 0;
+    const canInvest = state.skillsOwned?.sk_dynasty && (state.influence || 0) >= INFLUENCE_INVEST_COST;
+    investSection.style.display = state.skillsOwned?.sk_dynasty ? '' : 'none';
+    investSection.innerHTML = `
+      <div style="margin-top:12px;padding:12px;background:rgba(128,0,128,0.15);border:1px solid rgba(200,100,255,0.3);border-radius:10px;">
+        <div style="font-size:14px;color:#d88aff;margin-bottom:4px;">&#128081; Influence Investing</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:8px;">
+          Sink excess influence for permanent payout gains. Each investment: −${fmtNum(INFLUENCE_INVEST_COST)} influence → +0.5% all payouts (stacks forever).
+        </div>
+        <div style="font-size:12px;margin-bottom:8px;">Investments: <b style="color:#d88aff;">${count}</b> &nbsp;|&nbsp; Bonus: <b style="color:#2ecc71;">+${(count*0.5).toFixed(1)}%</b></div>
+        <button class="modal-btn" style="background:linear-gradient(180deg,#9b59b6,#6c3483);border-color:#4a235a;width:100%;" ${canInvest ? '' : 'disabled'} onclick="investInfluence()">
+          Invest ${fmtNum(INFLUENCE_INVEST_COST)} Influence → +0.5% Payouts
+        </button>
+      </div>`;
+  }
 }
 
 function renderSkillTree() {
@@ -3869,11 +3971,12 @@ function renderAll() {
 }
 function renderCash() {
   // Header shows the currency of the currently-viewed market
-  const isLondon = state.activeMarket === 'london';
-  const isTokyo  = state.activeMarket === 'tokyo';
-  const cur = isLondon ? 'gbp' : isTokyo ? 'yen' : 'cash';
-  const displayMoney = isLondon ? (state.gbp || 0) : isTokyo ? state.yen : state.cash;
-  const lifetime = isLondon ? (state.lifetimeGbp || 0) : isTokyo ? (state.lifetimeYen || 0) : state.lifetimeEarnings;
+  const isLondon  = state.activeMarket === 'london';
+  const isTokyo   = state.activeMarket === 'tokyo';
+  const isBlack   = state.activeMarket === 'blackmkt';
+  const cur = isLondon ? 'gbp' : isTokyo ? 'yen' : isBlack ? 'gold' : 'cash';
+  const displayMoney = isLondon ? (state.gbp || 0) : isTokyo ? state.yen : isBlack ? (state.gold || 0) : state.cash;
+  const lifetime = isLondon ? (state.lifetimeGbp || 0) : isTokyo ? (state.lifetimeYen || 0) : isBlack ? (state.lifetimeGold || 0) : state.lifetimeEarnings;
   document.getElementById('cash').textContent = fmt(displayMoney, cur);
   document.getElementById('incomeRate').textContent = fmt(totalIncomePerSec(), cur) + '/sec passive';
   // Show inactive market rates as a subtle secondary line
@@ -3891,6 +3994,10 @@ function renderCash() {
     if (state.londonUnlocked && state.activeMarket !== 'london') {
       let r = 0; ASSETS.forEach(a => { if (a.market==='london' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
       if (r > 0) parts.push('£' + fmt(r) + '/s');
+    }
+    if (state.blackmktUnlocked && state.activeMarket !== 'blackmkt') {
+      let r = 0; ASSETS.forEach(a => { if (a.market==='blackmkt' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
+      if (r > 0) parts.push(fmt(r, 'gold') + '/s');
     }
     otherRates.textContent = parts.length ? parts.join(' · ') : '';
   }
@@ -3910,9 +4017,10 @@ function renderCash() {
 
 // Switch the active market (Wall Street or Tokyo). Re-renders and saves.
 function switchMarket(market) {
-  if (!['wallst','tokyo','london'].includes(market)) return;
-  if (market === 'tokyo' && !state.tokyoUnlocked) { toast('Tokyo unlocks after your first IPO.'); return; }
-  if (market === 'london' && !state.londonUnlocked) { toast('London unlocks after the Chicago Pit challenge.'); return; }
+  if (!['wallst','tokyo','london','blackmkt'].includes(market)) return;
+  if (market === 'tokyo'    && !state.tokyoUnlocked)   { toast('Tokyo unlocks after your first IPO.'); return; }
+  if (market === 'london'   && !state.londonUnlocked)   { toast('London unlocks after the Chicago Pit challenge.'); return; }
+  if (market === 'blackmkt' && !state.blackmktUnlocked) { toast('Requires the Dark Web Terminal skill.'); return; }
   state.activeMarket = market;
   renderAll();
   save();
@@ -3943,6 +4051,7 @@ function renderAssets() {
       <button class="market-tab ${state.activeMarket === 'wallst' ? 'active' : ''}" onclick="switchMarket('wallst')">$ WALL ST</button>
       <button class="market-tab ${state.activeMarket === 'tokyo' ? 'active' : ''}" onclick="switchMarket('tokyo')">¥ TOKYO</button>
       ${state.londonUnlocked ? `<button class="market-tab ${state.activeMarket === 'london' ? 'active' : ''}" onclick="switchMarket('london')">£ LONDON</button>` : `<button class="market-tab locked-tab" title="Complete the Chicago Pit to unlock">🔒 LONDON</button>`}
+      ${state.blackmktUnlocked ? `<button class="market-tab blackmkt-tab ${state.activeMarket === 'blackmkt' ? 'active' : ''}" onclick="switchMarket('blackmkt')">⚫ DARK</button>` : (state.tokyoUnlocked ? `<button class="market-tab blackmkt-tab locked-tab" style="opacity:0.3;" title="Unlock via Dark Web Terminal skill">🔒 DARK</button>` : '')}
     `;
     list.appendChild(sw);
   }
@@ -4334,7 +4443,8 @@ function renderManagersTab() {
     const s = state.assets[a.id];
     const bio = MANAGER_BIOS[a.id];
     if (!bio) return;
-    if (a.market === 'london' && !state.londonUnlocked) return; // hide London until unlocked
+    if (a.market === 'london'   && !state.londonUnlocked)   return; // hide London until unlocked
+    if (a.market === 'blackmkt' && !state.blackmktUnlocked) return; // hide Black Market until unlocked
     const hired = !!s.hired;
     const owned = s.owned > 0;
     const isLondon = a.market === 'london';
@@ -4597,6 +4707,7 @@ function renderPrestige() {
   const ic = document.getElementById('influenceCurrent');
   if (ic) ic.textContent = fmtNum(state.influence || 0);
   renderInfluenceShop();
+  renderPrestigeModal(); // Influence Investing section
 }
 
 function renderInfluenceShop() {
@@ -4768,6 +4879,9 @@ function save() {
       gbp: state.gbp || 0,
       lifetimeGbp: state.lifetimeGbp || 0,
       londonUnlocked: !!state.londonUnlocked,
+      // Black Market
+      blackmktUnlocked: !!state.blackmktUnlocked,
+      influenceInvested: state.influenceInvested || 0,
       // Chicago
       pitCredits: state.pitCredits || 0,
       pitMilestonesReached: state.pitMilestonesReached || {},
@@ -4830,6 +4944,9 @@ function load() {
     state.gbp = data.gbp || 0;
     state.lifetimeGbp = data.lifetimeGbp || 0;
     state.londonUnlocked = !!data.londonUnlocked;
+    state.blackmktUnlocked = !!data.blackmktUnlocked;
+    state.influenceInvested = data.influenceInvested || 0;
+    if (state.activeMarket === 'blackmkt' && !state.blackmktUnlocked) state.activeMarket = 'wallst';
     if (state.activeMarket === 'london' && !state.londonUnlocked) state.activeMarket = 'wallst';
     if (state.activeMarket === 'tokyo'  && !state.tokyoUnlocked)  state.activeMarket = 'wallst';
     state.pitCredits = data.pitCredits || 0;
@@ -4854,26 +4971,30 @@ function load() {
     if (data.lastSavedAt) {
       const offlineSec = Math.min((Date.now() - data.lastSavedAt) / 1000, 4 * 3600);
       if (offlineSec > 30) {
-        let wallstRate = 0, tokyoRate = 0, londonRate = 0;
+        let wallstRate = 0, tokyoRate = 0, londonRate = 0, blackRate = 0;
         ASSETS.forEach(a => {
           const s = state.assets[a.id];
           if (!s || !s.hired || s.owned === 0) return;
           const rate = payoutOf(a) / timeOf(a);
-          if (a.market === 'tokyo')  tokyoRate  += rate;
-          else if (a.market === 'london') londonRate += rate;
+          if (a.market === 'tokyo')    tokyoRate  += rate;
+          else if (a.market === 'london')   londonRate += rate;
+          else if (a.market === 'blackmkt') blackRate  += rate;
           else wallstRate += rate;
         });
         const cashGain   = wallstRate * 0.5 * offlineSec;
         const yenGain    = tokyoRate  * 0.5 * offlineSec;
         const gbpGain    = londonRate * 0.5 * offlineSec;
+        const goldGain   = blackRate  * 0.5 * offlineSec;
         if (cashGain > 0) { state.cash += cashGain; state.lifetimeEarnings += cashGain; }
         if (yenGain  > 0) { state.yen = (state.yen || 0) + yenGain; state.lifetimeYen = (state.lifetimeYen || 0) + yenGain; }
         if (gbpGain  > 0) { state.gbp = (state.gbp || 0) + gbpGain; state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpGain; }
-        if (cashGain > 0 || yenGain > 0 || gbpGain > 0) {
+        if (goldGain > 0) { state.gold = (state.gold || 0) + goldGain; state.lifetimeGold = (state.lifetimeGold || 0) + goldGain; }
+        if (cashGain > 0 || yenGain > 0 || gbpGain > 0 || goldGain > 0) {
           const parts = [];
           if (cashGain > 0) parts.push(fmt(cashGain));
           if (yenGain  > 0) parts.push('¥' + fmt(yenGain));
           if (gbpGain  > 0) parts.push('£' + fmt(gbpGain));
+          if (goldGain > 0) parts.push(fmt(goldGain, 'gold'));
           setTimeout(() => toast('Offline earnings: ' + parts.join(' + ')), 700);
         }
       }
