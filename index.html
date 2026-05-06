@@ -1144,6 +1144,13 @@
     text-shadow: 0 1px 0 rgba(255,255,255,0.25);
   }
   .bb-btn.gold:active { box-shadow: 0 1px 0 #5a3f08; }
+  .bb-btn.gold.ipo-ready {
+    animation: ipoReadyPulse 1.4s ease-in-out infinite alternate;
+  }
+  @keyframes ipoReadyPulse {
+    from { box-shadow: 0 2px 0 #5a3f08, 0 0 4px #ffd700; }
+    to   { box-shadow: 0 2px 0 #5a3f08, 0 0 14px #ffd700, 0 0 24px rgba(255,215,0,0.45); }
+  }
 
   /* Modal */
   .modal-bg {
@@ -1350,6 +1357,7 @@
     </div>
     <div class="cash-display" id="cash">$0</div>
     <div class="income-rate" id="incomeRate">$0/sec passive income</div>
+    <div id="otherMarketRates" style="font-size:10px;color:rgba(255,255,255,0.35);text-align:center;margin-top:1px;min-height:14px;letter-spacing:0.02em;"></div>
     <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
       <div class="gold-chip" id="goldChip"><span class="gold-icon">&#129689;</span><span id="goldAmount">0</span> GOLD</div>
       <div class="gold-chip" id="megabucksChip" style="background:linear-gradient(180deg,#6a2a9a,#3d0a6a);border-color:#9b3dca;display:none;"><span class="gold-icon">&#128142;</span><span id="megabucksAmount">0</span> MB</div>
@@ -2140,6 +2148,15 @@ function earnMoney(asset, amt) {
 function fmtAsset(amt, asset) { return fmt(amt, currencyOf(asset)); }
 function fmtNum(n) {
   return Math.floor(n).toLocaleString();
+}
+// Format large multiplier values with K/M/B/T suffixes (e.g. 26783868 → "26.78M")
+function fmtMult(n) {
+  if (n >= 1e15) return (n / 1e15).toFixed(2) + 'Qd';
+  if (n >= 1e12) return (n / 1e12).toFixed(2) + 'T';
+  if (n >= 1e9)  return (n / 1e9).toFixed(2)  + 'B';
+  if (n >= 1e6)  return (n / 1e6).toFixed(2)  + 'M';
+  if (n >= 1e3)  return (n / 1e3).toFixed(2)  + 'K';
+  return n.toFixed(2);
 }
 // Format seconds into a compact countdown string matching AdVenture Capitalist style
 function fmtTimer(sec) {
@@ -3069,6 +3086,8 @@ function fillPitOrder(orderId) {
   const comboMult = _pitComboCount >= 3 ? 1.5 : 1;
   const earned = Math.round(order.value * comboMult);
   state.pitCredits = (state.pitCredits || 0) + earned;
+  // Pit taps are manual actions — count toward the Click Trader quest
+  state.manualTrades = (state.manualTrades || 0) + 1;
   checkPitMilestones();
   SFX.buy();
   if (state.londonUnlocked) {
@@ -3857,8 +3876,29 @@ function renderCash() {
   const lifetime = isLondon ? (state.lifetimeGbp || 0) : isTokyo ? (state.lifetimeYen || 0) : state.lifetimeEarnings;
   document.getElementById('cash').textContent = fmt(displayMoney, cur);
   document.getElementById('incomeRate').textContent = fmt(totalIncomePerSec(), cur) + '/sec passive';
+  // Show inactive market rates as a subtle secondary line
+  const otherRates = document.getElementById('otherMarketRates');
+  if (otherRates) {
+    const parts = [];
+    if (state.activeMarket !== 'wallst') {
+      let r = 0; ASSETS.forEach(a => { if ((a.market||'wallst')==='wallst' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
+      if (r > 0) parts.push('$' + fmt(r) + '/s');
+    }
+    if (state.tokyoUnlocked && state.activeMarket !== 'tokyo') {
+      let r = 0; ASSETS.forEach(a => { if (a.market==='tokyo' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
+      if (r > 0) parts.push('¥' + fmt(r) + '/s');
+    }
+    if (state.londonUnlocked && state.activeMarket !== 'london') {
+      let r = 0; ASSETS.forEach(a => { if (a.market==='london' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
+      if (r > 0) parts.push('£' + fmt(r) + '/s');
+    }
+    otherRates.textContent = parts.length ? parts.join(' · ') : '';
+  }
   document.getElementById('influence').textContent = fmtNum(state.influence);
-  document.getElementById('multiplier').textContent = marketMult(state.activeMarket).toFixed(2) + 'x';
+  document.getElementById('multiplier').textContent = fmtMult(marketMult(state.activeMarket)) + 'x';
+  // Pulse the IPO button when the player can currently earn influence from an IPO
+  const ipoBtn = document.querySelector('.bb-btn.gold');
+  if (ipoBtn) ipoBtn.classList.toggle('ipo-ready', prestigeGain() > 0);
   document.getElementById('lifetime').textContent = fmt(lifetime, cur);
   const g = document.getElementById('goldAmount'); if (g) g.textContent = fmtNum(state.gold || 0);
   const mb = state.megabucks || 0;
@@ -4527,7 +4567,7 @@ function renderStats() {
   html += `<div class="row"><span>Cash</span><span class="v">${fmt(state.cash)}</span></div>`;
   html += `<div class="row"><span>Lifetime Earnings (this run)</span><span class="v">${fmt(state.lifetimeEarnings)}</span></div>`;
   html += `<div class="row"><span>Influence Tokens</span><span class="v">${fmtNum(state.influence)}</span></div>`;
-  html += `<div class="row"><span>Global Multiplier</span><span class="v">${globalMult().toFixed(2)}x</span></div>`;
+  html += `<div class="row"><span>Global Multiplier</span><span class="v">${fmtMult(globalMult())}x</span></div>`;
   html += `<div class="row"><span>Passive Income</span><span class="v">${fmt(totalIncomePerSec())}/s</span></div>`;
   html += `<div class="row"><span>Next IPO Threshold</span><span class="v">${fmt(nextPrestigeAt())}</span></div>`;
   ASSETS.forEach(a => {
