@@ -64,7 +64,6 @@
     margin: 0 auto;
   }
 
-  .cartoon-font { font-family: 'Lilita One', 'Nunito', system-ui, sans-serif; font-weight: 400; }
 
   /* Main row: tab content + right tab strip */
   .main-row {
@@ -227,7 +226,6 @@
   .buy-btn.gold-btn:active:not(:disabled) {
     box-shadow: 0 1px 0 #5a3f08, inset 0 1px 0 rgba(255,255,255,0.3);
   }
-  .buy-btn.gold-btn .gold-cost-icon { color: #6a4f0a; }
 
   /* Unlocks list */
   .unlock-card {
@@ -583,22 +581,7 @@
   .options-lever-display.itm  { color: #2ecc71; animation: itmGlow 0.6s ease infinite alternate; }
   .options-lever-display.otm  { color: #e74c3c; }
   @keyframes itmGlow { from { text-shadow:0 0 10px #2ecc71; } to { text-shadow:0 0 30px #2ecc71, 0 0 60px #2ecc71; } }
-  .options-click-btn {
-    width: 100%; padding: 18px; font-size: 18px; font-weight: bold;
-    background: linear-gradient(180deg, #1a6a9a, #0a3a5a);
-    border: 2px solid #4af; border-radius: 10px;
-    color: #fff; cursor: pointer; letter-spacing: 0.05em;
-    box-shadow: 0 4px 0 #051020;
-    transition: transform 0.08s;
-    margin-top: 10px;
-  }
-  .options-click-btn:active { transform: scale(0.96); }
-  .options-click-btn.urgent { animation: optionUrgent 0.25s ease infinite alternate; }
-  @keyframes optionUrgent { from { background:linear-gradient(180deg,#1a6a9a,#0a3a5a); } to { background:linear-gradient(180deg,#9a1a1a,#5a0a0a); border-color:#f44; } }
-  .options-progress { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 8px 0; overflow: hidden; }
-  .options-progress-fill { height: 100%; background: linear-gradient(90deg, #1a6a9a, #4af); transition: width 0.1s; }
-  .options-sentiment { height: 12px; background: rgba(255,255,255,0.08); border-radius: 6px; margin: 8px 0; overflow: hidden; position: relative; }
-  .options-sentiment-fill { height: 100%; border-radius: 6px; transition: width 0.15s ease; }
+
   .options-direction-row { display:flex; gap:8px; margin:10px 0; }
   .options-call-btn, .options-put-btn {
     flex:1; padding:14px 8px; font-size:16px; font-weight:bold;
@@ -608,9 +591,7 @@
   .options-call-btn { background:linear-gradient(180deg,#0a4a1a,#061510); border-color:#2ecc71; color:#2ecc71; box-shadow:0 3px 0 #021008; }
   .options-put-btn  { background:linear-gradient(180deg,#4a0a0a,#150606); border-color:#e74c3c; color:#e74c3c; box-shadow:0 3px 0 #100202; }
   .options-call-btn:active, .options-put-btn:active { transform:scale(0.95); }
-  .options-result-panel { border-radius:10px; padding:18px; margin:8px 6px; text-align:center; }
-  .options-result-panel.itm { background:linear-gradient(180deg,#0a3a1a,#051510); border:2px solid #2ecc71; }
-  .options-result-panel.otm { background:linear-gradient(180deg,#2a0a0a,#150505); border:2px solid #e74c3c; }
+
 
   /* Crash Game */
   .crash-track {
@@ -3952,10 +3933,10 @@ function renderAssets() {
     const milestoneText = !unlocked
       ? ''
       : (next === null
-          ? `<div class="milestone-line"><span class="ms-current" style="${_multStyle}">x${_multStr}${_bonusTags} maxed${speedTag}</span></div>`
+          ? `<div class="milestone-line"><span id="mult-${asset.id}" class="ms-current" style="${_multStyle}">x${_multStr}${_bonusTags} maxed${speedTag}</span></div>`
           : `<div class="milestone-line">
                <span class="ms-progress">${s.owned}/${next} &rarr; +${MILESTONE_MULT}x${nextIsSpeed ? ' <span style="color:var(--blue);">+&#9889;</span>' : ''}</span>
-               ${hits > 0 ? `<span class="ms-current" style="${_multStyle}">x${_multStr}${_bonusTags}${speedTag}</span>` : ''}
+               ${hits > 0 ? `<span id="mult-${asset.id}" class="ms-current" style="${_multStyle}">x${_multStr}${_bonusTags}${speedTag}</span>` : ''}
              </div>`);
 
     // Owned-count display: show fraction toward next milestone if we haven't maxed
@@ -4059,6 +4040,37 @@ function renderProgressBars() {
         badge.textContent = '⚡ PUMPING! ' + remaining + 's';
       } else if (badge) {
         badge.remove();
+      }
+    }
+    // Live multiplier display — patch in place so no re-render needed
+    const multEl = document.getElementById('mult-' + a.id);
+    if (multEl && s.owned > 0) {
+      const hits = milestonesHit(s.owned);
+      if (hits > 0) {
+        const baseMult = Math.pow(MILESTONE_MULT, hits);
+        let liveMult = baseMult;
+        let bonusTags = '';
+        if (state.activeSqueeze?.assetId === a.id && now < (state.activeSqueeze?.until || 0)) {
+          liveMult *= SQUEEZE_MULT;
+          bonusTags += ' <span style="color:#ffd700;font-size:10px;vertical-align:middle;">⚡SQZ</span>';
+        }
+        if (state.optionsLeverage?.assetId === a.id && now < (state.optionsLeverage?.until || 0)) {
+          liveMult *= state.optionsLeverage.mult;
+          bonusTags += ' <span style="color:#4af;font-size:10px;vertical-align:middle;">🚀OPT</span>';
+        }
+        if (state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all')) {
+          liveMult *= state.activeEvent.mult;
+          bonusTags += state.activeEvent.bad
+            ? ' <span style="color:#f44;font-size:10px;vertical-align:middle;">📉EVT</span>'
+            : ' <span style="color:#2ecc71;font-size:10px;vertical-align:middle;">📈EVT</span>';
+        }
+        const multStr = liveMult >= 1000 ? (liveMult/1000).toFixed(1)+'K' : liveMult.toFixed(1);
+        const isMaxed = nextMilestone(s.owned) === null;
+        const newHTML = 'x' + multStr + bonusTags + (isMaxed ? ' maxed' : '');
+        if (multEl.innerHTML !== newHTML) {
+          multEl.innerHTML = newHTML;
+          multEl.style.color = bonusTags ? '#ffd700' : 'var(--gold)';
+        }
       }
     }
   });
