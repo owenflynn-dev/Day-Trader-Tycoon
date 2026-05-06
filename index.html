@@ -1578,10 +1578,13 @@ const ASSETS = [
   { id: 'l_palace',   ticker: '£REIT',  name: 'Royal Estate REIT',      icon: '&#127984;', baseCost: 3100000000,  basePayout: 2325000000,   baseTime: 60,  hireCost: 77500000000,  sector: 'l_property',  market: 'london' },
 
   // ── BLACK MARKET — currency: gold. Unlocks after London. Slow, expensive, but passively earns gold. ──
-  { id: 'bm_smug',   ticker: '&#9899;SMUG',  name: 'Contraband ETF',     icon: '&#129523;', baseCost: 3,    basePayout: 0.015, baseTime: 12,  hireCost: 15,   sector: 'bm_hustle', market: 'blackmkt' },
-  { id: 'bm_laund',  ticker: '&#9899;LAUND', name: 'Shell Corp Laundry', icon: '&#127968;', baseCost: 20,   basePayout: 0.08,  baseTime: 35,  hireCost: 80,   sector: 'bm_hustle', market: 'blackmkt' },
-  { id: 'bm_cartel', ticker: '&#9899;CRTL',  name: 'Algo Cartel',        icon: '&#129302;', baseCost: 120,  basePayout: 0.4,   baseTime: 90,  hireCost: 350,  sector: 'bm_ops',    market: 'blackmkt' },
-  { id: 'bm_ghost',  ticker: '&#9899;GHST',  name: 'Ghost Corporation',  icon: '&#128123;', baseCost: 750,  basePayout: 2.0,   baseTime: 300, hireCost: 1500, sector: 'bm_ops',    market: 'blackmkt' },
+  // === Black Market (⚫ Gold) — no managers, manual click only, very slow & scarce ===
+  { id: 'bm_smug',   ticker: '&#9899;SMUG',  name: 'Contraband ETF',     icon: '&#129523;', baseCost: 1,     basePayout: 0.10,  baseTime: 120,   sector: 'bm_hustle', market: 'blackmkt' },
+  { id: 'bm_laund',  ticker: '&#9899;LAUND', name: 'Shell Corp Laundry', icon: '&#127968;', baseCost: 8,     basePayout: 0.60,  baseTime: 600,   sector: 'bm_hustle', market: 'blackmkt' },
+  { id: 'bm_cartel', ticker: '&#9899;CRTL',  name: 'Algo Cartel',        icon: '&#129302;', baseCost: 60,    basePayout: 3.5,   baseTime: 1800,  sector: 'bm_ops',    market: 'blackmkt' },
+  { id: 'bm_ghost',  ticker: '&#9899;GHST',  name: 'Ghost Corporation',  icon: '&#128123;', baseCost: 400,   basePayout: 20,    baseTime: 3600,  sector: 'bm_ops',    market: 'blackmkt' },
+  { id: 'bm_pool',   ticker: '&#9899;POOL',  name: 'Dark Pool',          icon: '&#127756;', baseCost: 3000,  basePayout: 120,   baseTime: 14400, sector: 'bm_vault',  market: 'blackmkt' },
+  { id: 'bm_vault',  ticker: '&#9899;VALT',  name: 'Offshore Vault',     icon: '&#127963;', baseCost: 25000, basePayout: 800,   baseTime: 43200, sector: 'bm_vault',  market: 'blackmkt' },
 ];
 
 const COST_GROWTH = 1.12;  // each unit costs 12% more (rebalanced 2026-04-27 — extended ladder to 10 tiers does the heavy lifting; AdC uses 1.07)
@@ -1694,6 +1697,8 @@ const MANAGER_BIOS = {
   bm_laund:  { name: 'Madeleine Rinse',   role: 'Shell Corp Architect',      bio: '"Has seventeen companies named after her dog. Officially retired since 1994. Still billing by the hour."' },
   bm_cartel: { name: 'El Algo',           role: 'Cartel Systems Engineer',   bio: '"The algorithm has never been audited. The algorithm cannot be audited. The algorithm is fine."' },
   bm_ghost:  { name: 'Nobody',            role: 'Ghost Corp Director',       bio: '"No LinkedIn. No address. No record of employment. Sends very good quarterly reports. You have never met Nobody."' },
+  bm_pool:   { name: '???',              role: 'Dark Pool Operator',         bio: '"Identity classified. Communications encrypted. Operates in the liquidity void. Has never been wrong about a trade."' },
+  bm_vault:  { name: '[REDACTED]',       role: 'Offshore Vault Director',    bio: '"This profile has been removed at the request of twelve governments. Jurisdiction: unknown. Cleared.'  },
 };
 
 // Achievement unlocks — permanent multipliers, persist across IPO.
@@ -3888,7 +3893,10 @@ function tick() {
     const t = timeOf(a);
     s.progress += dt / t;
     if (s.progress >= 1) {
-      if (s.hired) {
+      // Black Market assets never auto-fire — manual click only, always wait at full bar
+      if (a.market === 'blackmkt') {
+        s.progress = 1;
+      } else if (s.hired) {
         // auto-execute, possibly multiple cycles per frame in extreme cases
         const cycles = Math.floor(s.progress);
         const gain = payoutOf(a) * cycles;
@@ -3996,8 +4004,9 @@ function renderCash() {
       if (r > 0) parts.push('£' + fmt(r) + '/s');
     }
     if (state.blackmktUnlocked && state.activeMarket !== 'blackmkt') {
-      let r = 0; ASSETS.forEach(a => { if (a.market==='blackmkt' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
-      if (r > 0) parts.push(fmt(r, 'gold') + '/s');
+      // BM has no passive income (manual only) — show current gold balance as a reminder
+      const goldBal = state.gold || 0;
+      if (goldBal > 0.01) parts.push(fmt(goldBal, 'gold') + ' ⚫');
     }
     otherRates.textContent = parts.length ? parts.join(' · ') : '';
   }
@@ -4177,12 +4186,14 @@ function renderAssets() {
           })()}
         </div>
         <div class="upgrades-row">
-          ${!s.hired ? `
+          ${asset.market === 'blackmkt'
+            ? `<div style="font-size:9px;color:rgba(180,60,60,0.7);font-weight:800;letter-spacing:0.5px;padding:2px 4px;">&#9888; NO TRADERS — MANUAL ONLY</div>`
+            : (!s.hired ? `
             <button class="upg-btn" ${canHire?'':'disabled'} onclick="hireTrader('${asset.id}')">
               <span class="upg-icon">&#128104;&#8205;&#128188;</span>
               <span>HIRE</span>
               <span class="upg-cost">${fmtAsset(hireCost, asset)}</span>
-            </button>` : ''}
+            </button>` : '')}
         </div>
       </div>
     `;
@@ -4445,6 +4456,7 @@ function renderManagersTab() {
     if (!bio) return;
     if (a.market === 'london'   && !state.londonUnlocked)   return; // hide London until unlocked
     if (a.market === 'blackmkt' && !state.blackmktUnlocked) return; // hide Black Market until unlocked
+    if (a.market === 'blackmkt') return; // no managers in the Black Market
     const hired = !!s.hired;
     const owned = s.owned > 0;
     const isLondon = a.market === 'london';
