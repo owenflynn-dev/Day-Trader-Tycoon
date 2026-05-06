@@ -2361,12 +2361,15 @@ function payoutOf(asset) {
   if (asset.market === 'blackmkt' && state.skillsOwned?.sk_dark_terminal) p *= 1.20;
   return p;
 }
-// Global multiplier — applies to BOTH markets. Premium managers without a .market property are global;
+// Global multiplier — applies to all markets. Premium managers without a .market property are global;
 // market-specific premium managers (Tokyo, etc.) are layered on in marketMult() instead.
-function globalMult() {
+// Pass market='blackmkt' to strip out influence-based bonuses (Black Market has its own scarce economy).
+function globalMult(market) {
+  const isBlackMkt = market === 'blackmkt';
   // +4% per banked Influence token (was +2%). Heaven's Lottery doubles to +8%.
+  // Black Market is immune — influence would make gold trivially cheap.
   const perInfluence = state.influenceShopOwned?.heavens_lottery ? 0.08 : 0.04;
-  let m = 1 + (state.influence * perInfluence);
+  let m = isBlackMkt ? 1 : 1 + (state.influence * perInfluence);
   BOOSTS.forEach(b => { if (state.boostsOwned[b.id]) m *= b.mult; });
   UNLOCKS.forEach(u => { if (state.unlocks[u.id]) m *= u.mult; });
   PREMIUM_MANAGERS.forEach(p => { if (!p.market && state.premiumOwned[p.id]) m *= (p.mult || 1); });
@@ -2390,7 +2393,8 @@ function globalMult() {
   if (state.skillsOwned?.sk_dynasty)   m *= 1.60;
   if (state.skillsOwned?.sk_sentiment) m *= 1.40;
   // Influence Investing — stacking +0.5% per investment (unlocked by sk_dynasty)
-  const invCount = state.influenceInvested || 0;
+  // Not applied to Black Market — influence-powered bonuses don't touch gold.
+  const invCount = isBlackMkt ? 0 : (state.influenceInvested || 0);
   if (invCount > 0) m *= (1 + invCount * 0.005);
   // Pit Milestones — permanent global payout multipliers from credit thresholds
   PIT_MILESTONES.forEach(ms => { if (state.pitMilestonesReached?.[ms.credits]) m *= ms.mult; });
@@ -2399,7 +2403,7 @@ function globalMult() {
 
 // Per-market multiplier — globalMult plus any market-specific premium managers.
 function marketMult(market) {
-  let m = globalMult();
+  let m = globalMult(market);
   PREMIUM_MANAGERS.forEach(p => {
     if (!state.premiumOwned[p.id]) return;
     if (p.market && p.market === market) m *= (p.mult || 1);
@@ -4165,7 +4169,7 @@ function renderAssets() {
           </button>
           <button class="buy-btn" style="flex:1;" ${(function(){const qty=state.buyQty||1;if(!unlocked)return 'disabled';const need=qty===0?costOf(asset):(costOf(asset));return money>=need?'':'disabled';})()}
             onclick="${state.buyQty===1?`buyAsset('${asset.id}')`:state.buyQty===0?`buyN('${asset.id}',0)`:(`buyN('${asset.id}',${state.buyQty})`)}">
-            <span class="label">${state.buyQty===0?'BUY MAX':`BUY x${state.buyQty||1}`}</span>
+            <span class="label">${(function(){if(state.buyQty!==0)return 'BUY x'+(state.buyQty||1);const n=maxBuyable(asset);return n>0?'BUY x'+n:'BUY MAX';})()}</span>
             <span class="price">${(function(){const qty=state.buyQty||1;if(qty===1)return fmtAsset(buyCost,asset);const can=maxBuyable(asset);if(can===0)return 'TOO COSTLY';const actual=Math.min(qty===0?100:qty,can);return fmtAsset((()=>{const a2=state.assets[asset.id];const orig=a2.owned;let tot=0;for(let i=0;i<actual;i++){a2.owned=orig+i;tot+=costOf(asset);}a2.owned=orig;return tot;})(),asset);})()}</span>
           </button>
           ${(function(){
