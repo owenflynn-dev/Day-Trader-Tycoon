@@ -3925,13 +3925,37 @@ function renderAssets() {
     const speedHits = speedFromMilestones(asset);
     const speedTag = speedHits > 0 ? ` &middot; <span style="color:var(--blue);">&#9889;${Math.pow(2, speedHits)}x</span>` : '';
     const nextIsSpeed = next !== null && SPEED_MILESTONES.includes(next);
+
+    // Live multiplier — milestone base × any active temporary bonuses
+    const _now = Date.now();
+    const _baseMsMult = hits > 0 ? Math.pow(MILESTONE_MULT, hits) : 0;
+    let _liveMult = _baseMsMult;
+    let _bonusTags = '';
+    if (state.activeSqueeze?.assetId === asset.id && _now < (state.activeSqueeze?.until || 0)) {
+      _liveMult *= SQUEEZE_MULT;
+      _bonusTags += ' <span style="color:#ffd700;font-size:10px;vertical-align:middle;">⚡SQZ</span>';
+    }
+    if (state.optionsLeverage?.assetId === asset.id && _now < (state.optionsLeverage?.until || 0)) {
+      _liveMult *= state.optionsLeverage.mult;
+      _bonusTags += ' <span style="color:#4af;font-size:10px;vertical-align:middle;">🚀OPT</span>';
+    }
+    if (state.activeEvent && state.activeEvent.bad && (state.activeEvent.sector === asset.sector || state.activeEvent.sector === 'all')) {
+      _liveMult *= state.activeEvent.mult;
+      _bonusTags += ' <span style="color:#f44;font-size:10px;vertical-align:middle;">📉EVT</span>';
+    } else if (state.activeEvent && !state.activeEvent.bad && (state.activeEvent.sector === asset.sector || state.activeEvent.sector === 'all')) {
+      _liveMult *= state.activeEvent.mult;
+      _bonusTags += ' <span style="color:#2ecc71;font-size:10px;vertical-align:middle;">📈EVT</span>';
+    }
+    const _multStr = _liveMult >= 1000 ? (_liveMult/1000).toFixed(1)+'K' : _liveMult.toFixed(1);
+    const _multStyle = _bonusTags ? 'color:#ffd700;' : 'color:var(--gold);';
+
     const milestoneText = !unlocked
       ? ''
       : (next === null
-          ? `<div class="milestone-line"><span class="ms-current">x${Math.pow(MILESTONE_MULT, hits).toFixed(1)} maxed${speedTag}</span></div>`
+          ? `<div class="milestone-line"><span class="ms-current" style="${_multStyle}">x${_multStr}${_bonusTags} maxed${speedTag}</span></div>`
           : `<div class="milestone-line">
                <span class="ms-progress">${s.owned}/${next} &rarr; +${MILESTONE_MULT}x${nextIsSpeed ? ' <span style="color:var(--blue);">+&#9889;</span>' : ''}</span>
-               ${hits > 0 ? `<span class="ms-current">x${Math.pow(MILESTONE_MULT, hits).toFixed(1)}${speedTag}</span>` : ''}
+               ${hits > 0 ? `<span class="ms-current" style="${_multStyle}">x${_multStr}${_bonusTags}${speedTag}</span>` : ''}
              </div>`);
 
     // Owned-count display: show fraction toward next milestone if we haven't maxed
