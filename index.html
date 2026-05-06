@@ -667,7 +667,7 @@
     background: linear-gradient(180deg, #3a0a0a, #150505);
     border: 2px solid #e74c3c; border-radius: 10px;
     padding: 20px; text-align: center; margin: 4px 0;
-    animation: crashShake 0.12s ease 4;
+    animation: crashShake 0.12s ease 3 forwards;
   }
   @keyframes crashShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
 
@@ -3410,8 +3410,9 @@ function boostCrash() {
 function cashOutCrash() {
   if (!state.optionsCrash || state.optionsCrash.result || !state.optionsCrash.direction) return;
   const mult = getCurrentCrashMult();
-  state.optionsCrash.result     = 'cashout';
-  state.optionsCrash.cashedMult = mult;
+  state.optionsCrash.result      = 'cashout';
+  state.optionsCrash.cashedMult  = mult;
+  state.optionsCrash.cashedOutAt = Date.now();
   stopCrashInterval();
   state.optionsLeverage = { assetId: state.optionsCrash.assetId, mult: parseFloat(mult.toFixed(2)), until: Date.now() + 3 * 60 * 1000 };
   state.optionsCooldownUntil = Date.now() + 5 * 60 * 1000;
@@ -3434,6 +3435,7 @@ function startCrashInterval() {
     if (mult >= c.crashAt) {
       c.result     = 'crashed';
       c.cashedMult = 0;
+      c.crashedAt  = Date.now();
       state.optionsCooldownUntil = Date.now() + 2 * 60 * 1000;
       stopCrashInterval();
       SFX.marketEvent(true);
@@ -3494,16 +3496,24 @@ function renderOptionsTab() {
       </div>`;
 
   } else if (crash && crash.result === 'cashout') {
-    const asset = ASSETS.find(a => a.id === crash.assetId);
-    html += `
-      <div class="crash-result-win">
-        <div style="font-size:44px;line-height:1.1;">\ud83d\ude80</div>
-        <div style="font-size:22px;font-weight:bold;color:#2ecc71;margin:6px 0;letter-spacing:0.05em;">CASHED OUT!</div>
-        <div class="options-lever-display itm">${crash.cashedMult.toFixed(2)}x</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:6px;">${asset?.ticker||crash.assetId} · ${crash.direction?.toUpperCase()}</div>
-        ${activeLev ? `<div style="font-size:12px;color:#2ecc71;margin-top:6px;">\u26a1 Leverage active · ${Math.max(0,Math.ceil((activeLev.until - Date.now())/1000))}s remaining</div>` : ''}
-        ${cooldown > 0 ? `<div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:4px;">\u23f3 Cooldown: ${cooldown}s</div>` : ''}
-      </div>`;
+    // Auto-return to picker after 5s
+    const cashReturnIn = 5 - Math.floor((Date.now() - (crash.cashedOutAt || Date.now())) / 1000);
+    if (cashReturnIn <= 0) {
+      state.optionsCrash = null;
+      // fall through — will render asset picker below
+    } else {
+      const asset = ASSETS.find(a => a.id === crash.assetId);
+      html += `
+        <div class="crash-result-win">
+          <div style="font-size:44px;line-height:1.1;">\ud83d\ude80</div>
+          <div style="font-size:22px;font-weight:bold;color:#2ecc71;margin:6px 0;letter-spacing:0.05em;">CASHED OUT!</div>
+          <div class="options-lever-display itm">${crash.cashedMult.toFixed(2)}x</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:6px;">${asset?.ticker||crash.assetId} · ${crash.direction?.toUpperCase()}</div>
+          ${activeLev ? `<div style="font-size:12px;color:#2ecc71;margin-top:6px;">\u26a1 Leverage active · ${Math.max(0,Math.ceil((activeLev.until - Date.now())/1000))}s remaining</div>` : ''}
+          <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">Returning to menu in <b style="color:#fff;">${cashReturnIn}s</b>…</div>
+        </div>`;
+    }
+    if (state.optionsCrash) { html += '</div>'; root.innerHTML = html; if (crash && crash.direction && !crash.result) startCrashInterval(); return; }
 
   } else if (crash && !crash.direction) {
     const asset = ASSETS.find(a => a.id === crash.assetId);
@@ -3720,7 +3730,8 @@ function tick() {
   }
   // Options: crash interval handles live game; only re-render for cooldown/result countdowns
   const _crashLive = state.optionsCrash && state.optionsCrash.direction && !state.optionsCrash.result;
-  if (state.activeTab === 'options' && !_crashLive && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderOptionsTab();
+  const _shaking   = state.optionsCrash?.result === 'crashed' && (Date.now() - (state.optionsCrash?.crashedAt || 0)) < 450;
+  if (state.activeTab === 'options' && !_crashLive && !_shaking && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderOptionsTab();
   if (state.activeTab === 'rivals'  && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderRivalsTab();
   // Pit arena: RAF animation handles bouncing; only refresh shell (credits/squeeze) every 2s
   if (state.activeTab === 'pit' && Math.floor(now / 2000) !== Math.floor((now - dt * 1000) / 2000)) updatePitShell();
