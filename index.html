@@ -2675,7 +2675,7 @@ function buyN(id, n) {
 function buyQtyToggle() {
   // cycle: 1 → 10 → 0(max)
   const cycle = [1, 10, 0];
-  const idx = cycle.indexOf(state.buyQty || 1);
+  const idx = cycle.indexOf(state.buyQty ?? 1);
   state.buyQty = cycle[(idx + 1) % cycle.length];
   renderAssets();
   save();
@@ -4050,11 +4050,22 @@ function renderAssets() {
             <span class="label">${state.buyQty===0?'BUY MAX':`BUY x${state.buyQty||1}`}</span>
             <span class="price">${(function(){const qty=state.buyQty||1;if(qty===1)return fmtAsset(buyCost,asset);const can=maxBuyable(asset);if(can===0)return 'TOO COSTLY';const actual=Math.min(qty===0?100:qty,can);return fmtAsset((()=>{const a2=state.assets[asset.id];const orig=a2.owned;let tot=0;for(let i=0;i<actual;i++){a2.owned=orig+i;tot+=costOf(asset);}a2.owned=orig;return tot;})(),asset);})()}</span>
           </button>
-          <button class="buy-btn alt" style="flex:0 0 52px;min-width:52px;font-size:9px;"
-            ${maxBuyable(asset)===0?'disabled':''} onclick="buyN('${asset.id}',0)">
-            <span class="label">MAX</span>
-            <span class="price">${maxBuyable(asset)===0?'—':'x'+maxBuyable(asset)}</span>
-          </button>
+          ${(function(){
+            const _next = nextMilestone(asset);
+            if (_next === null) return `<button class="buy-btn alt" style="flex:0 0 52px;min-width:52px;font-size:9px;" disabled><span class="label" style="font-size:8px;">MAXED</span><span class="price">&#10003;</span></button>`;
+            const _need = _next - s.owned;
+            // Cost to buy exactly _need more
+            const a2 = state.assets[asset.id];
+            const orig2 = a2.owned;
+            let _cost = 0;
+            try { for (let i=0;i<_need;i++){a2.owned=orig2+i;_cost+=costOf(asset);} } finally { a2.owned=orig2; }
+            const _canAfford = unlocked && money >= _cost;
+            return `<button class="buy-btn alt" style="flex:0 0 52px;min-width:52px;font-size:9px;${_canAfford?'border-color:#ffd700;':''}"
+              ${_canAfford?'':'disabled'} onclick="buyN('${asset.id}',${_need})">
+              <span class="label" style="font-size:8px;">NEXT</span>
+              <span class="price" style="font-size:9px;">x${_need}</span>
+            </button>`;
+          })()}
         </div>
         <div class="upgrades-row">
           ${!s.hired ? `
