@@ -3085,6 +3085,7 @@ function launchCommoditySqueeze(assetId) {
   addNews('SQUEEZE: ' + asset.ticker, '×2.5 payouts for 90s. Corner the market.', 'milestone');
   renderPitTab();
   renderCash();
+  buildTicker();
   save();
 }
 
@@ -3420,6 +3421,7 @@ function cashOutCrash() {
   SFX.milestone();
   celebrate('\ud83d\ude80 CASHED OUT!', (asset?.ticker || state.optionsCrash.assetId) + ' · ' + mult.toFixed(2) + 'x leverage for 3 min');
   addNews('OPTIONS CASHOUT', (asset?.ticker || '') + ' cashed at ' + mult.toFixed(2) + 'x · ' + (state.optionsCrash.direction?.toUpperCase() || '') + ' · leverage active 3 min', 'milestone');
+  buildTicker();
   renderOptionsTab();
   save();
 }
@@ -4489,13 +4491,47 @@ function renderInfluenceShop() {
 const TICKER_SYMBOLS = ['AAPL', 'TSLA', 'MSFT', 'NVDA', 'GME', 'AMC', 'CNDY', 'BTC', 'GOOG', 'META', 'AMZN', 'PNNY', 'YACT', 'SCAM', 'BAGZ', 'MEME', 'PEPE', 'TENDIES'];
 function buildTicker() {
   const t = document.getElementById('ticker');
+  if (!t) return;
+  const now = Date.now();
+  const entries = [];
+
+  // Owned assets — show real live multiplier including all active bonuses
+  ASSETS.forEach(a => {
+    const aState = state.assets[a.id];
+    if (!aState || (aState.owned || 0) === 0) return;
+
+    // Effective per-unit multiplier = total payout / (base * owned)
+    const effMult = payoutOf(a) / (a.basePayout * aState.owned);
+
+    const hasSqueeze = state.activeSqueeze?.assetId === a.id && now < (state.activeSqueeze?.until || 0);
+    const hasOptions = state.optionsLeverage?.assetId === a.id && now < (state.optionsLeverage?.until || 0);
+    const badEvent   = state.activeEvent && state.activeEvent.bad &&
+                       (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all');
+
+    const arrow = badEvent ? '▼' : '▲';
+    const cls   = badEvent ? 'down' : 'up';
+
+    let extras = '';
+    if (hasSqueeze) extras += ' <span style="color:#ffd700;font-size:0.85em;">⚡SQZ</span>';
+    if (hasOptions) extras += ' <span style="color:#4af;font-size:0.85em;">🚀OPT</span>';
+
+    entries.push(`${a.ticker} ${arrow} <span class="${cls}">${effMult >= 1000 ? (effMult/1000).toFixed(1)+'Kx' : effMult.toFixed(1)+'x'}</span>${extras}`);
+  });
+
+  // Pad with decorative filler so the tape always looks full
+  const filler = [];
+  for (let i = 0; i < Math.max(8, 20 - entries.length); i++) {
+    const s = TICKER_SYMBOLS[Math.floor(Math.random() * TICKER_SYMBOLS.length)];
+    const ch = (Math.random() * 12 - 6);
+    const cls = ch >= 0 ? 'up' : 'down';
+    filler.push(`${s} ${ch >= 0 ? '▲' : '▼'} <span class="${cls}">${ch >= 0 ? '+' : ''}${ch.toFixed(2)}%</span>`);
+  }
+
+  // Interleave: real asset entries first, then filler, repeated for continuous scroll
+  const all = [...entries, ...filler];
   let html = '';
-  for (let i = 0; i < 30; i++) {
-    const s = TICKER_SYMBOLS[Math.floor(Math.random()*TICKER_SYMBOLS.length)];
-    const change = (Math.random() * 12 - 6);
-    const cls = change >= 0 ? 'up' : 'down';
-    const arrow = change >= 0 ? '▲' : '▼';
-    html += `${s} ${arrow} <span class="${cls}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</span> &nbsp; &middot; &nbsp; `;
+  for (let rep = 0; rep < 3; rep++) {
+    all.forEach(e => { html += e + ' &nbsp;&middot;&nbsp; '; });
   }
   t.innerHTML = html;
 }
@@ -4749,7 +4785,7 @@ function hardReset() {
 // ============ BOOT ============
 function boot() {
   buildTicker();
-  setInterval(buildTicker, 40000);
+  setInterval(buildTicker, 3000);  // fast enough to catch squeeze/options bonuses
   const had = load();
   if (!had) openModal('welcomeModal');
   renderAll();
