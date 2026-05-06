@@ -849,6 +849,14 @@
     background: linear-gradient(90deg, var(--gold), #f8d860);
     transition: width 0.3s;
   }
+  .asset-mini-fill.near-milestone {
+    background: linear-gradient(90deg, #ffd700, #fff07a);
+    animation: nearMilestone 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes nearMilestone {
+    from { box-shadow: 0 0 2px #ffd700; }
+    to   { box-shadow: 0 0 8px #ffd700, 0 0 14px rgba(255,215,0,0.6); }
+  }
   .milestone-line {
     display: flex;
     justify-content: space-between;
@@ -2053,6 +2061,7 @@ let state = {
   newsLog: [],     // [{ts, headline, detail, kind: 'good'|'bad'|'rug'|'milestone'}]
   rugPullsExperienced: 0, // lifetime — capped at MAX_RUG_PULLS
   activeTab: 'home',
+  buyQty: 1,           // buy quantity: 1, 10, or 0 (=max)
   hasUnseenUnlock: false,
   hasUnseenNews: false,
   lastTick: Date.now(),
@@ -2362,6 +2371,12 @@ function checkUnlocks() {
       }
     }
   });
+  // Quest completion notification — light up GOALS tab when a quest becomes claimable
+  const anyQuestReady = QUESTS.some(q => !state.questsClaimed[q.id] && q.progress() >= q.target());
+  const goalsBtn = document.querySelector('.tab-btn[data-tab="unlocks"]');
+  if (goalsBtn && anyQuestReady && state.activeTab !== 'unlocks') {
+    goalsBtn.classList.add('has-news');
+  }
   if (any) { renderCash(); save(); }
 }
 
@@ -2621,6 +2636,32 @@ function executeTrade(id, evt) {
   SFX.trade(ASSETS.indexOf(asset));
   spawnFloat(evt, gain, currencyOf(asset));
   renderCash();
+}
+
+
+function buyN(id, n) {
+  // n=0 means buy max (up to 100). n>0 means buy exactly n if affordable.
+  const asset = ASSETS.find(a => a.id === id);
+  const before = state.assets[id].owned;
+  const limit = (n === 0) ? 100 : n;
+  let bought = 0;
+  while (getMoney(asset) >= costOf(asset) && bought < limit) {
+    spendMoney(asset, costOf(asset));
+    state.assets[id].owned++;
+    bought++;
+  }
+  if (bought === 0) toast('Not enough ' + (currencyOf(asset) === 'yen' ? '¥' : currencyOf(asset) === 'gbp' ? '£' : '$') + '.');
+  else { SFX.buy(); checkMilestoneCross(asset, before, state.assets[id].owned); }
+  renderAll();
+  save();
+}
+function buyQtyToggle() {
+  // cycle: 1 → 10 → 0(max)
+  const cycle = [1, 10, 0];
+  const idx = cycle.indexOf(state.buyQty || 1);
+  state.buyQty = cycle[(idx + 1) % cycle.length];
+  renderAssets();
+  save();
 }
 
 // Whistleblower active ability — once per IPO cycle, trigger a guaranteed bull event
@@ -3788,14 +3829,14 @@ function refreshButtonStates() {
     btns.forEach(btn => {
       const onclick = btn.getAttribute('onclick') || '';
       if (onclick.startsWith('buyAsset')) {
-        btn.disabled = !(state.cash >= costOf(asset) && unlocked);
+        btn.disabled = !(getMoney(asset) >= costOf(asset) && unlocked);
       } else if (onclick.startsWith('buyMax')) {
         const n = maxBuyable(asset);
         btn.disabled = n === 0;
         const priceEl = btn.querySelector('.price');
         if (priceEl) priceEl.textContent = 'x' + n;
       } else if (onclick.startsWith('hireTrader')) {
-        btn.disabled = !(state.cash >= asset.hireCost && !s.hired && s.owned > 0);
+        btn.disabled = !(getMoney(asset) >= asset.hireCost && !s.hired && s.owned > 0);
       }
     });
   });
@@ -3873,7 +3914,7 @@ function renderAssets() {
     const s = state.assets[asset.id];
     // Unlock the next asset when previous has at least 1 owned
     const unlocked = idx === 0 || state.assets[marketAssets[idx-1].id].owned >= 1;
-    const visible = unlocked || (idx > 0 && state.cash >= costOf(asset) * 0.5) || s.owned > 0;
+    const visible = unlocked || (idx > 0 && getMoney(asset) >= costOf(asset) * 0.5) || s.owned > 0;
     if (!visible && !prevUnlocked) return;
     const div = document.createElement('div');
     div.className = 'asset' + (unlocked ? '' : ' locked');
@@ -3939,10 +3980,7 @@ function renderAssets() {
                ${hits > 0 ? `<span id="mult-${asset.id}" class="ms-current" style="${_multStyle}">x${_multStr}${_bonusTags}${speedTag}</span>` : ''}
              </div>`);
 
-    // Owned-count display: show fraction toward next milestone if we haven't maxed
-    const countDisplay = next === null
-      ? fmtNum(s.owned)
-      : fmtNum(s.owned);
+    const countDisplay = fmtNum(s.owned);
 
     div.innerHTML = `
       <div class="asset-icon-col">
@@ -3963,13 +4001,19 @@ function renderAssets() {
         </div>
         ${milestoneText}
         <div class="buy-row">
-          <button class="buy-btn" ${canBuy?'':'disabled'} onclick="buyAsset('${asset.id}')">
-            <span class="label">BUY x1</span>
-            <span class="price">${fmtAsset(buyCost, asset)}</span>
+          <button class="buy-btn qty-toggle" onclick="buyQtyToggle()" style="flex:0 0 44px;min-width:44px;background:linear-gradient(180deg,#2c3d66,#131a2b);border-color:#2c3d66;font-size:10px;padding:4px 2px;">
+            <span class="label" style="font-size:7px;opacity:0.7;">QTY</span>
+            <span class="price" style="font-size:14px;">${state.buyQty===0?'MAX':('x'+(state.buyQty||1))}</span>
           </button>
-          <button class="buy-btn alt" ${maxBuyable(asset) === 0 ? 'disabled' : ''} onclick="buyMax('${asset.id}')">
-            <span class="label">BUY MAX</span>
-            <span class="price">x${maxBuyable(asset)}</span>
+          <button class="buy-btn" style="flex:1;" ${(function(){const qty=state.buyQty||1;if(!unlocked)return 'disabled';const need=qty===0?costOf(asset):(costOf(asset));return money>=need?'':'disabled';})()}
+            onclick="${state.buyQty===1?`buyAsset('${asset.id}')`:state.buyQty===0?`buyN('${asset.id}',0)`:(`buyN('${asset.id}',${state.buyQty})`)}">
+            <span class="label">${state.buyQty===0?'BUY MAX':`BUY x${state.buyQty||1}`}</span>
+            <span class="price">${(function(){const qty=state.buyQty||1;if(qty===1)return fmtAsset(buyCost,asset);const can=maxBuyable(asset);if(can===0)return 'TOO COSTLY';const actual=Math.min(qty===0?100:qty,can);return fmtAsset((()=>{const a2=state.assets[asset.id];const orig=a2.owned;let tot=0;for(let i=0;i<actual;i++){a2.owned=orig+i;tot+=costOf(asset);}a2.owned=orig;return tot;})(),asset);})()}</span>
+          </button>
+          <button class="buy-btn alt" style="flex:0 0 52px;min-width:52px;font-size:9px;"
+            ${maxBuyable(asset)===0?'disabled':''} onclick="buyN('${asset.id}',0)">
+            <span class="label">MAX</span>
+            <span class="price">${maxBuyable(asset)===0?'—':'x'+maxBuyable(asset)}</span>
           </button>
         </div>
         <div class="upgrades-row">
@@ -4065,13 +4109,19 @@ function renderProgressBars() {
             : ' <span style="color:#2ecc71;font-size:10px;vertical-align:middle;">📈EVT</span>';
         }
         const multStr = liveMult >= 1000 ? (liveMult/1000).toFixed(1)+'K' : liveMult.toFixed(1);
-        const isMaxed = nextMilestone(s.owned) === null;
+        const isMaxed = nextMilestone(a) === null;
         const newHTML = 'x' + multStr + bonusTags + (isMaxed ? ' maxed' : '');
         if (multEl.innerHTML !== newHTML) {
           multEl.innerHTML = newHTML;
           multEl.style.color = bonusTags ? '#ffd700' : 'var(--gold)';
         }
       }
+    }
+    // Milestone proximity glow — mini-bar pulses gold when within 5 of the next milestone
+    const miniBar = card?.querySelector('.asset-mini-fill');
+    if (miniBar && s.owned > 0) {
+      const nextMs = nextMilestone(a);
+      miniBar.classList.toggle('near-milestone', nextMs !== null && (nextMs - s.owned) <= 5);
     }
   });
 }
