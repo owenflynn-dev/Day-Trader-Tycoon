@@ -946,6 +946,29 @@
     background: linear-gradient(180deg, #ff6b5a 0%, #e74c3c 50%, #a83025 100%);
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.25);
   }
+  /* Fast-stream mode — for auto-hired assets cycling faster than ~0.35s.
+     Shows 100% full bar with a slow scrolling shimmer so motion is visible
+     without the backward-jump flicker that hits fast cycles. */
+  @keyframes barStream {
+    from { background-position: 200% center; }
+    to   { background-position: -200% center; }
+  }
+  .income-fill.fast-stream {
+    width: 100% !important;
+    background: linear-gradient(90deg, #3a821f 0%, #7ed750 35%, #aaef70 50%, #7ed750 65%, #3a821f 100%);
+    background-size: 300% 100%;
+    animation: barStream 0.9s linear infinite;
+  }
+  .income-fill.fast-stream.boosted {
+    background: linear-gradient(90deg, #b08010 0%, #f8d860 35%, #ffe898 50%, #f8d860 65%, #b08010 100%);
+    background-size: 300% 100%;
+    animation: barStream 0.9s linear infinite;
+  }
+  .income-fill.fast-stream.crashed {
+    background: linear-gradient(90deg, #8a2020 0%, #e74c3c 35%, #ff8877 50%, #e74c3c 65%, #8a2020 100%);
+    background-size: 300% 100%;
+    animation: barStream 0.9s linear infinite;
+  }
   /* ── Skill Tree ── */
   .skill-tree { display: flex; gap: 8px; padding: 8px 10px; }
   .skill-branch { flex: 1; display: flex; flex-direction: column; gap: 0; }
@@ -3554,6 +3577,7 @@ function buyMegaTicket(id) {
 
 // Leverage v2 — tiered consumables.
 function buyLeverage(id) {
+  if (!(state.totalIPOs >= 1)) { toast('Leverage unlocks after your first IPO.'); return; }
   const t = LEVERAGE_TIERS.find(x => x.id === id);
   if (!t) return;
   if ((state.gold || 0) < t.goldCost) { toast('Not enough gold.'); return; }
@@ -3566,6 +3590,7 @@ function buyLeverage(id) {
   save();
 }
 function activateLeverage(id) {
+  if (!(state.totalIPOs >= 1)) { toast('Leverage unlocks after your first IPO.'); return; }
   const t = LEVERAGE_TIERS.find(x => x.id === id);
   if (!t) return;
   if (state.activeLeverage && Date.now() < state.activeLeverage.until) {
@@ -3603,6 +3628,7 @@ function maybeGrantLeverageStarter() {
 }
 
 function useTimeWarp(id) {
+  if (!(state.totalIPOs >= 1)) { toast('Time Warps unlock after your first IPO.'); return; }
   const w = TIME_WARPS.find(x => x.id === id);
   if (!w) return;
   if ((state.gold || 0) < w.goldCost) { toast('Not enough gold.'); return; }
@@ -4974,6 +5000,10 @@ function renderAssets() {
   });
 }
 
+// Threshold below which auto-hired bars switch to fast-stream CSS animation
+// instead of animating actual progress (avoids backward-jump flicker at high speeds)
+const FAST_STREAM_THRESHOLD = 0.35; // seconds
+
 function renderProgressBars() {
   const now = Date.now();
   // Predict progress forward from the last game-logic tick so bars move at 60fps
@@ -4982,11 +5012,19 @@ function renderProgressBars() {
     const s = state.assets[a.id];
     const fill = document.getElementById('prog-' + a.id);
     if (!fill) return;
+    const cycleTime = timeOf(a);
+    // Fast-stream mode: hired asset cycling faster than threshold — show a
+    // continuous scrolling shimmer instead of real progress (prevents flicker)
+    const isFastStream = s.owned > 0 && s.hired && cycleTime < FAST_STREAM_THRESHOLD;
+    fill.classList.toggle('fast-stream', isFastStream);
     let displayProg = s.progress;
-    if (s.owned > 0 && s.progress < 1) {
-      displayProg = Math.min(1, s.progress + dtSinceTick / timeOf(a));
+    if (!isFastStream) {
+      if (s.owned > 0 && s.progress < 1) {
+        displayProg = Math.min(1, s.progress + dtSinceTick / cycleTime);
+      }
+      fill.style.width = (displayProg * 100) + '%';
     }
-    fill.style.width = (displayProg * 100) + '%';
+    // Note: fast-stream bars use CSS width:100%!important — no JS width needed
     fill.classList.toggle('boosted', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && !state.activeEvent.bad));
     fill.classList.toggle('crashed', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && state.activeEvent.bad));
     // Quantum Execution perk: electric blue bars (overridden by boosted/crashed event states)
@@ -5414,58 +5452,74 @@ function renderPerksTab() {
     }
   }
 
-  // Leverage tiers — buy + activate
+  // Leverage tiers — buy + activate (locked until first IPO)
   const lvroot = document.getElementById('leverageList');
   if (lvroot) {
-    let html = '';
-    LEVERAGE_TIERS.forEach(t => {
-      const owned = (state.leverageInventory?.[t.id] || 0);
-      const canAfford = (state.gold || 0) >= t.goldCost;
-      const isActive = !!(state.activeLeverage && Date.now() < state.activeLeverage.until);
-      html += `
-        <div class="perk-card">
-          <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${t.icon}</div>
-          <div>
-            <div class="perk-name">${t.name} <span style="color:var(--gold);">&times;${owned}</span></div>
-            <div class="perk-desc">${t.mult}x all income for ${t.minutes} min</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <button class="buy-btn" ${(owned > 0 && !isActive) ? '' : 'disabled'} onclick="activateLeverage('${t.id}')">
-              <span class="label">USE</span>
-              <span class="price">x${t.mult}</span>
-            </button>
-            <button class="buy-btn gold-btn" ${canAfford ? '' : 'disabled'} onclick="buyLeverage('${t.id}')" style="font-size:9px;padding:3px 6px;min-height:24px;">
-              <span class="label" style="font-size:8px;">BUY</span>
-              <span class="price" style="font-size:10px;">${t.goldCost}&#129689;</span>
-            </button>
-          </div>
-        </div>`;
-    });
-    lvroot.innerHTML = html;
+    const ipoLocked = !(state.totalIPOs >= 1);
+    if (ipoLocked) {
+      lvroot.innerHTML = `<div style="text-align:center;padding:16px 12px;color:rgba(255,255,255,0.4);font-size:13px;">
+        🔒 <b style="color:rgba(255,255,255,0.6);">Leverage unlocks after your first IPO</b><br>
+        <span style="font-size:11px;">Take your firm public to access multipliers.</span>
+      </div>`;
+    } else {
+      let html = '';
+      LEVERAGE_TIERS.forEach(t => {
+        const owned = (state.leverageInventory?.[t.id] || 0);
+        const canAfford = (state.gold || 0) >= t.goldCost;
+        const isActive = !!(state.activeLeverage && Date.now() < state.activeLeverage.until);
+        html += `
+          <div class="perk-card">
+            <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${t.icon}</div>
+            <div>
+              <div class="perk-name">${t.name} <span style="color:var(--gold);">&times;${owned}</span></div>
+              <div class="perk-desc">${t.mult}x all income for ${t.minutes} min</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <button class="buy-btn" ${(owned > 0 && !isActive) ? '' : 'disabled'} onclick="activateLeverage('${t.id}')">
+                <span class="label">USE</span>
+                <span class="price">x${t.mult}</span>
+              </button>
+              <button class="buy-btn gold-btn" ${canAfford ? '' : 'disabled'} onclick="buyLeverage('${t.id}')" style="font-size:9px;padding:3px 6px;min-height:24px;">
+                <span class="label" style="font-size:8px;">BUY</span>
+                <span class="price" style="font-size:10px;">${t.goldCost}&#129689;</span>
+              </button>
+            </div>
+          </div>`;
+      });
+      lvroot.innerHTML = html;
+    }
   }
 
-  // Time Warps
+  // Time Warps (locked until first IPO)
   const twroot = document.getElementById('timeWarpsList');
   if (twroot) {
-    const rate = totalIncomePerSec();
-    let html = '';
-    TIME_WARPS.forEach(w => {
-      const can = (state.gold || 0) >= w.goldCost && rate > 0;
-      const projected = rate * w.hours * 3600;
-      html += `
-        <div class="perk-card">
-          <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${w.icon}</div>
-          <div>
-            <div class="perk-name">${w.name}</div>
-            <div class="perk-desc">Instant: <b style="color:var(--green);">${fmt(projected)}</b> at current rate</div>
-          </div>
-          <button class="buy-btn gold-btn" ${can ? '' : 'disabled'} onclick="useTimeWarp('${w.id}')">
-            <span class="label">USE</span>
-            <span class="price">${w.goldCost}&#129689;</span>
-          </button>
-        </div>`;
-    });
-    twroot.innerHTML = html;
+    const ipoLocked = !(state.totalIPOs >= 1);
+    if (ipoLocked) {
+      twroot.innerHTML = `<div style="text-align:center;padding:16px 12px;color:rgba(255,255,255,0.4);font-size:13px;">
+        🔒 <b style="color:rgba(255,255,255,0.6);">Time Warps unlock after your first IPO</b><br>
+        <span style="font-size:11px;">Take your firm public to skip ahead in time.</span>
+      </div>`;
+    } else {
+      const rate = totalIncomePerSec();
+      let html = '';
+      TIME_WARPS.forEach(w => {
+        const can = (state.gold || 0) >= w.goldCost && rate > 0;
+        const projected = rate * w.hours * 3600;
+        html += `
+          <div class="perk-card">
+            <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${w.icon}</div>
+            <div>
+              <div class="perk-name">${w.name}</div>
+              <div class="perk-desc">Instant: <b style="color:var(--green);">${fmt(projected)}</b> at current rate</div>
+            </div>
+            <button class="buy-btn gold-btn" ${can ? '' : 'disabled'} onclick="useTimeWarp('${w.id}')">
+              <span class="label">USE</span>
+              <span class="price">${w.goldCost}&#129689;</span>
+            </button>
+          </div>`;
+      });
+      twroot.innerHTML = html;
+    }
   }
 }
 
