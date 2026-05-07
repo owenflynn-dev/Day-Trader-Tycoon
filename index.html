@@ -1238,6 +1238,140 @@
   }
   .modal-btn.secondary:active { box-shadow: 0 1px 0 rgba(0,0,0,0.5); }
 
+  /* ── Welcome Back modal ── */
+  .wb-earnings-box {
+    background: var(--panel-dark);
+    border: 3px solid rgba(243,199,75,0.3);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    text-align: center;
+  }
+  .wb-earnings-total {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 30px;
+    color: var(--gold);
+    text-shadow: 0 2px 0 rgba(0,0,0,0.5);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .wb-earnings-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 800;
+  }
+  .wb-market-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 800;
+    padding: 3px 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    margin-top: 6px;
+  }
+  .wb-market-row .val { color: var(--green); }
+
+  /* ── Rewarded Ad simulation overlay ── */
+  #adSimOverlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 600;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  #adSimOverlay.show { display: flex; }
+  .ad-sim-box {
+    border: 3px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 24px 32px;
+    text-align: center;
+    background: rgba(255,255,255,0.04);
+    width: 80%;
+    max-width: 300px;
+  }
+  .ad-sim-icon { font-size: 48px; margin-bottom: 8px; }
+  .ad-sim-title { font-family: 'Lilita One', sans-serif; font-size: 16px; color: var(--text-dim); margin-bottom: 4px; }
+  .ad-sim-countdown { font-family: 'Lilita One', sans-serif; font-size: 36px; color: var(--text); }
+  .ad-sim-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 12px; overflow: hidden; }
+  .ad-sim-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #f8d860); transition: width 1s linear; }
+  .ad-skip-btn { font-size: 11px; color: rgba(255,255,255,0.3); background: none; border: none; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 8px; }
+
+  /* ── Income doubler chip (2× active timer) ── */
+  .income-doubler-chip {
+    display: none;
+    background: linear-gradient(180deg, #9b3dca, #6a1a8a);
+    border: 2px solid #6a1a8a;
+    border-radius: 10px;
+    padding: 3px 8px;
+    font-size: 9px;
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: default;
+    animation: doublerPulse 2s ease-in-out infinite;
+  }
+  .income-doubler-chip.active { display: inline-block; }
+  @keyframes doublerPulse { 0%,100% { box-shadow: 0 0 4px #9b3dca; } 50% { box-shadow: 0 0 10px #d49aff; } }
+
+  /* ── Daily quests section ── */
+  .daily-quest-card {
+    margin: 6px 12px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, #1a2545, #111c38);
+    border: 3px solid rgba(74,144,226,0.3);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .daily-quest-card.dq-claimed { opacity: 0.5; border-color: rgba(46,204,113,0.3); background: linear-gradient(180deg, #0d2215, #081810); }
+  .daily-quest-card.dq-complete { border-color: var(--gold); background: linear-gradient(180deg, #2a1f05, #1a1300); }
+  .dq-icon { font-size: 22px; text-align: center; }
+  .dq-name { font-family: 'Lilita One', sans-serif; font-size: 13px; color: var(--text); }
+  .dq-desc { font-size: 10px; color: var(--text-dim); font-weight: 700; line-height: 1.3; margin-top: 1px; }
+  .dq-bar { height: 4px; background: var(--panel-dark); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+  .dq-bar-fill { height: 100%; background: linear-gradient(90deg, var(--blue), #6ab1f5); transition: width 0.4s; }
+  .daily-quest-card.dq-complete .dq-bar-fill { background: linear-gradient(90deg, var(--gold), #f8d860); }
+  .dq-prog-text { font-size: 10px; color: var(--text-dim); font-weight: 800; margin-top: 2px; }
+  .daily-reset-timer { text-align: center; font-size: 10px; color: var(--text-dim); font-weight: 800; padding: 4px 12px 8px; }
+
+  /* ── Bar-complete flash ── */
+  .bar-complete-flash {
+    animation: barFlash 0.4s ease-out forwards;
+  }
+  @keyframes barFlash {
+    0%   { filter: brightness(1);   background: linear-gradient(90deg, var(--gold), #f8d860); }
+    40%  { filter: brightness(2.2); background: #fff; }
+    100% { filter: brightness(1);   }
+  }
+
+  /* ── Coin particle ── */
+  .coin-particle {
+    position: fixed;
+    pointer-events: none;
+    font-size: 14px;
+    z-index: 300;
+    animation: coinFly 0.7s ease-in forwards;
+    will-change: transform, opacity;
+  }
+  @keyframes coinFly {
+    0%   { transform: translate(0, 0) scale(1);     opacity: 1; }
+    60%  { opacity: 0.9; }
+    100% { transform: var(--coin-end-xy) scale(0.4); opacity: 0; }
+  }
+
   /* Floating gain text */
   .float-gain {
     position: absolute;
@@ -1373,6 +1507,7 @@
     <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
       <div class="gold-chip" id="goldChip"><span class="gold-icon">&#129689;</span><span id="goldAmount">0</span> GOLD</div>
       <div class="gold-chip" id="megabucksChip" style="background:linear-gradient(180deg,#6a2a9a,#3d0a6a);border-color:#9b3dca;display:none;"><span class="gold-icon">&#128142;</span><span id="megabucksAmount">0</span> MB</div>
+      <button id="watchAdBtn" onclick="Monetization.showRewardedAd('income_boost', onIncomeBoostRewarded)" title="Watch ad for 2× income" style="display:none;background:linear-gradient(180deg,#9b3dca,#6a1a8a);border:2px solid #4a235a;border-radius:8px;color:#fff;font-size:10px;font-weight:900;padding:4px 7px;cursor:pointer;line-height:1;letter-spacing:0.3px;text-transform:uppercase;">📺 2× Income</button>
       <button id="muteBtn" onclick="toggleSFX()" title="Toggle sound" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;font-size:15px;padding:4px 8px;cursor:pointer;line-height:1;">&#128266;</button>
     </div>
     <div class="stats-row">
@@ -1394,6 +1529,16 @@
         <div class="assets" id="assetList"></div>
       </div>
       <div class="tab-panel" id="tab-unlocks">
+        <!-- Daily Quests section -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 4px;">
+          <div class="panel-title" style="padding:0;">Daily Goals</div>
+          <span class="income-doubler-chip" id="doublerChip">2× ACTIVE</span>
+        </div>
+        <div class="panel-sub">3 new goals every day at midnight UTC. Earn gold. Stack with everything else.</div>
+        <div id="dailyQuestsList"></div>
+        <div class="daily-reset-timer" id="dailyResetTimer"></div>
+
+        <!-- Permanent quests section -->
         <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 4px;">
           <div class="panel-title" style="padding:0;">Quests</div>
           <button id="claimedToggle" onclick="toggleClaimedQuests()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--text-dim);font-size:9px;font-family:'Nunito',sans-serif;font-weight:800;padding:4px 8px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;">Hide Claimed</button>
@@ -1526,6 +1671,15 @@
     <button class="modal-btn secondary" onclick="manualSave()">Save Now</button>
     <button class="modal-btn secondary" onclick="exportSave()">Export Save Code</button>
     <button class="modal-btn secondary" onclick="importSave()">Import Save Code</button>
+    <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
+    <div style="font-family:'Lilita One',sans-serif;color:var(--gold);font-size:14px;margin-bottom:6px;">💎 Support the Game</div>
+    <button class="modal-btn" style="background:linear-gradient(180deg,#f8d860,#c89a18);border-color:#6a4f0a;color:#0a0e1a;margin-bottom:6px;" onclick="Monetization.purchaseIAP('starter_pack', onStarterPackPurchased)">
+      Starter Pack — 50 Gold + No Ads &middot; <span style="color:#0a0e1a;">$2.99</span>
+    </button>
+    <button class="modal-btn" style="background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#4a235a;margin-bottom:6px;" onclick="Monetization.showRewardedAd('income_boost', onIncomeBoostRewarded)">
+      📺 Watch Ad — 2× Income for 2 hours
+    </button>
+    <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
     <button class="modal-btn secondary" style="color:var(--red);border-color:var(--red);" onclick="hardReset()">Liquidate Everything</button>
     <button class="modal-btn" onclick="closeModal('settingsModal')">Back</button>
   </div>
@@ -1549,6 +1703,36 @@
     <p>Eventually, IPO your firm to start over with permanent multipliers. The grind never ends.</p>
     <button class="modal-btn" onclick="closeModal('welcomeModal')">Let's Make Money</button>
   </div>
+</div>
+
+<!-- Welcome Back (offline earnings) modal -->
+<div class="modal-bg" id="welcomeBackModal">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:48px;margin-bottom:4px;line-height:1;">🌅</div>
+    <h2 style="margin-bottom:4px;">Welcome Back!</h2>
+    <p style="margin:0 0 4px;font-size:13px;">Your traders worked while you were away.</p>
+    <div class="wb-earnings-box" id="wbEarningsBox">
+      <div class="wb-earnings-total" id="wbTotal">—</div>
+      <div class="wb-earnings-label">Offline Earnings</div>
+      <div id="wbBreakdown"></div>
+    </div>
+    <div style="font-size:10px;color:var(--text-dim);margin-bottom:10px;">50% of active rate &middot; capped at 4 hours</div>
+    <button id="wbAdBtn" class="modal-btn" style="background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#4a235a;margin-bottom:8px;width:100%;" onclick="doubleOfflineEarnings()">
+      📺 &nbsp;Watch Ad &mdash; Double It!
+    </button>
+    <button class="modal-btn secondary" style="width:100%;" onclick="closeModal('welcomeBackModal')">Collect &amp; Continue</button>
+  </div>
+</div>
+
+<!-- Rewarded ad simulation overlay (web fallback — replaced by real AdMob in Capacitor build) -->
+<div id="adSimOverlay">
+  <div class="ad-sim-box">
+    <div class="ad-sim-icon">📺</div>
+    <div class="ad-sim-title">AD PLAYING</div>
+    <div class="ad-sim-countdown" id="adCountdown">5</div>
+    <div class="ad-sim-bar"><div class="ad-sim-fill" id="adSimFill" style="width:0%"></div></div>
+  </div>
+  <button class="ad-skip-btn" onclick="Monetization.skipAd()">✕ Skip (forfeit reward)</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -2136,6 +2320,18 @@ let state = {
   hasUnseenUnlock: false,
   hasUnseenNews: false,
   hideClaimedQuests: false,
+  // Income doubler (rewarded ad)
+  incomeDoublerUntil: 0,
+  starterPackOwned: false,
+  // Daily quests
+  dailyQuestDate: '',
+  dailyProgress: {},
+  dailyClaimed: {},
+  dailySnapTrades: 0,
+  dailySnapManual: 0,
+  dailyEarnCashStart: 0,
+  dailyEarnYenStart: 0,
+  dailyEarnGbpStart: 0,
   lastTick: Date.now(),
   lastEventAt: Date.now(),
   activeEvent: null, // {sector, mult, until, headline, detail, bad, rugPull}
@@ -2173,6 +2369,372 @@ ASSETS.forEach(a => {
 // Helper: assets in the currently-viewed market (used by renderAssets).
 function activeMarketAssets() {
   return ASSETS.filter(a => (a.market || 'wallst') === state.activeMarket);
+}
+
+// ============ HAPTIC FEEDBACK ============
+// On web: uses navigator.vibrate() with short patterns.
+// In a Capacitor build, swap the vibrate() calls below with:
+//   Capacitor.Plugins.Haptics.impact({ style: ImpactStyle.Light/Medium/Heavy })
+const Haptic = (() => {
+  function vib(p) {
+    try { navigator.vibrate?.(p); } catch(_) {}
+  }
+  return {
+    light()   { vib(10); },
+    medium()  { vib([20, 10, 20]); },
+    heavy()   { vib([40, 15, 40, 15, 40]); },
+    success() { vib([30, 10, 30, 10, 80]); },
+  };
+})();
+
+// ============ MONETIZATION (Ad & IAP stubs) ============
+// All calls gracefully no-op on web (simulated).
+// In a Capacitor build: swap _showAdSim with Capacitor.Plugins.AdMob calls,
+// and _handleIAP with Capacitor.Plugins.InAppPurchase2.
+const Monetization = (() => {
+  let _adCallback = null;
+  let _adTimer = null;
+  let _adCount = 0;
+  let _adEl = null;
+  let _adFillEl = null;
+  let _adCountEl = null;
+
+  function _showAdSim(callback) {
+    _adCallback = callback;
+    _adEl = document.getElementById('adSimOverlay');
+    _adFillEl = document.getElementById('adSimFill');
+    _adCountEl = document.getElementById('adCountdown');
+    _adCount = 5;
+    _adFillEl.style.transition = 'none';
+    _adFillEl.style.width = '0%';
+    _adCountEl.textContent = _adCount;
+    _adEl.classList.add('show');
+    Haptic.medium();
+    // Kick off the countdown on next frame so the transition reset takes effect
+    requestAnimationFrame(() => {
+      _adFillEl.style.transition = 'width 1s linear';
+      _adFillEl.style.width = '20%';
+    });
+    _adTimer = setInterval(() => {
+      _adCount--;
+      _adCountEl.textContent = Math.max(0, _adCount);
+      const pct = Math.min(100, ((5 - _adCount) / 5) * 100);
+      _adFillEl.style.width = pct + '%';
+      if (_adCount <= 0) {
+        clearInterval(_adTimer);
+        _adTimer = null;
+        _adEl.classList.remove('show');
+        Haptic.success();
+        if (_adCallback) _adCallback(true);
+        _adCallback = null;
+      }
+    }, 1000);
+  }
+
+  return {
+    canShowAd() {
+      // On web always allow. In Capacitor: check AdMob.isInitialized() etc.
+      return true;
+    },
+    showRewardedAd(placement, callback) {
+      if (!this.canShowAd()) { callback(false); return; }
+      if (_adTimer !== null) { callback(false); return; } // already showing an ad
+      // Capacitor native hook (uncomment in App Store build):
+      // if (window.Capacitor?.Plugins?.AdMob) { ... return; }
+      _showAdSim(callback);
+    },
+    skipAd() {
+      if (!_adEl) return;
+      clearInterval(_adTimer);
+      _adTimer = null;
+      _adEl.classList.remove('show');
+      if (_adCallback) _adCallback(false);
+      _adCallback = null;
+    },
+    purchaseIAP(productId, callback) {
+      // Capacitor native hook (uncomment in App Store build):
+      // if (window.Capacitor?.Plugins?.InAppPurchase2) { ... return; }
+      // Web fallback: show a friendly message
+      toast('💳 Available in the App Store version.');
+      setTimeout(() => callback(false), 400);
+    },
+  };
+})();
+
+// ============ INCOME DOUBLER ============
+// Active when state.incomeDoublerUntil > Date.now()
+function onIncomeBoostRewarded(rewarded) {
+  if (!rewarded) { toast('Ad skipped — no reward.'); return; }
+  state.incomeDoublerUntil = Date.now() + 2 * 3600 * 1000; // 2 hours
+  toast('🎉 2× income active for 2 hours!');
+  addNews('AD REWARD: 2× INCOME', 'All passive earnings doubled for 2 hours.', 'milestone');
+  renderCash();
+  updateDoublerUI();
+  save();
+}
+
+function onStarterPackPurchased(success) {
+  if (!success) return;
+  state.gold = (state.gold || 0) + 50;
+  state.lifetimeGold = (state.lifetimeGold || 0) + 50;
+  state.starterPackOwned = true;
+  celebrate('💎 STARTER PACK', '+50 Gold added to your account!');
+  addNews('STARTER PACK', '+50 Gold credited.', 'milestone');
+  renderCash();
+  save();
+}
+
+function updateDoublerUI() {
+  const active = state.incomeDoublerUntil && Date.now() < state.incomeDoublerUntil;
+  const chip = document.getElementById('doublerChip');
+  if (chip) chip.classList.toggle('active', active);
+  // Show/hide the 2× Income button in the header based on whether doubler is active
+  const adBtn = document.getElementById('watchAdBtn');
+  if (adBtn) adBtn.style.display = active ? 'none' : '';
+}
+
+// ============ DAILY QUESTS ============
+const DAILY_QUEST_POOL = [
+  { id: 'dq_trades_100',  name: 'Day Trader',       icon: '&#128200;', desc: 'Execute 100 trades today.',          type: 'trades',    target: 100,  reward: 3 },
+  { id: 'dq_trades_500',  name: 'Market Maker',      icon: '&#9889;',   desc: 'Execute 500 trades today.',          type: 'trades',    target: 500,  reward: 8 },
+  { id: 'dq_trades_2k',   name: 'HFT Overlord',      icon: '&#129302;', desc: 'Execute 2,000 trades today.',        type: 'trades',    target: 2000, reward: 20 },
+  { id: 'dq_buy_25',      name: 'Accumulator',       icon: '&#128722;', desc: 'Buy 25 positions today.',            type: 'buys',      target: 25,   reward: 3 },
+  { id: 'dq_buy_100',     name: 'Position Builder',  icon: '&#127970;', desc: 'Buy 100 positions today.',           type: 'buys',      target: 100,  reward: 7 },
+  { id: 'dq_buy_500',     name: 'Bulk Buyer',        icon: '&#128184;', desc: 'Buy 500 positions today.',           type: 'buys',      target: 500,  reward: 18 },
+  { id: 'dq_earn_1m',     name: 'Million Dollar Day', icon: '&#128176;', desc: 'Earn $1M in a single session.',    type: 'earn_cash', target: 1e6,  reward: 4 },
+  { id: 'dq_earn_1b',     name: 'Billion Club',      icon: '&#129297;', desc: 'Earn $1B in a single session.',     type: 'earn_cash', target: 1e9,  reward: 10 },
+  { id: 'dq_earn_100b',   name: 'Legendary Earner',  icon: '&#127775;', desc: 'Earn $100B in a single session.',   type: 'earn_cash', target: 1e11, reward: 25 },
+  { id: 'dq_manual_50',   name: 'Hands On',          icon: '&#128075;', desc: 'Manually click 50 trade bars.',     type: 'manual',    target: 50,   reward: 3 },
+  { id: 'dq_manual_200',  name: 'The Grinder',       icon: '&#128170;', desc: 'Manually click 200 trade bars.',    type: 'manual',    target: 200,  reward: 9 },
+  { id: 'dq_event_1',     name: 'Opportunist',       icon: '&#128240;', desc: 'Trigger or survive 1 market event.',type: 'events',    target: 1,    reward: 3 },
+  { id: 'dq_pit_5',       name: 'Pit Regular',       icon: '&#127963;', desc: 'Fill 5 Chicago Pit orders.',        type: 'pit',       target: 5,    reward: 4 },
+  { id: 'dq_pit_20',      name: 'Pit Champion',      icon: '&#129354;', desc: 'Fill 20 Chicago Pit orders.',       type: 'pit',       target: 20,   reward: 12 },
+  { id: 'dq_yen_earn',    name: 'Tokyo Session',     icon: '&#165;',    desc: 'Earn ¥100M on Tokyo Floor today.',  type: 'earn_yen',  target: 1e8,  reward: 6 },
+  { id: 'dq_gbp_earn',    name: 'London Open',       icon: '&#163;',    desc: 'Earn £50M on London Exchange today.',type:'earn_gbp',  target: 5e7,  reward: 6 },
+];
+
+function getTodayDateKey() {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+}
+
+function getDailyQuestList() {
+  const key = getTodayDateKey();
+  let hash = 5381;
+  for (let i = 0; i < key.length; i++) hash = ((hash * 33) ^ key.charCodeAt(i)) >>> 0;
+  // Filter out quests for markets the player hasn't unlocked yet
+  const pool = DAILY_QUEST_POOL.filter(q => {
+    if (q.type === 'earn_yen' && !state.tokyoUnlocked) return false;
+    if (q.type === 'earn_gbp' && !state.londonUnlocked) return false;
+    return true;
+  });
+  const out = [];
+  let seed = hash;
+  while (out.length < 3 && pool.length > 0) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    out.push(pool.splice(seed % pool.length, 1)[0]);
+  }
+  return out;
+}
+
+function resetDailyQuestsIfNeeded() {
+  const today = getTodayDateKey();
+  if (state.dailyQuestDate === today) return;
+  state.dailyQuestDate = today;
+  state.dailyProgress  = {};
+  state.dailyClaimed   = {};
+  // Snapshot current counters so we track only *today's* delta
+  state.dailySnapTrades  = state.totalTrades || 0;
+  state.dailySnapManual  = state.manualTrades || 0;
+  state.dailySnapBuys    = 0; // tracked fresh each day
+  state.dailySnapEvents  = 0;
+  state.dailySnapPit     = 0;
+  state.dailyEarnCashStart = state.allTimeEarnings || 0;
+  state.dailyEarnYenStart  = state.lifetimeYen || 0;
+  state.dailyEarnGbpStart  = state.lifetimeGbp || 0;
+  save();
+}
+
+function getDailyProgress(q) {
+  switch (q.type) {
+    case 'trades':    return Math.max(0, (state.totalTrades || 0) - (state.dailySnapTrades || 0));
+    case 'manual':    return Math.max(0, (state.manualTrades || 0) - (state.dailySnapManual || 0));
+    case 'buys':      return state.dailyProgress?.dq_buys || 0;
+    case 'events':    return state.dailyProgress?.dq_events || 0;
+    case 'pit':       return state.dailyProgress?.dq_pit || 0;
+    case 'earn_cash': return Math.max(0, (state.allTimeEarnings || 0) - (state.dailyEarnCashStart || 0));
+    case 'earn_yen':  return Math.max(0, (state.lifetimeYen || 0) - (state.dailyEarnYenStart || 0));
+    case 'earn_gbp':  return Math.max(0, (state.lifetimeGbp || 0) - (state.dailyEarnGbpStart || 0));
+    default: return 0;
+  }
+}
+
+function claimDailyQuest(id) {
+  const q = DAILY_QUEST_POOL.find(x => x.id === id);
+  if (!q || state.dailyClaimed?.[id]) return;
+  const prog = getDailyProgress(q);
+  if (prog < q.target) { toast('Not done yet!'); return; }
+  if (!state.dailyClaimed) state.dailyClaimed = {};
+  state.dailyClaimed[id] = true;
+  state.gold = (state.gold || 0) + q.reward;
+  state.lifetimeGold = (state.lifetimeGold || 0) + q.reward;
+  Haptic.success();
+  SFX.gold();
+  toast('Daily quest claimed! +' + q.reward + '⬤ Gold');
+  renderGoalsTab();
+  renderCash();
+  save();
+}
+
+function msUntilMidnightUTC() {
+  const now = new Date();
+  const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  return midnight - now;
+}
+
+function renderDailyQuestsSection() {
+  const root = document.getElementById('dailyQuestsList');
+  if (!root) return;
+  const quests = getDailyQuestList();
+  let html = '';
+  quests.forEach(q => {
+    const claimed = !!state.dailyClaimed?.[q.id];
+    const prog  = getDailyProgress(q);
+    const pct   = Math.min(100, (prog / q.target) * 100);
+    const done  = prog >= q.target;
+    let cls = '';
+    if (claimed) cls = 'dq-claimed';
+    else if (done) cls = 'dq-complete';
+    // Format progress nicely
+    let progStr;
+    if (q.type === 'earn_cash') progStr = fmt(prog) + ' / ' + fmt(q.target);
+    else if (q.type === 'earn_yen') progStr = fmt(prog, 'yen') + ' / ' + fmt(q.target, 'yen');
+    else if (q.type === 'earn_gbp') progStr = fmt(prog, 'gbp') + ' / ' + fmt(q.target, 'gbp');
+    else progStr = fmtNum(prog) + ' / ' + fmtNum(q.target);
+    let btn;
+    if (claimed) btn = `<span style="font-family:'Lilita One',sans-serif;color:var(--green);font-size:12px;">✓</span>`;
+    else if (done) btn = `<button class="buy-btn gold-btn" onclick="claimDailyQuest('${q.id}')" style="font-size:10px;padding:6px 8px;"><span class="label">CLAIM</span><span class="price">+${q.reward}&#129689;</span></button>`;
+    else btn = `<div style="text-align:right;"><div style="font-family:'Lilita One',sans-serif;color:var(--gold);font-size:12px;">+${q.reward}&#129689;</div></div>`;
+    html += `
+      <div class="daily-quest-card ${cls}">
+        <div class="dq-icon">${q.icon}</div>
+        <div>
+          <div class="dq-name">${q.name}</div>
+          <div class="dq-desc">${q.desc}</div>
+          <div class="dq-bar"><div class="dq-bar-fill" style="width:${pct}%;"></div></div>
+          <div class="dq-prog-text">${progStr}</div>
+        </div>
+        ${btn}
+      </div>`;
+  });
+  root.innerHTML = html;
+
+  // Countdown to reset
+  const timerEl = document.getElementById('dailyResetTimer');
+  if (timerEl) {
+    const ms = msUntilMidnightUTC();
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    timerEl.textContent = `Resets in ${h}h ${m}m`;
+  }
+
+  // Update doubler chip
+  updateDoublerUI();
+}
+
+// ============ WELCOME BACK MODAL ============
+// Populated by load() when offline earnings exist
+let _pendingOfflineModal = null;
+
+function showWelcomeBackModal(earningsData) {
+  _pendingOfflineModal = earningsData;
+  const { cashGain, yenGain, gbpGain, goldGain, offlineSec } = earningsData;
+
+  // Build main total (use highest single value as the hero number)
+  const wbTotal = document.getElementById('wbTotal');
+  const parts = [];
+  if (cashGain > 0) parts.push({ val: cashGain, str: fmt(cashGain), label: 'Wall St.' });
+  if (yenGain  > 0) parts.push({ val: yenGain,  str: fmt(yenGain, 'yen'), label: 'Tokyo' });
+  if (gbpGain  > 0) parts.push({ val: gbpGain,  str: fmt(gbpGain, 'gbp'), label: 'London' });
+  if (goldGain > 0) parts.push({ val: goldGain, str: fmt(goldGain, 'gold'), label: 'Black Market' });
+
+  if (wbTotal && parts.length > 0) {
+    // Show the biggest one as hero
+    const hero = parts.reduce((a, b) => a.val > b.val ? a : b);
+    wbTotal.textContent = hero.str;
+  }
+
+  // Build per-market breakdown
+  const breakdown = document.getElementById('wbBreakdown');
+  if (breakdown && parts.length > 1) {
+    breakdown.innerHTML = parts.map(p =>
+      `<div class="wb-market-row"><span>${p.label}</span><span class="val">${p.str}</span></div>`
+    ).join('');
+  } else if (breakdown) {
+    breakdown.innerHTML = '';
+  }
+
+  // Time away label
+  const hrs = Math.floor(offlineSec / 3600);
+  const mins = Math.floor((offlineSec % 3600) / 60);
+  const timeAway = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+  const label = document.querySelector('#wbEarningsBox .wb-earnings-label');
+  if (label) label.textContent = `Away for ${timeAway}`;
+
+  // The ad button should only show if there's a meaningful amount to double
+  const totalValue = cashGain + yenGain + gbpGain + goldGain;
+  const adBtn = document.getElementById('wbAdBtn');
+  if (adBtn) adBtn.style.display = totalValue > 1 ? '' : 'none';
+
+  openModal('welcomeBackModal');
+}
+
+function doubleOfflineEarnings() {
+  Monetization.showRewardedAd('offline_double', (rewarded) => {
+    if (!rewarded) { toast('Ad skipped — reward not earned.'); return; }
+    if (!_pendingOfflineModal) return;
+    const { cashGain, yenGain, gbpGain, goldGain } = _pendingOfflineModal;
+    if (cashGain > 0) { state.cash += cashGain; state.lifetimeEarnings += cashGain; state.allTimeEarnings += cashGain; }
+    if (yenGain  > 0) { state.yen = (state.yen || 0) + yenGain; state.lifetimeYen = (state.lifetimeYen || 0) + yenGain; }
+    if (gbpGain  > 0) { state.gbp = (state.gbp || 0) + gbpGain; state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpGain; }
+    if (goldGain > 0) { state.gold = (state.gold || 0) + goldGain; state.lifetimeGold = (state.lifetimeGold || 0) + goldGain; }
+    _pendingOfflineModal = null;
+    Haptic.success();
+    celebrate('🎉 DOUBLED!', 'Your offline earnings were doubled!');
+    document.getElementById('wbAdBtn').style.display = 'none';
+    renderCash();
+    save();
+  });
+}
+
+// ============ COIN FLY PARTICLES ============
+// Spawns small coin particles that fly from the asset bar to the cash display
+function spawnCoinParticles(fromEl, count) {
+  if (!fromEl) return;
+  const cashEl = document.getElementById('cash');
+  if (!cashEl) return;
+  const fromRect = fromEl.getBoundingClientRect();
+  const toRect   = cashEl.getBoundingClientRect();
+  // Bail if target element is off-screen or not rendered
+  if (toRect.width === 0 && toRect.height === 0) return;
+  const toX = (toRect.left + toRect.right) / 2;
+  const toY = (toRect.top + toRect.bottom) / 2;
+  const symbols = ['💰', '💵', '$', '💲'];
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'coin-particle';
+    const startX = fromRect.left + Math.random() * fromRect.width;
+    const startY = fromRect.top  + Math.random() * fromRect.height;
+    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    el.style.left = startX + 'px';
+    el.style.top  = startY + 'px';
+    const dx = toX - startX;
+    const dy = toY - startY;
+    el.style.setProperty('--coin-end-xy', `translate(${dx}px, ${dy}px)`);
+    el.style.animationDelay = (i * 60) + 'ms';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 900 + i * 60);
+  }
 }
 
 // ============ HELPERS ============
@@ -2432,6 +2994,8 @@ function globalMult(market) {
   if (invCount > 0) m *= (1 + invCount * 0.005);
   // Pit Milestones — permanent global payout multipliers from credit thresholds
   PIT_MILESTONES.forEach(ms => { if (state.pitMilestonesReached?.[ms.credits]) m *= ms.mult; });
+  // Rewarded-ad income doubler — 2× for 2 hours
+  if (state.incomeDoublerUntil && Date.now() < state.incomeDoublerUntil) m *= 2;
   return m;
 }
 
@@ -2700,6 +3264,9 @@ function activateEvent(ev) {
     headline: ev.headline, detail: ev.detail, bad: ev.bad, rugPull: !!ev.rugPull,
   };
   if (ev.rugPull) state.rugPullsExperienced = (state.rugPullsExperienced || 0) + 1;
+  // Daily quest: event tracking
+  if (!state.dailyProgress) state.dailyProgress = {};
+  state.dailyProgress.dq_events = (state.dailyProgress.dq_events || 0) + 1;
   SFX.marketEvent(!!(ev.bad || ev.rugPull));
   addNews(ev.headline, ev.detail, ev.rugPull ? 'rug' : (ev.bad ? 'bad' : 'good'));
   showEvent();
@@ -2718,13 +3285,16 @@ function hideEvent() {
 }
 
 // ============ ACTIONS ============
+const _CURRENCY_NAME = { yen: 'Yen', gbp: 'GBP', gold: 'Gold', cash: 'cash' };
 function buyAsset(id) {
   const asset = ASSETS.find(a => a.id === id);
   const c = costOf(asset);
-  if (getMoney(asset) < c) { toast('Not enough ' + (currencyOf(asset) === 'yen' ? 'yen' : 'cash') + '.'); return; }
+  if (getMoney(asset) < c) { toast('Not enough ' + (_CURRENCY_NAME[currencyOf(asset)] || 'cash') + '.'); return; }
   const before = state.assets[id].owned;
   spendMoney(asset, c);
   state.assets[id].owned++;
+  if (!state.dailyProgress) state.dailyProgress = {};
+  state.dailyProgress.dq_buys = (state.dailyProgress.dq_buys || 0) + 1;
   SFX.buy();
   checkMilestoneCross(asset, before, state.assets[id].owned);
   renderAll();
@@ -2739,8 +3309,13 @@ function buyMax(id) {
     state.assets[id].owned++;
     bought++;
   }
-  if (bought === 0) toast('Not enough ' + (currencyOf(asset) === 'yen' ? 'yen' : 'cash') + '.');
-  else { SFX.buy(); checkMilestoneCross(asset, before, state.assets[id].owned); }
+  if (bought === 0) toast('Not enough ' + (_CURRENCY_NAME[currencyOf(asset)] || 'cash') + '.');
+  else {
+    SFX.buy();
+    if (!state.dailyProgress) state.dailyProgress = {};
+    state.dailyProgress.dq_buys = (state.dailyProgress.dq_buys || 0) + bought;
+    checkMilestoneCross(asset, before, state.assets[id].owned);
+  }
   renderAll();
   save();
 }
@@ -2751,6 +3326,7 @@ function checkMilestoneCross(asset, ownedBefore, ownedAfter) {
   const top = crossed[crossed.length - 1];
   const newMult = Math.pow(MILESTONE_MULT, crossed.length);
   SFX.milestone();
+  Haptic.heavy();
   celebrate('MILESTONE: ' + top + ' ' + asset.ticker + ' positions!', '+' + (newMult).toFixed(0) + 'x ' + asset.ticker + ' payouts forever');
   addNews('MILESTONE: ' + asset.ticker + ' x' + top, 'Asset payout permanently x' + newMult, 'milestone');
 }
@@ -2777,6 +3353,7 @@ function executeTrade(id, evt) {
   state.manualTrades = (state.manualTrades || 0) + 1;
   s.progress = 0;
   SFX.trade(ASSETS.indexOf(asset));
+  Haptic.light();
   spawnFloat(evt, gain, currencyOf(asset));
   renderCash();
 }
@@ -2793,8 +3370,15 @@ function buyN(id, n) {
     state.assets[id].owned++;
     bought++;
   }
-  if (bought === 0) toast('Not enough ' + (currencyOf(asset) === 'yen' ? '¥' : currencyOf(asset) === 'gbp' ? '£' : '$') + '.');
-  else { SFX.buy(); checkMilestoneCross(asset, before, state.assets[id].owned); }
+  if (bought === 0) toast('Not enough ' + (_CURRENCY_NAME[currencyOf(asset)] || 'cash') + '.');
+  else {
+    SFX.buy();
+    Haptic.medium();
+    checkMilestoneCross(asset, before, state.assets[id].owned);
+    // Daily quest buy tracking
+    if (!state.dailyProgress) state.dailyProgress = {};
+    state.dailyProgress.dq_buys = (state.dailyProgress.dq_buys || 0) + bought;
+  }
   renderAll();
   save();
 }
@@ -2840,6 +3424,7 @@ function spawnFloatForAsset(id, gain, currency) {
   const prog = document.getElementById('prog-' + id);
   if (!prog) return;
   const rect = prog.getBoundingClientRect();
+  // Floating number
   const el = document.createElement('div');
   el.className = 'float-gain';
   el.textContent = '+' + fmt(gain, currency);
@@ -2847,6 +3432,11 @@ function spawnFloatForAsset(id, gain, currency) {
   el.style.top = (rect.top - 5) + 'px';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1000);
+  // Bar-complete flash
+  prog.classList.add('bar-complete-flash');
+  setTimeout(() => prog.classList.remove('bar-complete-flash'), 420);
+  // Coin fly — only for non-gold markets (gold has its own symbol and the header position differs)
+  if (currency !== 'gold') spawnCoinParticles(prog, 3);
 }
 
 function claimQuest(id) {
@@ -3261,9 +3851,12 @@ function fillPitOrder(orderId) {
   const comboMult = _pitComboCount >= 3 ? 1.5 : 1;
   const earned = Math.round(order.value * comboMult);
   state.pitCredits = (state.pitCredits || 0) + earned;
-  // Pit taps are manual actions — count toward the Click Trader quest
+  // Pit taps are manual actions — count toward the Click Trader quest and daily pit tracking
   state.manualTrades = (state.manualTrades || 0) + 1;
+  if (!state.dailyProgress) state.dailyProgress = {};
+  state.dailyProgress.dq_pit = (state.dailyProgress.dq_pit || 0) + 1;
   checkPitMilestones();
+  Haptic.medium();
   SFX.buy();
   if (state.londonUnlocked) {
     const gbpBonus = earned * 500;
@@ -3896,6 +4489,7 @@ function doPrestige() {
   state.lastEventAt = Date.now();
   state.whistleblowerUsedThisRun = false; // refresh ability per run
   state.totalIPOs = (state.totalIPOs || 0) + 1; // lifetime IPO counter for achievements
+  Haptic.success();
   // Milestone IPOs earn Megabucks: 2 at 3rd IPO, 2 more at 10th, 2 more at 25th
   if ([3, 10, 25].includes(state.totalIPOs)) {
     state.megabucks = (state.megabucks || 0) + 2;
@@ -4497,6 +5091,8 @@ function renderQuestsTab() {
 }
 
 function renderGoalsTab() {
+  resetDailyQuestsIfNeeded();
+  renderDailyQuestsSection();
   renderQuestsTab();
   renderUnlocksTab();
 }
@@ -4993,6 +5589,18 @@ function save() {
       blackmktUnlocked: !!state.blackmktUnlocked,
       influenceInvested: state.influenceInvested || 0,
       hideClaimedQuests: !!state.hideClaimedQuests,
+      // Income doubler + IAP
+      incomeDoublerUntil: state.incomeDoublerUntil || 0,
+      starterPackOwned: !!state.starterPackOwned,
+      // Daily quests
+      dailyQuestDate: state.dailyQuestDate || '',
+      dailyProgress:  state.dailyProgress  || {},
+      dailyClaimed:   state.dailyClaimed   || {},
+      dailySnapTrades: state.dailySnapTrades || 0,
+      dailySnapManual: state.dailySnapManual || 0,
+      dailyEarnCashStart: state.dailyEarnCashStart || 0,
+      dailyEarnYenStart:  state.dailyEarnYenStart  || 0,
+      dailyEarnGbpStart:  state.dailyEarnGbpStart  || 0,
       // Chicago
       pitCredits: state.pitCredits || 0,
       pitMilestonesReached: state.pitMilestonesReached || {},
@@ -5058,6 +5666,16 @@ function load() {
     state.blackmktUnlocked = !!data.blackmktUnlocked;
     state.influenceInvested = data.influenceInvested || 0;
     state.hideClaimedQuests = !!data.hideClaimedQuests;
+    state.incomeDoublerUntil = data.incomeDoublerUntil || 0;
+    state.starterPackOwned   = !!data.starterPackOwned;
+    state.dailyQuestDate     = data.dailyQuestDate  || '';
+    state.dailyProgress      = data.dailyProgress   || {};
+    state.dailyClaimed       = data.dailyClaimed    || {};
+    state.dailySnapTrades    = data.dailySnapTrades  || 0;
+    state.dailySnapManual    = data.dailySnapManual  || 0;
+    state.dailyEarnCashStart = data.dailyEarnCashStart || 0;
+    state.dailyEarnYenStart  = data.dailyEarnYenStart  || 0;
+    state.dailyEarnGbpStart  = data.dailyEarnGbpStart  || 0;
     if (state.activeMarket === 'blackmkt' && !state.blackmktUnlocked) state.activeMarket = 'wallst';
     if (state.activeMarket === 'london' && !state.londonUnlocked) state.activeMarket = 'wallst';
     if (state.activeMarket === 'tokyo'  && !state.tokyoUnlocked)  state.activeMarket = 'wallst';
@@ -5102,12 +5720,8 @@ function load() {
         if (gbpGain  > 0) { state.gbp = (state.gbp || 0) + gbpGain; state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpGain; }
         if (goldGain > 0) { state.gold = (state.gold || 0) + goldGain; state.lifetimeGold = (state.lifetimeGold || 0) + goldGain; }
         if (cashGain > 0 || yenGain > 0 || gbpGain > 0 || goldGain > 0) {
-          const parts = [];
-          if (cashGain > 0) parts.push(fmt(cashGain));
-          if (yenGain  > 0) parts.push(fmt(yenGain, 'yen'));
-          if (gbpGain  > 0) parts.push(fmt(gbpGain, 'gbp'));
-          if (goldGain > 0) parts.push(fmt(goldGain, 'gold'));
-          setTimeout(() => toast('Offline earnings: ' + parts.join(' + ')), 700);
+          // Store for Welcome Back modal — shown after boot() completes rendering
+          state._pendingOfflineData = { cashGain, yenGain, gbpGain, goldGain, offlineSec };
         }
       }
     }
@@ -5158,6 +5772,7 @@ function boot() {
   setInterval(buildTicker, 3000);  // fast enough to catch squeeze/options bonuses
   const had = load();
   if (!had) openModal('welcomeModal');
+  resetDailyQuestsIfNeeded();
   renderAll();
   // Initial unlock pass + restore the tab the player was on
   checkUnlocks();
@@ -5175,6 +5790,17 @@ function boot() {
   // 60fps render loop for smooth progress bars — game logic stays on the 100ms tick
   (function rafLoop() { renderProgressBars(); requestAnimationFrame(rafLoop); })();
   window.addEventListener('beforeunload', save);
+  // Show Welcome Back modal after UI is ready (if offline earnings exist)
+  if (state._pendingOfflineData) {
+    setTimeout(() => {
+      showWelcomeBackModal(state._pendingOfflineData);
+      delete state._pendingOfflineData;
+    }, 800);
+  }
+  // Refresh doubler UI in case a saved doubler timer is still running
+  updateDoublerUI();
+  // Keep the doubler chip / ad button live — check every minute
+  setInterval(updateDoublerUI, 60000);
 }
 boot();
 </script>
