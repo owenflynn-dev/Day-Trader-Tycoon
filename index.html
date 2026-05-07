@@ -1394,7 +1394,10 @@
         <div class="assets" id="assetList"></div>
       </div>
       <div class="tab-panel" id="tab-unlocks">
-        <div class="panel-title">Quests</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 4px;">
+          <div class="panel-title" style="padding:0;">Quests</div>
+          <button id="claimedToggle" onclick="toggleClaimedQuests()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--text-dim);font-size:9px;font-family:'Nunito',sans-serif;font-weight:800;padding:4px 8px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;">Hide Claimed</button>
+        </div>
         <div class="panel-sub">Complete quests to earn <span style="color:var(--gold);">GOLD</span>. Spend gold on premium managers and lifestyle upgrades.</div>
         <div id="questsList"></div>
         <div class="panel-title" style="margin-top:8px;">Achievements</div>
@@ -1453,12 +1456,15 @@
       </button>
       <button class="tab-btn" data-tab="managers" onclick="switchTab('managers')">
         <span class="tab-icon">&#128188;</span>STAFF
+        <span class="tab-dot"></span>
       </button>
       <button class="tab-btn" data-tab="perks" onclick="switchTab('perks')">
         <span class="tab-icon">&#9889;</span>PERKS
+        <span class="tab-dot"></span>
       </button>
       <button class="tab-btn" data-tab="skills" onclick="switchTab('skills')">
         <span class="tab-icon">&#127795;</span>SKILLS
+        <span class="tab-dot"></span>
       </button>
       <button class="tab-btn" data-tab="pit" onclick="switchTab('pit')">
         <span class="tab-icon">&#127963;</span>PIT
@@ -1592,11 +1598,11 @@ const PAYOUT_MULT = 1.0;   // multiplier per unit owned
 
 // Per-asset profit milestones (AdC's "x25 / x50 / x100..." mechanic).
 // When you hit each threshold of owned positions, that asset gets a permanent multiplier on its own payout.
-const MILESTONES = [25, 50, 100, 200, 300, 400];
+const MILESTONES = [25, 50, 100, 200, 300, 400, 500, 750, 1000, 1500, 2000];
 const MILESTONE_MULT = 2.0; // each milestone DOUBLES that asset's payout — AdVenture Capitalist curve (was 1.1 on 2026-04-26, reverted 2026-04-29)
 // Subset of milestones that ALSO grant a 2x speed boost (halves the trade cycle time).
 // Replaces the old cash-cost speed upgrade button (removed 2026-04-26 per Owen's directive).
-const SPEED_MILESTONES = [50, 200];
+const SPEED_MILESTONES = [50, 200, 500];
 function speedFromMilestones(asset) {
   const owned = state.assets[asset.id]?.owned || 0;
   return SPEED_MILESTONES.filter(m => owned >= m).length;
@@ -1721,6 +1727,15 @@ const UNLOCKS = [
   { id: 'leverage_king', icon: '&#128640;', name: 'Leverage King',        desc: 'Activate a 10x or higher leverage.',                               mult: 1.06,  check: () => !!(state.highLeverageUsed) },
   { id: 'ipo_veteran',   icon: '&#127974;', name: 'IPO Veteran',          desc: 'Take your firm public 3 times.',                                   mult: 1.10,  check: () => (state.totalIPOs || 0) >= 3 },
   { id: 'hft_ready',     icon: '&#9889;',   name: 'HFT Ready',            desc: 'Purchase any HFT Speed Perk.',                                     mult: 1.05,  check: () => Object.keys(state.hftPerksOwned || {}).length >= 1 },
+  // Endgame achievements
+  { id: 'quarter_k',     icon: '&#128200;', name: 'Quarter Millennial',   desc: 'Own 500 positions on any single asset.',                           mult: 1.08,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 500) },
+  { id: 'triple_digit',  icon: '&#127775;', name: 'Four-Figure Club',     desc: 'Own 1,000 positions on any single asset.',                         mult: 1.10,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 1000) },
+  { id: 'titan',         icon: '&#128081;', name: 'Market Titan',         desc: 'Own 2,000 positions on any single asset.',                         mult: 1.15,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 2000) },
+  { id: 'dark_lord',     icon: '&#9899;',   name: 'Dark Market Lord',     desc: 'Earn 1,000 gold on the Black Market.',                             mult: 1.08,  check: () => (state.lifetimeGold || 0) >= 1000 },
+  { id: 'london_calling',icon: '&#127980;', name: 'London Calling',       desc: 'Earn £1B lifetime on London Exchange.',                            mult: 1.10,  check: () => (state.lifetimeGbp || 0) >= 1e9 },
+  { id: 'ipo_machine',   icon: '&#127974;', name: 'IPO Machine',          desc: 'Take your firm public 10 times.',                                  mult: 1.10,  check: () => (state.totalIPOs || 0) >= 10 },
+  { id: 'dynasty',       icon: '&#128081;', name: 'Dynasty',              desc: 'Make 10 Influence Investments.',                                   mult: 1.12,  check: () => (state.influenceInvested || 0) >= 10 },
+  { id: 'trillion_club', icon: '&#128176;', name: 'Trillion Club',        desc: 'Earn $1 Trillion USD lifetime on Wall Street.',                    mult: 1.20,  check: () => (state.allTimeEarnings || 0) >= 1e12 },
 ];
 const NEWS_MAX = 30;
 
@@ -1757,6 +1772,22 @@ const QUESTS = [
   // Tokyo-specific quests
   { id: 'q_neo_tokyo',     icon: '&#127884;', name: 'Neo-Tokyo Resident',  desc: 'Own 100 $ANIME positions.',              target: () => 100, progress: () => state.assets.t_anime?.owned || 0,                                              reward: 30 },
   { id: 'q_last_samurai',  icon: '&#129686;', name: 'The Last Samurai',    desc: 'Hire all 6 Tokyo traders.',              target: () => 6,   progress: () => ASSETS.filter(a => a.market === 'tokyo' && state.assets[a.id]?.hired).length,  reward: 100 },
+
+  // Endgame / prestige quests
+  { id: 'q_endgame_500',   icon: '&#128176;', name: 'Position Master',     desc: 'Own 500+ positions on any single asset.',  target: () => 500,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 100 },
+  { id: 'q_endgame_1k',    icon: '&#127775;', name: 'Four-Digit Holder',   desc: 'Own 1,000+ positions on any single asset.', target: () => 1000, progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),              reward: 250 },
+  { id: 'q_total_10k',     icon: '&#128200;', name: 'Portfolio Titan',     desc: 'Own 10,000 total positions across all assets.', target: () => 10000, progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),      reward: 150 },
+  { id: 'q_ipo_10',        icon: '&#127974;', name: 'Serial Founder',      desc: 'Take your firm public 10 times.',          target: () => 10,  progress: () => state.totalIPOs || 0,                                                           reward: 200 },
+  { id: 'q_gold_master',   icon: '&#129689;', name: 'Gold Hoarder',        desc: 'Earn 1,000 gold lifetime on the Black Market.',target: () => 1000, progress: () => state.lifetimeGold || 0,                                                  reward: 100 },
+  { id: 'q_gold_vault',    icon: '&#127963;', name: 'Vault Operator',      desc: 'Earn 10,000 gold lifetime on the Black Market.',target: () => 10000, progress: () => state.lifetimeGold || 0,                                               reward: 300 },
+  { id: 'q_gbp_billionaire',icon: '&#163;',  name: 'City of London',      desc: 'Earn £1,000,000,000 lifetime on London Exchange.',target: () => 1e9, progress: () => state.lifetimeGbp || 0,                                                 reward: 150 },
+  { id: 'q_click_1k',      icon: '&#128075;', name: 'Chronic Clicker',     desc: 'Manually execute 1,000 trades.',            target: () => 1000, progress: () => state.manualTrades || 0,                                                     reward: 75 },
+  { id: 'q_all_premium',   icon: '&#127881;', name: 'Full House',          desc: 'Hire all 4 Wall Street premium managers.',  target: () => 4,   progress: () => ['senator','quant','cfo','whistleblower'].filter(id => state.premiumOwned?.[id]).length, reward: 200 },
+  { id: 'q_max_leverage',  icon: '&#128640;', name: 'Max Leverage',        desc: 'Activate 10x leverage.',                    target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 10 ? 1 : 0,                                   reward: 50 },
+  { id: 'q_ipo_25',        icon: '&#128276;', name: 'Dynasty Builder',     desc: 'Take your firm public 25 times.',           target: () => 25,  progress: () => state.totalIPOs || 0,                                                          reward: 500 },
+  { id: 'q_yen_trillion',  icon: '&#165;',    name: 'Tokyo Titan',         desc: 'Earn ¥1,000,000,000,000 lifetime.',         target: () => 1e12, progress: () => state.lifetimeYen || 0,                                                       reward: 200 },
+  { id: 'q_invest_10',     icon: '&#128081;', name: 'Influence Baron',     desc: 'Make 10 Influence Investments.',            target: () => 10,  progress: () => state.influenceInvested || 0,                                                   reward: 150 },
+  { id: 'q_bm_all',        icon: '&#9899;',   name: 'Dark Operator',       desc: 'Own at least 1 of every Black Market asset.', target: () => 6, progress: () => ASSETS.filter(a => a.market === 'blackmkt' && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 75 },
 ];
 
 // Premium managers — now cost Influence (prestige currency), not gold.
@@ -2104,6 +2135,7 @@ let state = {
   buyQty: 1,           // buy quantity: 1, 10, or 0 (=max)
   hasUnseenUnlock: false,
   hasUnseenNews: false,
+  hideClaimedQuests: false,
   lastTick: Date.now(),
   lastEventAt: Date.now(),
   activeEvent: null, // {sector, mult, until, headline, detail, bad, rugPull}
@@ -2435,11 +2467,12 @@ function checkUnlocks() {
     if (state.unlocks[u.id]) return;
     if (u.check()) {
       state.unlocks[u.id] = true;
-      const pct = Math.round((u.mult - 1) * 100);
+      const pctRaw = (u.mult - 1) * 100;
+      const pct = pctRaw < 1 ? pctRaw.toFixed(1) : Math.round(pctRaw).toString();
       addNews('UNLOCK: ' + u.name, '+' + pct + '% all payouts (permanent).', 'milestone');
       SFX.achievement();
       // Big celebration for ≥10% unlocks, regular toast for the small ones
-      if (pct >= 10) celebrate('UNLOCK: ' + u.name, '+' + pct + '% all payouts forever');
+      if (pctRaw >= 10) celebrate('UNLOCK: ' + u.name, '+' + pct + '% all payouts forever');
       else toast('UNLOCK: ' + u.name + ' (+' + pct + '%)');
       any = true;
       if (state.activeTab !== 'unlocks') {
@@ -2456,6 +2489,35 @@ function checkUnlocks() {
     goalsBtn.classList.add('has-news');
   }
   if (any) { renderCash(); save(); }
+}
+
+// Update tab badge dots — lights up STAFF/PERKS/SKILLS tabs when affordable content is waiting.
+function updateTabBadges() {
+  // STAFF tab: any un-hired premium manager that the player can afford
+  const canAffordManager = PREMIUM_MANAGERS.some(p => {
+    if (state.premiumOwned?.[p.id]) return false;
+    if (p.influenceCost) return (state.influence || 0) >= p.influenceCost;
+    if (p.goldCost)      return (state.gold || 0) >= p.goldCost;
+    return false;
+  });
+  const staffBtn = document.querySelector('.tab-btn[data-tab="managers"]');
+  if (staffBtn && state.activeTab !== 'managers') staffBtn.classList.toggle('has-news', canAffordManager);
+
+  // PERKS tab: any un-bought HFT perk or lifestyle item the player can afford
+  const canAffordPerk =
+    HFT_PERKS.some(p => !state.hftPerksOwned?.[p.id] && (state.gold || 0) >= p.goldCost) ||
+    LIFESTYLE.some(l => !state.lifestyleOwned?.[l.id] &&
+      (state.cash || 0) >= (l.cashCost || 0) &&
+      (state.gold || 0) >= (l.goldCost || 0));
+  const perksBtn = document.querySelector('.tab-btn[data-tab="perks"]');
+  if (perksBtn && state.activeTab !== 'perks') perksBtn.classList.toggle('has-news', canAffordPerk);
+
+  // SKILLS tab: any un-bought skill the player can afford
+  const canAffordSkill = SKILL_TREE.some(row =>
+    row.nodes.some(n => !state.skillsOwned?.[n.id] && (state.influence || 0) >= n.cost)
+  );
+  const skillsBtn = document.querySelector('.tab-btn[data-tab="skills"]');
+  if (skillsBtn && state.activeTab !== 'skills') skillsBtn.classList.toggle('has-news', canAffordSkill);
 }
 
 function timeAgo(ts) {
@@ -3930,6 +3992,7 @@ function tick() {
     state._lastButtonsRefresh = now;
     refreshButtonStates();
     checkUnlocks();
+    updateTabBadges();
     // Re-render the active side panel if it shows live data
     if (state.activeTab === 'unlocks') renderGoalsTab();
     else if (state.activeTab === 'perks') renderPerksTab();
@@ -3992,7 +4055,9 @@ function renderCash() {
   const displayMoney = isLondon ? (state.gbp || 0) : isTokyo ? state.yen : isBlack ? (state.gold || 0) : state.cash;
   const lifetime = isLondon ? (state.lifetimeGbp || 0) : isTokyo ? (state.lifetimeYen || 0) : isBlack ? (state.lifetimeGold || 0) : state.lifetimeEarnings;
   document.getElementById('cash').textContent = fmt(displayMoney, cur);
-  document.getElementById('incomeRate').textContent = fmt(totalIncomePerSec(), cur) + '/sec passive';
+  document.getElementById('incomeRate').textContent = isBlack
+    ? '⚫ MANUAL MARKET — click to earn gold'
+    : fmt(totalIncomePerSec(), cur) + '/sec passive';
   // Show inactive market rates as a subtle secondary line
   const otherRates = document.getElementById('otherMarketRates');
   if (otherRates) {
@@ -4003,11 +4068,11 @@ function renderCash() {
     }
     if (state.tokyoUnlocked && state.activeMarket !== 'tokyo') {
       let r = 0; ASSETS.forEach(a => { if (a.market==='tokyo' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
-      if (r > 0) parts.push('¥' + fmt(r) + '/s');
+      if (r > 0) parts.push(fmt(r, 'yen') + '/s');
     }
     if (state.londonUnlocked && state.activeMarket !== 'london') {
       let r = 0; ASSETS.forEach(a => { if (a.market==='london' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
-      if (r > 0) parts.push('£' + fmt(r) + '/s');
+      if (r > 0) parts.push(fmt(r, 'gbp') + '/s');
     }
     if (state.blackmktUnlocked && state.activeMarket !== 'blackmkt') {
       // BM has no passive income (manual only) — show current gold balance as a reminder
@@ -4150,7 +4215,7 @@ function renderAssets() {
       <div class="asset-icon-col">
         <div class="asset-icon">${asset.icon}</div>
         <div class="asset-count">${countDisplay}</div>
-        ${unlocked && next ? `<div class="asset-mini-bar"><div class="asset-mini-fill" style="width:${Math.min(100, (s.owned / next) * 100)}%;"></div></div>` : ''}
+        ${unlocked && next ? `<div class="asset-mini-bar"><div class="asset-mini-fill" style="width:${(function(){ const prev = MILESTONES.filter(m => m <= s.owned).pop() || 0; return Math.min(100, ((s.owned - prev) / (next - prev)) * 100); })()}%;"></div></div>` : ''}
       </div>
       <div class="asset-main">
         <div class="asset-header">
@@ -4294,11 +4359,12 @@ function renderProgressBars() {
         }
       }
     }
-    // Milestone proximity glow — mini-bar pulses gold when within 5 of the next milestone
+    // Milestone proximity glow — mini-bar pulses when within 5% of the next milestone (or ≤5, whichever is bigger)
     const miniBar = card?.querySelector('.asset-mini-fill');
     if (miniBar && s.owned > 0) {
       const nextMs = nextMilestone(a);
-      miniBar.classList.toggle('near-milestone', nextMs !== null && (nextMs - s.owned) <= 5);
+      const proximity = nextMs !== null ? Math.max(5, Math.floor(nextMs * 0.05)) : 0;
+      miniBar.classList.toggle('near-milestone', nextMs !== null && (nextMs - s.owned) <= proximity);
     }
   });
 }
@@ -4340,7 +4406,8 @@ function renderUnlocksTab() {
   });
   sorted.forEach(u => {
     const done = !!state.unlocks[u.id];
-    const pct = Math.round((u.mult - 1) * 100);
+    const pctRaw = (u.mult - 1) * 100;
+    const pct = pctRaw < 1 ? pctRaw.toFixed(1) : Math.round(pctRaw).toString();
     html += `
       <div class="unlock-card${done ? ' done' : ''}">
         <div class="unlock-icon">${u.icon}</div>
@@ -4354,9 +4421,20 @@ function renderUnlocksTab() {
   root.innerHTML = html;
 }
 
+function toggleClaimedQuests() {
+  state.hideClaimedQuests = !state.hideClaimedQuests;
+  const btn = document.getElementById('claimedToggle');
+  if (btn) btn.textContent = state.hideClaimedQuests ? 'Show Claimed' : 'Hide Claimed';
+  renderQuestsTab();
+  save();
+}
+
 function renderQuestsTab() {
   const root = document.getElementById('questsList');
   if (!root) return;
+  // Update toggle button label
+  const btn = document.getElementById('claimedToggle');
+  if (btn) btn.textContent = state.hideClaimedQuests ? 'Show Claimed' : 'Hide Claimed';
   // Sort: completable first, then in-progress, then claimed
   const rows = QUESTS.map(q => {
     const claimed = !!state.questsClaimed[q.id];
@@ -4370,7 +4448,9 @@ function renderQuestsTab() {
     return sa - sb;
   });
   let html = '';
-  rows.forEach(({ q, claimed, prog, tgt, complete }) => {
+  const visibleRows = state.hideClaimedQuests ? rows.filter(r => !r.claimed) : rows;
+  const hiddenCount = rows.length - visibleRows.length;
+  visibleRows.forEach(({ q, claimed, prog, tgt, complete }) => {
     const pct = Math.min(100, Math.round((prog / tgt) * 100));
     const cls = claimed ? 'claimed' : (complete ? 'complete' : '');
     let btnHtml;
@@ -4387,9 +4467,17 @@ function renderQuestsTab() {
                    <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;font-weight:800;">REWARD</div>
                  </div>`;
     }
-    // Format progress numbers smartly: $ for money quests, plain count otherwise
-    const moneyQuests = ['q_first_million', 'q_day_trader', 'q_wall_st_tycoon'];
-    const progStr = moneyQuests.includes(q.id) ? (fmt(prog) + ' / ' + fmt(tgt)) : (fmtNum(prog) + ' / ' + fmtNum(tgt));
+    // Format progress numbers smartly based on currency type
+    const cashQuests = ['q_first_million', 'q_day_trader', 'q_wall_st_tycoon'];
+    const yenQuests  = ['q_yen_millionaire', 'q_yen_trillion'];
+    const gbpQuests  = ['q_gbp_billionaire'];
+    const goldQuests = ['q_goldsmith', 'q_gold_master', 'q_gold_vault'];
+    let progStr;
+    if (cashQuests.includes(q.id))      progStr = fmt(prog) + ' / ' + fmt(tgt);
+    else if (yenQuests.includes(q.id))  progStr = fmt(prog, 'yen') + ' / ' + fmt(tgt, 'yen');
+    else if (gbpQuests.includes(q.id))  progStr = fmt(prog, 'gbp') + ' / ' + fmt(tgt, 'gbp');
+    else if (goldQuests.includes(q.id)) progStr = fmt(prog, 'gold') + ' / ' + fmt(tgt, 'gold');
+    else                                progStr = fmtNum(prog) + ' / ' + fmtNum(tgt);
     html += `
       <div class="quest-card ${cls}">
         <div class="quest-icon">${q.icon}</div>
@@ -4402,6 +4490,9 @@ function renderQuestsTab() {
         ${btnHtml}
       </div>`;
   });
+  if (hiddenCount > 0) {
+    html += `<div style="text-align:center;padding:8px;font-size:11px;color:var(--text-dim);font-weight:800;">${hiddenCount} claimed quest${hiddenCount !== 1 ? 's' : ''} hidden</div>`;
+  }
   root.innerHTML = html;
 }
 
@@ -4496,7 +4587,8 @@ function renderPerksTab() {
     BOOSTS.forEach(b => {
       const owned = !!state.boostsOwned[b.id];
       const can = state.cash >= b.cost;
-      const pct = Math.round((b.mult - 1) * 100);
+      const pctRaw = (b.mult - 1) * 100;
+      const pct = Number.isInteger(pctRaw) ? pctRaw : parseFloat(pctRaw.toFixed(1));
       html += `
         <div class="perk-card${owned ? ' owned' : ''}">
           <div class="perk-icon">${b.icon || '&#9889;'}</div>
@@ -4900,6 +4992,7 @@ function save() {
       // Black Market
       blackmktUnlocked: !!state.blackmktUnlocked,
       influenceInvested: state.influenceInvested || 0,
+      hideClaimedQuests: !!state.hideClaimedQuests,
       // Chicago
       pitCredits: state.pitCredits || 0,
       pitMilestonesReached: state.pitMilestonesReached || {},
@@ -4964,6 +5057,7 @@ function load() {
     state.londonUnlocked = !!data.londonUnlocked;
     state.blackmktUnlocked = !!data.blackmktUnlocked;
     state.influenceInvested = data.influenceInvested || 0;
+    state.hideClaimedQuests = !!data.hideClaimedQuests;
     if (state.activeMarket === 'blackmkt' && !state.blackmktUnlocked) state.activeMarket = 'wallst';
     if (state.activeMarket === 'london' && !state.londonUnlocked) state.activeMarket = 'wallst';
     if (state.activeMarket === 'tokyo'  && !state.tokyoUnlocked)  state.activeMarket = 'wallst';
@@ -5010,8 +5104,8 @@ function load() {
         if (cashGain > 0 || yenGain > 0 || gbpGain > 0 || goldGain > 0) {
           const parts = [];
           if (cashGain > 0) parts.push(fmt(cashGain));
-          if (yenGain  > 0) parts.push('¥' + fmt(yenGain));
-          if (gbpGain  > 0) parts.push('£' + fmt(gbpGain));
+          if (yenGain  > 0) parts.push(fmt(yenGain, 'yen'));
+          if (gbpGain  > 0) parts.push(fmt(gbpGain, 'gbp'));
           if (goldGain > 0) parts.push(fmt(goldGain, 'gold'));
           setTimeout(() => toast('Offline earnings: ' + parts.join(' + ')), 700);
         }
