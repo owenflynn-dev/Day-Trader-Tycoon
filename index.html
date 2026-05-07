@@ -1793,12 +1793,12 @@ const ASSETS = [
   // ── BLACK MARKET — currency: gold. Unlocks after London. Slow, expensive, but passively earns gold. ──
   // === Black Market (⚫ Gold) — no managers, manual click only, very slow & scarce ===
   // Black Market: buy positions with CASH, click bar to launder cash → earn gold. No traders allowed.
-  { id: 'bm_smug',   ticker: '&#9899;SMUG',  name: 'Contraband ETF',     icon: '&#129523;', baseCost: 1000,    launderCost: 100,    basePayout: 0.2,   baseTime: 120,   sector: 'bm_hustle', market: 'blackmkt' },
-  { id: 'bm_laund',  ticker: '&#9899;LAUND', name: 'Shell Corp Laundry', icon: '&#127968;', baseCost: 10000,   launderCost: 800,    basePayout: 1,     baseTime: 600,   sector: 'bm_hustle', market: 'blackmkt' },
-  { id: 'bm_cartel', ticker: '&#9899;CRTL',  name: 'Algo Cartel',        icon: '&#129302;', baseCost: 100000,  launderCost: 6000,   basePayout: 6,     baseTime: 1800,  sector: 'bm_ops',    market: 'blackmkt' },
-  { id: 'bm_ghost',  ticker: '&#9899;GHST',  name: 'Ghost Corporation',  icon: '&#128123;', baseCost: 1e6,     launderCost: 50000,  basePayout: 30,    baseTime: 3600,  sector: 'bm_ops',    market: 'blackmkt' },
-  { id: 'bm_pool',   ticker: '&#9899;POOL',  name: 'Dark Pool',          icon: '&#127756;', baseCost: 1e7,     launderCost: 400000, basePayout: 150,   baseTime: 14400, sector: 'bm_vault',  market: 'blackmkt' },
-  { id: 'bm_vault',  ticker: '&#9899;VALT',  name: 'Offshore Vault',     icon: '&#127963;', baseCost: 1e8,     launderCost: 3e6,    basePayout: 750,   baseTime: 43200, sector: 'bm_vault',  market: 'blackmkt' },
+  { id: 'bm_smug',   ticker: '&#9899;SMUG',  name: 'Contraband ETF',     icon: '&#129523;', baseCost: 1000,    launderCost: 100,    basePayout: 0.02,  baseTime: 120,   sector: 'bm_hustle', market: 'blackmkt' },
+  { id: 'bm_laund',  ticker: '&#9899;LAUND', name: 'Shell Corp Laundry', icon: '&#127968;', baseCost: 10000,   launderCost: 800,    basePayout: 0.1,   baseTime: 600,   sector: 'bm_hustle', market: 'blackmkt' },
+  { id: 'bm_cartel', ticker: '&#9899;CRTL',  name: 'Algo Cartel',        icon: '&#129302;', baseCost: 100000,  launderCost: 6000,   basePayout: 0.5,   baseTime: 1800,  sector: 'bm_ops',    market: 'blackmkt' },
+  { id: 'bm_ghost',  ticker: '&#9899;GHST',  name: 'Ghost Corporation',  icon: '&#128123;', baseCost: 1e6,     launderCost: 50000,  basePayout: 3,     baseTime: 3600,  sector: 'bm_ops',    market: 'blackmkt' },
+  { id: 'bm_pool',   ticker: '&#9899;POOL',  name: 'Dark Pool',          icon: '&#127756;', baseCost: 1e7,     launderCost: 400000, basePayout: 15,    baseTime: 14400, sector: 'bm_vault',  market: 'blackmkt' },
+  { id: 'bm_vault',  ticker: '&#9899;VALT',  name: 'Offshore Vault',     icon: '&#127963;', baseCost: 1e8,     launderCost: 3e6,    basePayout: 75,    baseTime: 43200, sector: 'bm_vault',  market: 'blackmkt' },
 ];
 
 const COST_GROWTH = 1.12;  // each unit costs 12% more (rebalanced 2026-04-27 — extended ladder to 10 tiers does the heavy lifting; AdC uses 1.07)
@@ -1836,46 +1836,66 @@ const BOOSTS = [
   { id: 'congressBuddy',  name: 'Congressional Buddy',   desc: 'All payouts +70%',          mult: 1.70,  cost: 25000000000,  icon: '&#127963;' },
 ];
 
-// HFT Speed Perks — gold-cost, permanent cycle time reductions. Stack multiplicatively.
+// HFT Speed Perks — cash-cost, permanent cycle time reductions. Stack multiplicatively.
 // Each reduces ALL asset cycle times. Stacks with milestone speed, Quant manager, lifestyle speed, etc.
 const HFT_PERKS = [
-  { id: 'fiber_link',  name: 'Fiber Optic Uplink', icon: '&#128421;', goldCost: 50,   speedMult: 0.90, desc: '-10% all cycle times. You are faster than the retail crowd.' },
-  { id: 'microwave',   name: 'Microwave Relay',    icon: '&#128225;', goldCost: 150,  speedMult: 0.80, desc: '-20% all cycle times. Signal bounced off the building across the street.' },
-  { id: 'colocation',  name: 'Server Co-location', icon: '&#128442;', goldCost: 400,  speedMult: 0.75, desc: '-25% all cycle times. Your racks live inside the exchange itself.' },
-  { id: 'quantum',     name: 'Quantum Execution',  icon: '&#9889;',   goldCost: 1000, speedMult: 0.60, desc: '-40% all cycle times. Progress bars pulse electric blue. Unreal.' },
+  { id: 'fiber_link',  name: 'Fiber Optic Uplink', icon: '&#128421;', cashCost: 10e6,   speedMult: 0.90, desc: '-10% all cycle times. You are faster than the retail crowd.' },
+  { id: 'microwave',   name: 'Microwave Relay',    icon: '&#128225;', cashCost: 500e6,  speedMult: 0.80, desc: '-20% all cycle times. Signal bounced off the building across the street.' },
+  { id: 'colocation',  name: 'Server Co-location', icon: '&#128442;', cashCost: 50e9,   speedMult: 0.75, desc: '-25% all cycle times. Your racks live inside the exchange itself.' },
+  { id: 'quantum',     name: 'Quantum Execution',  icon: '&#9889;',   cashCost: 10e12,  speedMult: 0.60, desc: '-40% all cycle times. Progress bars pulse electric blue. Unreal.' },
 ];
 
-// Skill Tree — 3 branches, 4 nodes each, unlocked sequentially.
-// Each node costs Influence. Effects are wired directly into timeOf(), globalMult(), executeTrade(), and events.
+// Gold run milestones — gold awarded on IPO based on lifetime earnings reached that run.
+// Gold is scarce (like Megabucks in AdCap). Each threshold hit this run adds to the IPO payout.
+const GOLD_RUN_MILESTONES = [
+  { threshold: 1e6,   gold: 1  },   // $1M
+  { threshold: 1e7,   gold: 1  },   // $10M
+  { threshold: 1e8,   gold: 2  },   // $100M
+  { threshold: 1e9,   gold: 3  },   // $1B
+  { threshold: 1e10,  gold: 5  },   // $10B
+  { threshold: 1e11,  gold: 8  },   // $100B
+  { threshold: 1e12,  gold: 12 },   // $1T
+  { threshold: 1e15,  gold: 20 },   // $1Qa
+  { threshold: 1e18,  gold: 30 },   // $1Qi
+];
+function goldEarnedFromRun(lifetimeEarnings) {
+  let total = 0;
+  for (const m of GOLD_RUN_MILESTONES) { if (lifetimeEarnings >= m.threshold) total += m.gold; }
+  return total;
+}
+
+// Skill Tree — 3 branches, 5 nodes each, unlocked sequentially.
+// Early/mid nodes cost cash (grind for them). Top nodes cost gold (rare, IPO-earned).
+// Effects wired directly into timeOf(), globalMult(), executeTrade(), and events.
 const SKILL_TREE = [
   {
     id: 'speed', name: 'Trading Floor', icon: '&#9889;', color: '#4a90e2',
     nodes: [
-      { id: 'sk_fast_hands',  name: 'Fast Hands',        icon: '&#128075;', cost: 5,    desc: '+10% payout on every manual trade you click.' },
-      { id: 'sk_pre_market',  name: 'Pre-Market Access', icon: '&#128338;', cost: 20,   desc: '-10% all asset cycle times.' },
-      { id: 'sk_algo_edge',   name: 'Algorithmic Edge',  icon: '&#129302;', cost: 75,   desc: '-15% all cycle times (stacks).' },
-      { id: 'sk_light_speed', name: 'Light Speed',       icon: '&#128640;', cost: 200,  desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
-      { id: 'sk_dark_terminal',name: 'Dark Web Terminal',icon: '&#9899;',   cost: 500,  desc: 'Unlocks the Black Market. +20% Black Market payouts. The less said, the better.' },
+      { id: 'sk_fast_hands',   name: 'Fast Hands',        icon: '&#128075;', cashCost: 50000,        desc: '+10% payout on every manual trade you click.' },
+      { id: 'sk_pre_market',   name: 'Pre-Market Access', icon: '&#128338;', cashCost: 5e6,          desc: '-10% all asset cycle times.' },
+      { id: 'sk_algo_edge',    name: 'Algorithmic Edge',  icon: '&#129302;', cashCost: 1e9,          desc: '-15% all cycle times (stacks).' },
+      { id: 'sk_light_speed',  name: 'Light Speed',       icon: '&#128640;', cashCost: 500e9,        desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
+      { id: 'sk_dark_pool',    name: 'Dark Pool Access',  icon: '&#127756;', goldCost: 8,            desc: '+30% all payouts permanently. Shadow liquidity. No questions asked.' },
     ]
   },
   {
     id: 'intel', name: 'Market Intel', icon: '&#128225;', color: '#f3c74b',
     nodes: [
-      { id: 'sk_scanner',    name: 'Market Scanner',    icon: '&#128202;', cost: 8,    desc: 'Positive events last 20% longer.' },
-      { id: 'sk_bull_ext',   name: 'Bull Extension',    icon: '&#128994;', cost: 30,   desc: 'Positive events last 40% longer total.' },
-      { id: 'sk_bear_buf',   name: 'Bear Buffer',       icon: '&#128308;', cost: 80,   desc: 'Negative events end 25% sooner.' },
-      { id: 'sk_bias',       name: 'Event Bias',        icon: '&#127775;', cost: 200,  desc: 'Each event roll has a 20% chance of being forced positive.' },
-      { id: 'sk_sentiment',  name: 'Sentiment Engine',  icon: '&#129504;', cost: 500,  desc: '+40% all payouts permanently. Events fire 50% more often. You feel the market.' },
+      { id: 'sk_scanner',    name: 'Market Scanner',    icon: '&#128202;', cashCost: 100000,       desc: 'Positive events last 20% longer.' },
+      { id: 'sk_bull_ext',   name: 'Bull Extension',    icon: '&#128994;', cashCost: 10e6,         desc: 'Positive events last 40% longer total.' },
+      { id: 'sk_bear_buf',   name: 'Bear Buffer',       icon: '&#128308;', cashCost: 2e9,          desc: 'Negative events end 25% sooner.' },
+      { id: 'sk_bias',       name: 'Event Bias',        icon: '&#127775;', cashCost: 200e9,        desc: 'Each event roll has a 20% chance of being forced positive.' },
+      { id: 'sk_sentiment',  name: 'Sentiment Engine',  icon: '&#129504;', goldCost: 12,           desc: '+40% all payouts permanently. Events fire 50% more often. You feel the market.' },
     ]
   },
   {
     id: 'capital', name: 'Capital', icon: '&#128176;', color: '#2ecc71',
     nodes: [
-      { id: 'sk_compound',   name: 'Compounding',       icon: '&#128200;', cost: 10,   desc: '+5% all payouts per completed IPO (max bonus at 5 IPOs = +25%).' },
-      { id: 'sk_portfolio',  name: 'Portfolio Spread',  icon: '&#128203;', cost: 35,   desc: '+10% payouts when 5+ assets each have 10+ positions.' },
-      { id: 'sk_ms_amp',     name: 'Milestone Amp',     icon: '&#127942;', cost: 100,  desc: 'Each milestone multiplier is 20% stronger.' },
-      { id: 'sk_legend',     name: 'Wall St. Legend',   icon: '&#127775;', cost: 250,  desc: '+30% all payouts permanently. You made it.' },
-      { id: 'sk_dynasty',    name: 'Dynasty Protocol',  icon: '&#128081;', cost: 750,  desc: '+60% all payouts permanently. Unlock Influence Investing in the IPO menu.' },
+      { id: 'sk_compound',   name: 'Compounding',       icon: '&#128200;', cashCost: 250000,       desc: '+5% all payouts per completed IPO (max bonus at 5 IPOs = +25%).' },
+      { id: 'sk_portfolio',  name: 'Portfolio Spread',  icon: '&#128203;', cashCost: 25e6,         desc: '+10% payouts when 5+ assets each have 10+ positions.' },
+      { id: 'sk_ms_amp',     name: 'Milestone Amp',     icon: '&#127942;', cashCost: 5e9,          desc: 'Each milestone multiplier is 20% stronger.' },
+      { id: 'sk_legend',     name: 'Wall St. Legend',   icon: '&#127775;', cashCost: 500e9,        desc: '+30% all payouts permanently. You made it.' },
+      { id: 'sk_dynasty',    name: 'Dynasty Protocol',  icon: '&#128081;', goldCost: 20,           desc: '+60% all payouts permanently. Unlock Influence Investing in the IPO menu.' },
     ]
   },
 ];
@@ -2034,31 +2054,33 @@ const PREMIUM_MANAGERS = [
     desc: '+15% Tokyo payouts. Never sleeps. Never complains. Drinks too much sake on Fridays.',
     bio: '"Has worked here for 23 years. You\'ve seen him cry once. You will not bring it up."',
     mult: 1.15 },
-  // London premium managers — goldCost (endgame gold sink)
-  { id: 'governor',   name: 'The Governor',   role: 'Central Bank Chief',     icon: '&#127981;', goldCost: 250, market: 'london',
+  // London premium managers — goldCost (rare, gold-gated)
+  { id: 'governor',   name: 'The Governor',   role: 'Central Bank Chief',     icon: '&#127981;', goldCost: 5, market: 'london',
     desc: '+40% London payouts. Controls interest rates personally. You are just borrowing his market.',
     bio: '"Speaks in compound sentences only. Has never said the word \'inflation\' out loud. Just gestures vaguely."',
     mult: 1.40 },
-  { id: 'knight',     name: 'The Knight',     role: 'HFT Floor Commander',    icon: '&#9876;',   goldCost: 300, market: 'london',
+  { id: 'knight',     name: 'The Knight',     role: 'HFT Floor Commander',    icon: '&#9876;',   goldCost: 8, market: 'london',
     desc: '+20% London payouts. All London assets 20% faster. Was knighted for "services to velocity."',
     bio: '"Was a derivatives trader before derivatives existed. Invented three of the four instruments he uses."',
     mult: 1.20, speedMult: 0.80 },
 ];
 
 // Lifestyle upgrades — cash + gold. Permanent multipliers + speed bonuses.
+// Gold costs are calibrated to IPO milestone gold: early items (2-5g) reachable in a good first run,
+// mid items (10-25g) require several IPOs, top items (50g+) are endgame goals.
 // speedMult: reduces all cycle times (stacks with HFT perks, milestones, manager bonuses).
 const LIFESTYLE = [
-  { id: 'penthouse',   name: 'Penthouse Apartment',  icon: '&#127961;', cashCost: 1e8,  goldCost: 25,
+  { id: 'penthouse',   name: 'Penthouse Apartment',  icon: '&#127961;', cashCost: 1e8,  goldCost: 2,
     desc: 'Skyline views and private elevator. +25% all payouts, -10% all cycle times.', mult: 1.25, speedMult: 0.90 },
-  { id: 'yacht',       name: 'The Yacht',            icon: '&#128674;', cashCost: 1e9,  goldCost: 75,
+  { id: 'yacht',       name: 'The Yacht',            icon: '&#128674;', cashCost: 1e9,  goldCost: 5,
     desc: '47 meters of teak deck and contempt. +50% all payouts, -15% all cycle times.', mult: 1.50, speedMult: 0.85 },
-  { id: 'jet',         name: 'Private Jet',          icon: '&#128747;', cashCost: 1e10, goldCost: 150,
+  { id: 'jet',         name: 'Private Jet',          icon: '&#128747;', cashCost: 1e10, goldCost: 10,
     desc: 'No more middle seats, ever. +75% all payouts, -20% all cycle times.', mult: 1.75, speedMult: 0.80 },
-  { id: 'art',         name: 'Modern Art Collection',icon: '&#127912;', cashCost: 1e11, goldCost: 250,
+  { id: 'art',         name: 'Modern Art Collection',icon: '&#127912;', cashCost: 1e11, goldCost: 15,
     desc: 'Tax-deductible scribbles by long-dead Europeans. +100% all payouts forever.', mult: 2.00 },
-  { id: 'island',      name: 'Private Island',       icon: '&#127965;', cashCost: 1e12, goldCost: 500,
+  { id: 'island',      name: 'Private Island',       icon: '&#127965;', cashCost: 1e12, goldCost: 25,
     desc: 'Your own zip code in international waters. +150% all payouts forever.', mult: 2.50 },
-  { id: 'nfl_team',    name: 'NFL Franchise',        icon: '&#127944;', cashCost: 1e14, goldCost: 1000,
+  { id: 'nfl_team',    name: 'NFL Franchise',        icon: '&#127944;', cashCost: 1e14, goldCost: 50,
     desc: 'You sit in the owner\'s box now. The league hates you. +250% all payouts, -0.2s all cycle floors.', mult: 3.50 },
   { id: 'moon_colony', name: 'Moon Colony',          icon: '&#127769;', cashCost: 1e15, megabucksCost: 5,
     desc: 'Low orbit, low taxes. +400% all payouts forever. Tax residency: space.', mult: 5.00 },
@@ -2976,13 +2998,15 @@ function basePayoutOf(asset) {
   // payoutLevel was the old "2x $" upgrade button — removed in v1.14, no longer factored in.
   // Old saves get their payoutLevel zeroed on load() so this is moot, but kept defensive.
   const a = state.assets[asset.id];
+  // Black Market gold is a separate scarce currency — milestone multiplier (2^n) would make it
+  // explode at high owned counts. BM scales only with owned count, not milestones.
+  if (asset.market === 'blackmkt') return asset.basePayout * a.owned;
   return asset.basePayout * a.owned * milestoneMultOf(asset) * megaTicketMultOf(asset) * synergyMultOf(asset);
 }
 function payoutOf(asset) {
   let p = basePayoutOf(asset);
-  // Black Market is fully isolated from Wall St multipliers — only milestones + skill bonus apply.
+  // Black Market is fully isolated from Wall St multipliers.
   if (asset.market === 'blackmkt') {
-    if (state.skillsOwned?.sk_dark_terminal) p *= 1.20;
     return p;
   }
   // Per-market multipliers (includes globals + market-specific premium managers)
@@ -3040,6 +3064,7 @@ function globalMult(market) {
   if (state.skillsOwned?.sk_legend)    m *= 1.30;
   if (state.skillsOwned?.sk_dynasty)   m *= 1.60;
   if (state.skillsOwned?.sk_sentiment) m *= 1.40;
+  if (state.skillsOwned?.sk_dark_pool) m *= 1.30;
   // Influence Investing — stacking +0.5% per investment (unlocked by sk_dynasty)
   const invCount = state.influenceInvested || 0;
   if (invCount > 0) m *= (1 + invCount * 0.005);
@@ -3122,16 +3147,21 @@ function updateTabBadges() {
 
   // PERKS tab: any un-bought HFT perk or lifestyle item the player can afford
   const canAffordPerk =
-    HFT_PERKS.some(p => !state.hftPerksOwned?.[p.id] && (state.gold || 0) >= p.goldCost) ||
+    HFT_PERKS.some(p => !state.hftPerksOwned?.[p.id] && (state.cash || 0) >= p.cashCost) ||
     LIFESTYLE.some(l => !state.lifestyleOwned?.[l.id] &&
       (state.cash || 0) >= (l.cashCost || 0) &&
-      (state.gold || 0) >= (l.goldCost || 0));
+      (l.megabucksCost ? (state.megabucks || 0) >= l.megabucksCost : (state.gold || 0) >= (l.goldCost || 0)));
   const perksBtn = document.querySelector('.tab-btn[data-tab="perks"]');
   if (perksBtn && state.activeTab !== 'perks') perksBtn.classList.toggle('has-news', canAffordPerk);
 
-  // SKILLS tab: any un-bought skill the player can afford
+  // SKILLS tab: any un-bought skill the player can afford (cash, gold, or influence)
   const canAffordSkill = SKILL_TREE.some(row =>
-    row.nodes.some(n => !state.skillsOwned?.[n.id] && (state.influence || 0) >= n.cost)
+    row.nodes.some(n => {
+      if (state.skillsOwned?.[n.id]) return false;
+      if (n.goldCost)  return (state.gold || 0) >= n.goldCost;
+      if (n.cashCost)  return (state.cash || 0) >= n.cashCost;
+      return (state.influence || 0) >= n.cost;
+    })
   );
   const skillsBtn = document.querySelector('.tab-btn[data-tab="skills"]');
   if (skillsBtn && state.activeTab !== 'skills') skillsBtn.classList.toggle('has-news', canAffordSkill);
@@ -3160,10 +3190,12 @@ function prestigeGain() {
   // Influence is scarce — AdC angel style. Fewer tokens, each worth more.
   // Formula: 8 * sqrt(Earnings / 1M). First prestige at $1M gives 8 tokens.
   // $100M → 80, $1B → 253, $10B → 800. Encourages going deep before resetting.
+  // Cap: max 1000 tokens per individual IPO to prevent runaway multiplier from mega-sessions.
   if (state.lifetimeEarnings < 1e6) return 0;
   let totalPossible = Math.floor(8 * Math.sqrt(state.lifetimeEarnings / 1e6));
-  let pending = totalPossible - (state.influence + (state.influenceSpent || 0));
-  return Math.max(0, pending);
+  let alreadyHave = state.influence + (state.influenceSpent || 0);
+  let pending = totalPossible - alreadyHave;
+  return Math.min(1000, Math.max(0, pending));
 }
 
 function nextPrestigeAt() {
@@ -3728,23 +3760,25 @@ function buySkill(id) {
     const prev = branch.nodes[nodeIdx - 1];
     if (!state.skillsOwned?.[prev.id]) { toast('Unlock the previous skill first.'); return; }
   }
-  if ((state.influence || 0) < node.cost) { toast('Not enough Influence.'); return; }
-  state.influence -= node.cost;
-  state.influenceSpent = (state.influenceSpent || 0) + node.cost;
+  // Check and deduct cost — nodes are either cashCost, goldCost, or legacy influence cost
+  if (node.goldCost) {
+    if ((state.gold || 0) < node.goldCost) { toast('Not enough Gold. Earn gold by going deeper each IPO run.'); return; }
+    state.gold -= node.goldCost;
+  } else if (node.cashCost) {
+    if ((state.cash || 0) < node.cashCost) { toast('Not enough cash.'); return; }
+    state.cash -= node.cashCost;
+  } else {
+    // Legacy influence cost (fallback for any old nodes)
+    if ((state.influence || 0) < node.cost) { toast('Not enough Influence.'); return; }
+    state.influence -= node.cost;
+    state.influenceSpent = (state.influenceSpent || 0) + node.cost;
+  }
   if (!state.skillsOwned) state.skillsOwned = {};
   state.skillsOwned[id] = true;
-  // Dark Web Terminal — unlock the Black Market and give a gold starter bonus
-  if (id === 'sk_dark_terminal' && !state.blackmktUnlocked) {
-    state.blackmktUnlocked = true;
-    state.gold = (state.gold || 0) + 5;
-    state.lifetimeGold = (state.lifetimeGold || 0) + 5;
-    addNews('BLACK MARKET UNLOCKED', 'The Dark Web Terminal is active. +5g starter. Keep it quiet.', 'milestone');
-    celebrate('⚫ DARK MARKET OPEN', 'The terminal is live. +5 Gold to get started.');
-  }
   SFX.skill();
   toast(node.name + ' unlocked!');
   addNews('SKILL: ' + node.name, node.desc, 'milestone');
-  if (id !== 'sk_dark_terminal') celebrate('SKILL UNLOCKED', node.name); // BM already celebrated above
+  celebrate('SKILL UNLOCKED', node.name);
   renderCash();
   renderSkillTree();
   save();
@@ -3766,10 +3800,11 @@ function investInfluence() {
 }
 function renderPrestigeModal() {
   const gain = prestigeGain();
+  const goldGain = goldEarnedFromRun(state.lifetimeEarnings);
   const gainEl = document.getElementById('prestigeGain');
   const btnEl  = document.getElementById('prestigeBtn');
   const infEl  = document.getElementById('influenceCurrent');
-  if (gainEl) gainEl.textContent = '+' + fmtNum(gain) + ' Influence';
+  if (gainEl) gainEl.textContent = '+' + fmtNum(gain) + ' Influence' + (goldGain > 0 ? ' · +' + goldGain + ' 🥇 Gold' : '');
   if (btnEl)  btnEl.disabled = gain === 0;
   if (infEl)  infEl.textContent = fmtNum(state.influence);
   const investSection = document.getElementById('influenceInvestSection');
@@ -3801,7 +3836,18 @@ function renderSkillTree() {
     branch.nodes.forEach((node, idx) => {
       const owned = !!state.skillsOwned?.[node.id];
       const prevOwned = idx === 0 || !!state.skillsOwned?.[branch.nodes[idx-1].id];
-      const canAfford = (state.influence || 0) >= node.cost;
+      let canAfford = false;
+      let costLabel = '';
+      if (node.goldCost) {
+        canAfford = (state.gold || 0) >= node.goldCost;
+        costLabel = node.goldCost + ' 🥇';
+      } else if (node.cashCost) {
+        canAfford = (state.cash || 0) >= node.cashCost;
+        costLabel = fmt(node.cashCost, 'cash');
+      } else {
+        canAfford = (state.influence || 0) >= node.cost;
+        costLabel = node.cost + ' ▲';
+      }
       const available = !owned && prevOwned;
       const locked = !owned && !prevOwned;
       // Connector line between nodes
@@ -3813,15 +3859,15 @@ function renderSkillTree() {
         <div class="skill-node ${cls}" ${available && canAfford ? `onclick="buySkill('${node.id}')"` : ''}>
           <div class="skill-node-icon">${node.icon}</div>
           <div class="skill-node-name">${node.name}</div>
-          <div class="skill-node-cost">${owned ? '✓ OWNED' : locked ? '🔒 ' + node.cost + ' ▲' : canAfford ? node.cost + ' ▲ BUY' : node.cost + ' ▲ NEED'}</div>
+          <div class="skill-node-cost">${owned ? '✓ OWNED' : locked ? '🔒 ' + costLabel : canAfford ? costLabel + ' · BUY' : costLabel + ' · NEED'}</div>
           <div class="skill-node-desc">${node.desc}</div>
         </div>`;
     });
     html += `</div>`;
   });
   html += '</div>';
-  // Influence balance reminder
-  html += `<div style="text-align:center;padding:8px;font-size:11px;color:var(--text-dim);">You have <b style="color:var(--text);">${fmtNum(state.influence || 0)} Influence</b> to spend. Each token banked = +${state.influenceShopOwned?.heavens_lottery ? 8 : 4}% global payouts.</div>`;
+  // Wallet reminder
+  html += `<div style="text-align:center;padding:8px;font-size:11px;color:var(--text-dim);">Cash: <b style="color:var(--text);">${fmt(state.cash, 'cash')}</b> &nbsp;|&nbsp; Gold: <b style="color:var(--gold);">${fmtNum(state.gold || 0)} 🥇</b> &nbsp;|&nbsp; Influence: <b style="color:#d88aff;">${fmtNum(state.influence || 0)} ▲</b></div>`;
   root.innerHTML = html;
 }
 
@@ -3829,11 +3875,11 @@ function buyHFTPerk(id) {
   const p = HFT_PERKS.find(x => x.id === id);
   if (!p) return;
   if (state.hftPerksOwned?.[p.id]) return;
-  if ((state.gold || 0) < p.goldCost) { toast('Not enough gold.'); return; }
-  state.gold -= p.goldCost;
+  if ((state.cash || 0) < p.cashCost) { toast('Not enough cash.'); return; }
+  state.cash -= p.cashCost;
   if (!state.hftPerksOwned) state.hftPerksOwned = {};
   state.hftPerksOwned[p.id] = true;
-  SFX.gold();
+  SFX.buy();
   toast(p.name + ' activated!');
   addNews('HFT: ' + p.name, p.desc, 'milestone');
   if (p.id === 'quantum') celebrate('QUANTUM EXECUTION', 'All bars pulse electric blue. Speed ×0.6.');
@@ -4606,6 +4652,12 @@ function doPrestige() {
   const gain = prestigeGain();
   if (gain === 0) { toast('You need more lifetime earnings.'); return; }
   state.influence += gain;
+  // Gold from run milestones (like Megabucks in AdCap — earned by going deep each run)
+  const goldGain = goldEarnedFromRun(state.lifetimeEarnings);
+  if (goldGain > 0) {
+    state.gold = (state.gold || 0) + goldGain;
+    state.lifetimeGold = (state.lifetimeGold || 0) + goldGain;
+  }
   state.cash = 4;
   state.lifetimeEarnings = 0;
   state.activeEvent = null;
@@ -4625,7 +4677,8 @@ function doPrestige() {
   closeModal('prestigeModal');
   hideEvent();
   SFX.ipo();
-  celebrate('IPO!', '+' + gain + ' Influence earned');
+  const celebMsg = '+' + gain + ' Influence' + (goldGain > 0 ? ' · +' + goldGain + ' 🥇 Gold' : '');
+  celebrate('IPO!', celebMsg);
   renderAll();
   save();
 }
@@ -4849,7 +4902,7 @@ function renderAssets() {
       <button class="market-tab ${state.activeMarket === 'wallst' ? 'active' : ''}" onclick="switchMarket('wallst')">$ WALL ST</button>
       <button class="market-tab ${state.activeMarket === 'tokyo' ? 'active' : ''}" onclick="switchMarket('tokyo')">¥ TOKYO</button>
       ${state.londonUnlocked ? `<button class="market-tab ${state.activeMarket === 'london' ? 'active' : ''}" onclick="switchMarket('london')">£ LONDON</button>` : `<button class="market-tab locked-tab" title="Complete the Chicago Pit to unlock">🔒 LONDON</button>`}
-      ${state.blackmktUnlocked ? `<button class="market-tab blackmkt-tab ${state.activeMarket === 'blackmkt' ? 'active' : ''}" onclick="switchMarket('blackmkt')">⚫ DARK</button>` : (state.tokyoUnlocked ? `<button class="market-tab blackmkt-tab locked-tab" style="opacity:0.3;" title="Unlock via Dark Web Terminal skill">🔒 DARK</button>` : '')}
+      <!-- Black Market is a Limited Time Event — not a permanent tab -->
     `;
     list.appendChild(sw);
   }
@@ -5340,13 +5393,13 @@ function renderPerksTab() {
     root.innerHTML = html;
   }
 
-  // HFT Speed Perks (gold-cost speed reductions)
+  // HFT Speed Perks (cash-cost speed reductions)
   const hftroot = document.getElementById('hftPerksList');
   if (hftroot) {
     let html = '';
     HFT_PERKS.forEach(p => {
       const owned = !!(state.hftPerksOwned?.[p.id]);
-      const can = (state.gold || 0) >= p.goldCost;
+      const can = (state.cash || 0) >= p.cashCost;
       const pct = Math.round((1 - p.speedMult) * 100);
       html += `
         <div class="perk-card${owned ? ' owned' : ''}">
@@ -5355,8 +5408,8 @@ function renderPerksTab() {
             <div class="perk-name">${p.name}</div>
             <div class="perk-desc">-${pct}% all cycle times &middot; permanent</div>
           </div>
-          <button class="buy-btn gold-btn" ${owned || !can ? 'disabled' : ''} onclick="buyHFTPerk('${p.id}')">
-            ${owned ? '<span class="price">OWNED</span>' : '<span class="label">BUY</span><span class="price">' + p.goldCost + '&#129689;</span>'}
+          <button class="buy-btn" ${owned || !can ? 'disabled' : ''} onclick="buyHFTPerk('${p.id}')">
+            ${owned ? '<span class="price">OWNED</span>' : '<span class="label">BUY</span><span class="price">' + fmt(p.cashCost) + '</span>'}
           </button>
         </div>`;
     });
