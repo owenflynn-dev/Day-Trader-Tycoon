@@ -1769,12 +1769,13 @@ const ASSETS = [
 
   // ── BLACK MARKET — currency: gold. Unlocks after London. Slow, expensive, but passively earns gold. ──
   // === Black Market (⚫ Gold) — no managers, manual click only, very slow & scarce ===
-  { id: 'bm_smug',   ticker: '&#9899;SMUG',  name: 'Contraband ETF',     icon: '&#129523;', baseCost: 1,     basePayout: 0.10,  baseTime: 120,   sector: 'bm_hustle', market: 'blackmkt' },
-  { id: 'bm_laund',  ticker: '&#9899;LAUND', name: 'Shell Corp Laundry', icon: '&#127968;', baseCost: 8,     basePayout: 0.60,  baseTime: 600,   sector: 'bm_hustle', market: 'blackmkt' },
-  { id: 'bm_cartel', ticker: '&#9899;CRTL',  name: 'Algo Cartel',        icon: '&#129302;', baseCost: 60,    basePayout: 3.5,   baseTime: 1800,  sector: 'bm_ops',    market: 'blackmkt' },
-  { id: 'bm_ghost',  ticker: '&#9899;GHST',  name: 'Ghost Corporation',  icon: '&#128123;', baseCost: 400,   basePayout: 20,    baseTime: 3600,  sector: 'bm_ops',    market: 'blackmkt' },
-  { id: 'bm_pool',   ticker: '&#9899;POOL',  name: 'Dark Pool',          icon: '&#127756;', baseCost: 3000,  basePayout: 120,   baseTime: 14400, sector: 'bm_vault',  market: 'blackmkt' },
-  { id: 'bm_vault',  ticker: '&#9899;VALT',  name: 'Offshore Vault',     icon: '&#127963;', baseCost: 25000, basePayout: 800,   baseTime: 43200, sector: 'bm_vault',  market: 'blackmkt' },
+  // Black Market: buy positions with CASH, click bar to launder cash → earn gold. No traders allowed.
+  { id: 'bm_smug',   ticker: '&#9899;SMUG',  name: 'Contraband ETF',     icon: '&#129523;', baseCost: 1000,    launderCost: 100,    basePayout: 0.2,   baseTime: 120,   sector: 'bm_hustle', market: 'blackmkt' },
+  { id: 'bm_laund',  ticker: '&#9899;LAUND', name: 'Shell Corp Laundry', icon: '&#127968;', baseCost: 10000,   launderCost: 800,    basePayout: 1,     baseTime: 600,   sector: 'bm_hustle', market: 'blackmkt' },
+  { id: 'bm_cartel', ticker: '&#9899;CRTL',  name: 'Algo Cartel',        icon: '&#129302;', baseCost: 100000,  launderCost: 6000,   basePayout: 6,     baseTime: 1800,  sector: 'bm_ops',    market: 'blackmkt' },
+  { id: 'bm_ghost',  ticker: '&#9899;GHST',  name: 'Ghost Corporation',  icon: '&#128123;', baseCost: 1e6,     launderCost: 50000,  basePayout: 30,    baseTime: 3600,  sector: 'bm_ops',    market: 'blackmkt' },
+  { id: 'bm_pool',   ticker: '&#9899;POOL',  name: 'Dark Pool',          icon: '&#127756;', baseCost: 1e7,     launderCost: 400000, basePayout: 150,   baseTime: 14400, sector: 'bm_vault',  market: 'blackmkt' },
+  { id: 'bm_vault',  ticker: '&#9899;VALT',  name: 'Offshore Vault',     icon: '&#127963;', baseCost: 1e8,     launderCost: 3e6,    basePayout: 750,   baseTime: 43200, sector: 'bm_vault',  market: 'blackmkt' },
 ];
 
 const COST_GROWTH = 1.12;  // each unit costs 12% more (rebalanced 2026-04-27 — extended ladder to 10 tiers does the heavy lifting; AdC uses 1.07)
@@ -1925,53 +1926,53 @@ const NEWS_MAX = 30;
 
 // Quests — completable goals that grant gold. One-time per save.
 const QUESTS = [
-  { id: 'q_first_steps',   icon: '&#128181;', name: 'First Steps',         desc: 'Execute 10 trades.',                    target: () => 10,  progress: () => state.totalTrades || 0,                                                       reward: 5 },
-  { id: 'q_buying_in',     icon: '&#128722;', name: 'Buying In',           desc: 'Own 25 positions across all assets.',   target: () => 25,  progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),             reward: 10 },
-  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every unlocked asset.',      target: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked)).length, progress: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked) && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 25 },
-  { id: 'q_crypto_curious',icon: '&#127852;', name: 'Crypto Curious',      desc: 'Own 5 Candy Crypto positions.',         target: () => 5,   progress: () => state.assets.dogz?.owned || 0,                                                reward: 10 },
-  { id: 'q_first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1,000,000 lifetime.',             target: () => 1e6, progress: () => state.allTimeEarnings || 0,                                                   reward: 25 },
-  { id: 'q_hedge_mgr',     icon: '&#128188;', name: 'Hedge Fund Manager',  desc: 'Hire 4 traders.',                       target: () => 4,   progress: () => Object.values(state.assets).filter(a => a.hired).length,                      reward: 25 },
-  { id: 'q_first_ipo',     icon: '&#127970;', name: 'First IPO',           desc: 'Take your firm public for the first time.', target: () => 1, progress: () => state.influence >= 1 ? 1 : 0,                                                reward: 100 },
-  { id: 'q_yacht_bound',   icon: '&#128674;', name: 'Yacht Bound',         desc: 'Own 1 Offshore Yacht Fund position.',   target: () => 1,   progress: () => state.assets.yact?.owned || 0,                                                reward: 50 },
+  { id: 'q_first_steps',   icon: '&#128181;', name: 'First Steps',         desc: 'Execute 10 trades.',                    target: () => 10,  progress: () => state.totalTrades || 0,                                                       reward: 2 },
+  { id: 'q_buying_in',     icon: '&#128722;', name: 'Buying In',           desc: 'Own 25 positions across all assets.',   target: () => 25,  progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),             reward: 5 },
+  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every unlocked asset.',      target: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked)).length, progress: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked) && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 10 },
+  { id: 'q_crypto_curious',icon: '&#127852;', name: 'Crypto Curious',      desc: 'Own 5 Candy Crypto positions.',         target: () => 5,   progress: () => state.assets.dogz?.owned || 0,                                                reward: 5 },
+  { id: 'q_first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1,000,000 lifetime.',             target: () => 1e6, progress: () => state.allTimeEarnings || 0,                                                   reward: 10 },
+  { id: 'q_hedge_mgr',     icon: '&#128188;', name: 'Hedge Fund Manager',  desc: 'Hire 4 traders.',                       target: () => 4,   progress: () => Object.values(state.assets).filter(a => a.hired).length,                      reward: 10 },
+  { id: 'q_first_ipo',     icon: '&#127970;', name: 'First IPO',           desc: 'Take your firm public for the first time.', target: () => 1, progress: () => state.influence >= 1 ? 1 : 0,                                                reward: 50 },
+  { id: 'q_yacht_bound',   icon: '&#128674;', name: 'Yacht Bound',         desc: 'Own 1 Offshore Yacht Fund position.',   target: () => 1,   progress: () => state.assets.yact?.owned || 0,                                                reward: 15 },
 
   // Mid-late progression
-  { id: 'q_click_trader',  icon: '&#128075;', name: 'Click Trader',        desc: 'Manually execute 100 trades.',           target: () => 100, progress: () => state.manualTrades || 0,                                                       reward: 15 },
-  { id: 'q_speed_demon',   icon: '&#9889;',   name: 'Speed Demon',         desc: 'Hit the 50-position speed milestone on any asset.', target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 20 },
-  { id: 'q_big_spender',   icon: '&#128181;', name: 'Big Spender',         desc: 'Hire any premium manager.',              target: () => 1,   progress: () => Object.keys(state.premiumOwned || {}).length >= 1 ? 1 : 0,                     reward: 25 },
-  { id: 'q_day_trader',    icon: '&#128184;', name: 'Day Trader',          desc: 'Hold $10M cash at one time.',           target: () => 1e7, progress: () => Math.min(state.cash, 1e7),                                                     reward: 30 },
-  { id: 'q_wall_st_tycoon',icon: '&#127970;', name: 'Wall Street Tycoon',  desc: 'Hold $1B cash at one time.',            target: () => 1e9, progress: () => Math.min(state.cash, 1e9),                                                     reward: 75 },
-  { id: 'q_goldsmith',     icon: '&#129689;', name: 'Goldsmith',           desc: 'Earn 100 gold lifetime.',                target: () => 100, progress: () => state.lifetimeGold || 0,                                                       reward: 30 },
-  { id: 'q_time_lord',     icon: '&#9203;',   name: 'Time Lord',           desc: 'Use 3 Time Warps.',                      target: () => 3,   progress: () => state.timeWarpsUsed || 0,                                                      reward: 30 },
-  { id: 'q_influencer',    icon: '&#128276;', name: 'Influencer',          desc: 'Own 2+ Influence Shop items.',           target: () => 2,   progress: () => Object.keys(state.influenceShopOwned || {}).length,                            reward: 100 },
-  { id: 'q_survivor',      icon: '&#129505;', name: 'Survivor',            desc: 'Survive a Black Swan event.',            target: () => 1,   progress: () => state.blackSwansExperienced || 0,                                              reward: 200 },
+  { id: 'q_click_trader',  icon: '&#128075;', name: 'Click Trader',        desc: 'Manually execute 100 trades.',           target: () => 100, progress: () => state.manualTrades || 0,                                                       reward: 5 },
+  { id: 'q_speed_demon',   icon: '&#9889;',   name: 'Speed Demon',         desc: 'Hit the 50-position speed milestone on any asset.', target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 8 },
+  { id: 'q_big_spender',   icon: '&#128181;', name: 'Big Spender',         desc: 'Hire any premium manager.',              target: () => 1,   progress: () => Object.keys(state.premiumOwned || {}).length >= 1 ? 1 : 0,                     reward: 8 },
+  { id: 'q_day_trader',    icon: '&#128184;', name: 'Day Trader',          desc: 'Hold $10M cash at one time.',           target: () => 1e7, progress: () => Math.min(state.cash, 1e7),                                                     reward: 10 },
+  { id: 'q_wall_st_tycoon',icon: '&#127970;', name: 'Wall Street Tycoon',  desc: 'Hold $1B cash at one time.',            target: () => 1e9, progress: () => Math.min(state.cash, 1e9),                                                     reward: 25 },
+  { id: 'q_goldsmith',     icon: '&#129689;', name: 'Goldsmith',           desc: 'Earn 100 gold lifetime.',                target: () => 100, progress: () => state.lifetimeGold || 0,                                                       reward: 10 },
+  { id: 'q_time_lord',     icon: '&#9203;',   name: 'Time Lord',           desc: 'Use 3 Time Warps.',                      target: () => 3,   progress: () => state.timeWarpsUsed || 0,                                                      reward: 10 },
+  { id: 'q_influencer',    icon: '&#128276;', name: 'Influencer',          desc: 'Own 2+ Influence Shop items.',           target: () => 2,   progress: () => Object.keys(state.influenceShopOwned || {}).length,                            reward: 30 },
+  { id: 'q_survivor',      icon: '&#129505;', name: 'Survivor',            desc: 'Survive a Black Swan event.',            target: () => 1,   progress: () => state.blackSwansExperienced || 0,                                              reward: 50 },
 
   // Mid-game quests — targeted at the hour 3-5 dead zone
-  { id: 'q_power_trader',  icon: '&#128200;', name: 'Power Trader',        desc: 'Own 50+ positions on any single asset.',  target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),                reward: 20 },
-  { id: 'q_diversify_more',icon: '&#128202;', name: 'Going Wide',          desc: 'Own 10+ positions on 5 different assets.',target: () => 5,   progress: () => ASSETS.filter(a => a.market !== 'london' && (state.assets[a.id]?.owned || 0) >= 10).length, reward: 25 },
-  { id: 'q_yen_millionaire',icon: '&#165;',   name: 'Yen Millionaire',     desc: 'Earn ¥1,000,000 lifetime on Tokyo Floor.',target: () => 1e6, progress: () => state.lifetimeYen || 0,                                                        reward: 40 },
-  { id: 'q_mega_holder',   icon: '&#127929;', name: 'Mega Ticket Holder',  desc: 'Purchase any Mega Ticket.',               target: () => 1,   progress: () => Object.keys(state.megaTicketsOwned || {}).length,                              reward: 30 },
-  { id: 'q_speed_freak',   icon: '&#128421;', name: 'Speed Freak',         desc: 'Purchase any HFT Speed Perk.',            target: () => 1,   progress: () => Object.keys(state.hftPerksOwned || {}).length,                                 reward: 35 },
-  { id: 'q_leverage_rush', icon: '&#128640;', name: 'Leverage Rush',       desc: 'Activate a 5x or higher leverage.',       target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 5 ? 1 : 0,                                      reward: 25 },
+  { id: 'q_power_trader',  icon: '&#128200;', name: 'Power Trader',        desc: 'Own 50+ positions on any single asset.',  target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),                reward: 8 },
+  { id: 'q_diversify_more',icon: '&#128202;', name: 'Going Wide',          desc: 'Own 10+ positions on 5 different assets.',target: () => 5,   progress: () => ASSETS.filter(a => a.market !== 'london' && (state.assets[a.id]?.owned || 0) >= 10).length, reward: 8 },
+  { id: 'q_yen_millionaire',icon: '&#165;',   name: 'Yen Millionaire',     desc: 'Earn ¥1,000,000 lifetime on Tokyo Floor.',target: () => 1e6, progress: () => state.lifetimeYen || 0,                                                        reward: 15 },
+  { id: 'q_mega_holder',   icon: '&#127929;', name: 'Mega Ticket Holder',  desc: 'Purchase any Mega Ticket.',               target: () => 1,   progress: () => Object.keys(state.megaTicketsOwned || {}).length,                              reward: 10 },
+  { id: 'q_speed_freak',   icon: '&#128421;', name: 'Speed Freak',         desc: 'Purchase any HFT Speed Perk.',            target: () => 1,   progress: () => Object.keys(state.hftPerksOwned || {}).length,                                 reward: 10 },
+  { id: 'q_leverage_rush', icon: '&#128640;', name: 'Leverage Rush',       desc: 'Activate a 5x or higher leverage.',       target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 5 ? 1 : 0,                                      reward: 8 },
 
   // Tokyo-specific quests
-  { id: 'q_neo_tokyo',     icon: '&#127884;', name: 'Neo-Tokyo Resident',  desc: 'Own 100 $ANIME positions.',              target: () => 100, progress: () => state.assets.t_anime?.owned || 0,                                              reward: 30 },
-  { id: 'q_last_samurai',  icon: '&#129686;', name: 'The Last Samurai',    desc: 'Hire all 6 Tokyo traders.',              target: () => 6,   progress: () => ASSETS.filter(a => a.market === 'tokyo' && state.assets[a.id]?.hired).length,  reward: 100 },
+  { id: 'q_neo_tokyo',     icon: '&#127884;', name: 'Neo-Tokyo Resident',  desc: 'Own 100 $ANIME positions.',              target: () => 100, progress: () => state.assets.t_anime?.owned || 0,                                              reward: 10 },
+  { id: 'q_last_samurai',  icon: '&#129686;', name: 'The Last Samurai',    desc: 'Hire all 6 Tokyo traders.',              target: () => 6,   progress: () => ASSETS.filter(a => a.market === 'tokyo' && state.assets[a.id]?.hired).length,  reward: 35 },
 
   // Endgame / prestige quests
-  { id: 'q_endgame_500',   icon: '&#128176;', name: 'Position Master',     desc: 'Own 500+ positions on any single asset.',  target: () => 500,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 100 },
-  { id: 'q_endgame_1k',    icon: '&#127775;', name: 'Four-Digit Holder',   desc: 'Own 1,000+ positions on any single asset.', target: () => 1000, progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),              reward: 250 },
-  { id: 'q_total_10k',     icon: '&#128200;', name: 'Portfolio Titan',     desc: 'Own 10,000 total positions across all assets.', target: () => 10000, progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),      reward: 150 },
-  { id: 'q_ipo_10',        icon: '&#127974;', name: 'Serial Founder',      desc: 'Take your firm public 10 times.',          target: () => 10,  progress: () => state.totalIPOs || 0,                                                           reward: 200 },
-  { id: 'q_gold_master',   icon: '&#129689;', name: 'Gold Hoarder',        desc: 'Earn 1,000 gold lifetime on the Black Market.',target: () => 1000, progress: () => state.lifetimeGold || 0,                                                  reward: 100 },
-  { id: 'q_gold_vault',    icon: '&#127963;', name: 'Vault Operator',      desc: 'Earn 10,000 gold lifetime on the Black Market.',target: () => 10000, progress: () => state.lifetimeGold || 0,                                               reward: 300 },
-  { id: 'q_gbp_billionaire',icon: '&#163;',  name: 'City of London',      desc: 'Earn £1,000,000,000 lifetime on London Exchange.',target: () => 1e9, progress: () => state.lifetimeGbp || 0,                                                 reward: 150 },
-  { id: 'q_click_1k',      icon: '&#128075;', name: 'Chronic Clicker',     desc: 'Manually execute 1,000 trades.',            target: () => 1000, progress: () => state.manualTrades || 0,                                                     reward: 75 },
-  { id: 'q_all_premium',   icon: '&#127881;', name: 'Full House',          desc: 'Hire all 4 Wall Street premium managers.',  target: () => 4,   progress: () => ['senator','quant','cfo','whistleblower'].filter(id => state.premiumOwned?.[id]).length, reward: 200 },
-  { id: 'q_max_leverage',  icon: '&#128640;', name: 'Max Leverage',        desc: 'Activate 10x leverage.',                    target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 10 ? 1 : 0,                                   reward: 50 },
-  { id: 'q_ipo_25',        icon: '&#128276;', name: 'Dynasty Builder',     desc: 'Take your firm public 25 times.',           target: () => 25,  progress: () => state.totalIPOs || 0,                                                          reward: 500 },
-  { id: 'q_yen_trillion',  icon: '&#165;',    name: 'Tokyo Titan',         desc: 'Earn ¥1,000,000,000,000 lifetime.',         target: () => 1e12, progress: () => state.lifetimeYen || 0,                                                       reward: 200 },
-  { id: 'q_invest_10',     icon: '&#128081;', name: 'Influence Baron',     desc: 'Make 10 Influence Investments.',            target: () => 10,  progress: () => state.influenceInvested || 0,                                                   reward: 150 },
-  { id: 'q_bm_all',        icon: '&#9899;',   name: 'Dark Operator',       desc: 'Own at least 1 of every Black Market asset.', target: () => 6, progress: () => ASSETS.filter(a => a.market === 'blackmkt' && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 75 },
+  { id: 'q_endgame_500',   icon: '&#128176;', name: 'Position Master',     desc: 'Own 500+ positions on any single asset.',  target: () => 500,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 40 },
+  { id: 'q_endgame_1k',    icon: '&#127775;', name: 'Four-Digit Holder',   desc: 'Own 1,000+ positions on any single asset.', target: () => 1000, progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),              reward: 100 },
+  { id: 'q_total_10k',     icon: '&#128200;', name: 'Portfolio Titan',     desc: 'Own 10,000 total positions across all assets.', target: () => 10000, progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),      reward: 60 },
+  { id: 'q_ipo_10',        icon: '&#127974;', name: 'Serial Founder',      desc: 'Take your firm public 10 times.',          target: () => 10,  progress: () => state.totalIPOs || 0,                                                           reward: 75 },
+  { id: 'q_gold_master',   icon: '&#129689;', name: 'Gold Hoarder',        desc: 'Earn 1,000 gold lifetime on the Black Market.',target: () => 1000, progress: () => state.lifetimeGold || 0,                                                  reward: 50 },
+  { id: 'q_gold_vault',    icon: '&#127963;', name: 'Vault Operator',      desc: 'Earn 10,000 gold lifetime on the Black Market.',target: () => 10000, progress: () => state.lifetimeGold || 0,                                               reward: 125 },
+  { id: 'q_gbp_billionaire',icon: '&#163;',  name: 'City of London',      desc: 'Earn £1,000,000,000 lifetime on London Exchange.',target: () => 1e9, progress: () => state.lifetimeGbp || 0,                                                 reward: 60 },
+  { id: 'q_click_1k',      icon: '&#128075;', name: 'Chronic Clicker',     desc: 'Manually execute 1,000 trades.',            target: () => 1000, progress: () => state.manualTrades || 0,                                                     reward: 25 },
+  { id: 'q_all_premium',   icon: '&#127881;', name: 'Full House',          desc: 'Hire all 4 Wall Street premium managers.',  target: () => 4,   progress: () => ['senator','quant','cfo','whistleblower'].filter(id => state.premiumOwned?.[id]).length, reward: 75 },
+  { id: 'q_max_leverage',  icon: '&#128640;', name: 'Max Leverage',        desc: 'Activate 10x leverage.',                    target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 10 ? 1 : 0,                                   reward: 15 },
+  { id: 'q_ipo_25',        icon: '&#128276;', name: 'Dynasty Builder',     desc: 'Take your firm public 25 times.',           target: () => 25,  progress: () => state.totalIPOs || 0,                                                          reward: 200 },
+  { id: 'q_yen_trillion',  icon: '&#165;',    name: 'Tokyo Titan',         desc: 'Earn ¥1,000,000,000,000 lifetime.',         target: () => 1e12, progress: () => state.lifetimeYen || 0,                                                       reward: 80 },
+  { id: 'q_invest_10',     icon: '&#128081;', name: 'Influence Baron',     desc: 'Make 10 Influence Investments.',            target: () => 10,  progress: () => state.influenceInvested || 0,                                                   reward: 60 },
+  { id: 'q_bm_all',        icon: '&#9899;',   name: 'Dark Operator',       desc: 'Own at least 1 of every Black Market asset.', target: () => 6, progress: () => ASSETS.filter(a => a.market === 'blackmkt' && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 30 },
 ];
 
 // Premium managers — now cost Influence (prestige currency), not gold.
@@ -2346,10 +2347,12 @@ let state = {
   blackmktUnlocked: false,  // unlocks after sk_dark_terminal skill
   influenceInvested: 0,     // repeatable influence sink; each +1 = +0.5% global payout (unlocked by sk_dynasty)
   // Chicago Pit
-  pitCredits: 0,            // total earned (never resets)
+  pitCredits: 0,            // spendable credits (can be consumed by Squeeze)
+  pitLifetimeCredits: 0,    // cumulative lifetime credits — never decreases, used for Megabuck milestones
   pitOrders: [],            // active tappable orders [{id, commodity, value, expiresAt}]
   _lastPitSpawn: 0,         // ms timestamp of last order spawn
   pitMilestonesReached: {}, // credit threshold -> true when crossed
+  pitMegabucksReached: {},  // lifetime threshold -> true when Megabuck was awarded
   activeSqueeze: null,      // { assetId, until } — Commodity Squeeze buff
   squeezeCooldownUntil: 0,  // ms — when next squeeze is available
   // Options
@@ -2357,8 +2360,11 @@ let state = {
   optionsLeverage: null,    // { assetId, mult, until } — per-asset leverage from Options
   optionsCrash: null,       // { assetId, direction, crashAt, startedAt, result, cashedMult, clickBonus }
   // Rivals
-  secComplaints: {},        // rivalId -> ms timestamp when complaint expires
-  rivalBuff: null,          // { mult, until } — active SEC complaint buff
+  secComplaints: {},           // rivalId -> ms timestamp when complaint expires
+  rivalBuff: null,             // { mult, until } — active SEC complaint buff
+  rivalRaid: null,             // { until, rivalId, rivalName } — rival actively raiding (-5% income)
+  rivalRaidSuppressedUntil: 0, // ms — raids suppressed after filing SEC complaint
+  _nextRivalRaidCheck: 0,      // ms — throttle rival raid check to once per minute
 };
 
 // Initialize state for every asset (both Wall Street and Tokyo).
@@ -2485,9 +2491,20 @@ function onStarterPackPurchased(success) {
 }
 
 function updateDoublerUI() {
-  const active = state.incomeDoublerUntil && Date.now() < state.incomeDoublerUntil;
+  const now = Date.now();
+  const active = !!(state.incomeDoublerUntil && now < state.incomeDoublerUntil);
   const chip = document.getElementById('doublerChip');
-  if (chip) chip.classList.toggle('active', active);
+  if (chip) {
+    chip.classList.toggle('active', active);
+    if (active) {
+      const secsLeft = Math.ceil((state.incomeDoublerUntil - now) / 1000);
+      const hrs  = Math.floor(secsLeft / 3600);
+      const mins = Math.floor((secsLeft % 3600) / 60);
+      chip.textContent = hrs > 0 ? '2× · ' + hrs + 'h ' + mins + 'm' : '2× · ' + mins + 'm';
+    } else {
+      chip.textContent = '2× ACTIVE';
+    }
+  }
   // Show/hide the 2× Income button in the header based on whether doubler is active
   const adBtn = document.getElementById('watchAdBtn');
   if (adBtn) adBtn.style.display = active ? 'none' : '';
@@ -2762,14 +2779,23 @@ function currencyOf(asset) {
 function getMoney(asset) {
   if (asset.market === 'tokyo')    return state.yen;
   if (asset.market === 'london')   return state.gbp || 0;
-  if (asset.market === 'blackmkt') return state.gold || 0;
+  if (asset.market === 'blackmkt') return state.cash;  // BM positions bought with cash
   return state.cash;
 }
 function spendMoney(asset, amt) {
   if (asset.market === 'tokyo')    state.yen -= amt;
   else if (asset.market === 'london')   state.gbp -= amt;
-  else if (asset.market === 'blackmkt') state.gold = (state.gold || 0) - amt;
-  else state.cash -= amt;
+  else state.cash -= amt;  // both wallst and BM spend cash
+}
+// Format a buy cost using the correct currency for the asset's market
+function buyFmt(asset, cost) {
+  if (asset.market === 'blackmkt') return fmt(cost, 'cash'); // BM buys in cash
+  return fmtAsset(cost, asset);
+}
+// Returns the currency key used to PURCHASE a position (distinct from payout currency for BM)
+function buyCurrencyOf(asset) {
+  if (asset.market === 'blackmkt') return 'cash';
+  return currencyOf(asset);
 }
 function earnMoney(asset, amt) {
   if (asset.market === 'tokyo') {
@@ -2814,6 +2840,8 @@ function fmtTimer(sec) {
 function costOf(asset) {
   const a = state.assets[asset.id];
   const geometric = asset.baseCost * Math.pow(COST_GROWTH, a.owned);
+  // Black Market: buy with cash, payout is gold — different currencies, so skip the payout-floor.
+  if (asset.market === 'blackmkt') return geometric;
   // Safety floor — Owen's invariant: "buying 1x must always cost more than what you make per trade".
   // Without this, late-game stacking (milestones × mega ticket × global mult × leverage) can outpace
   // the geometric cost growth. The floor enforces cost > payoutOf × 1.2 even when multipliers stack hard.
@@ -2996,6 +3024,8 @@ function globalMult(market) {
   PIT_MILESTONES.forEach(ms => { if (state.pitMilestonesReached?.[ms.credits]) m *= ms.mult; });
   // Rewarded-ad income doubler — 2× for 2 hours
   if (state.incomeDoublerUntil && Date.now() < state.incomeDoublerUntil) m *= 2;
+  // Rival raid — active raid reduces all income by 5%
+  if (state.rivalRaid && Date.now() < state.rivalRaid.until) m *= (1 - RIVAL_RAID_INCOME_PENALTY);
   return m;
 }
 
@@ -3289,7 +3319,7 @@ const _CURRENCY_NAME = { yen: 'Yen', gbp: 'GBP', gold: 'Gold', cash: 'cash' };
 function buyAsset(id) {
   const asset = ASSETS.find(a => a.id === id);
   const c = costOf(asset);
-  if (getMoney(asset) < c) { toast('Not enough ' + (_CURRENCY_NAME[currencyOf(asset)] || 'cash') + '.'); return; }
+  if (getMoney(asset) < c) { toast('Not enough ' + (_CURRENCY_NAME[buyCurrencyOf(asset)] || 'cash') + '.'); return; }
   const before = state.assets[id].owned;
   spendMoney(asset, c);
   state.assets[id].owned++;
@@ -3309,7 +3339,7 @@ function buyMax(id) {
     state.assets[id].owned++;
     bought++;
   }
-  if (bought === 0) toast('Not enough ' + (_CURRENCY_NAME[currencyOf(asset)] || 'cash') + '.');
+  if (bought === 0) toast('Not enough ' + (_CURRENCY_NAME[buyCurrencyOf(asset)] || 'cash') + '.');
   else {
     SFX.buy();
     if (!state.dailyProgress) state.dailyProgress = {};
@@ -3346,6 +3376,15 @@ function executeTrade(id, evt) {
   const s = state.assets[id];
   if (s.owned === 0) { toast('Buy a position first.'); return; }
   if (s.progress < 1) return; // not ready
+  // Black Market: each click launders cash → gold. Deduct the cash cost first.
+  if (asset.market === 'blackmkt' && asset.launderCost) {
+    const totalLaunder = asset.launderCost * s.owned;
+    if (state.cash < totalLaunder) {
+      toast('Need ' + fmt(totalLaunder) + ' cash to launder.');
+      return; // bar stays full — player can try again when they have enough cash
+    }
+    state.cash -= totalLaunder;
+  }
   let gain = payoutOf(asset);
   if (state.skillsOwned?.sk_fast_hands) gain *= 1.10; // Skill: Fast Hands — +10% on manual trades
   earnMoney(asset, gain);
@@ -3370,7 +3409,7 @@ function buyN(id, n) {
     state.assets[id].owned++;
     bought++;
   }
-  if (bought === 0) toast('Not enough ' + (_CURRENCY_NAME[currencyOf(asset)] || 'cash') + '.');
+  if (bought === 0) toast('Not enough ' + (_CURRENCY_NAME[buyCurrencyOf(asset)] || 'cash') + '.');
   else {
     SFX.buy();
     Haptic.medium();
@@ -3786,6 +3825,8 @@ const PIT_MILESTONES = [
   { credits:   500000, mult: 1.20, label: '+20% all payouts' },
   { credits:  2500000, mult: 1.30, label: '+30% all payouts' },
 ];
+// Lifetime credit milestones that award Megabucks (💎) — uses pitLifetimeCredits (never decreases)
+const PIT_MEGABUCK_MILESTONES = [2500, 5000, 10000, 25000, 50000];
 const SQUEEZE_COST     = 500;    // Pit Credits
 const SQUEEZE_MULT     = 2.5;    // ×2.5 on the chosen asset
 const SQUEEZE_DURATION = 90000;  // 90 seconds
@@ -3851,11 +3892,13 @@ function fillPitOrder(orderId) {
   const comboMult = _pitComboCount >= 3 ? 1.5 : 1;
   const earned = Math.round(order.value * comboMult);
   state.pitCredits = (state.pitCredits || 0) + earned;
+  state.pitLifetimeCredits = (state.pitLifetimeCredits || 0) + earned;
   // Pit taps are manual actions — count toward the Click Trader quest and daily pit tracking
   state.manualTrades = (state.manualTrades || 0) + 1;
   if (!state.dailyProgress) state.dailyProgress = {};
   state.dailyProgress.dq_pit = (state.dailyProgress.dq_pit || 0) + 1;
   checkPitMilestones();
+  checkPitMegabuckMilestones();
   Haptic.medium();
   SFX.buy();
   if (state.londonUnlocked) {
@@ -3875,6 +3918,19 @@ function checkPitMilestones() {
       SFX.milestone();
       celebrate('🏅 PIT MILESTONE!', fmtNum(ms.credits) + ' credits — ' + ms.label + ' (permanent)');
       addNews('PIT MILESTONE', fmtNum(ms.credits) + ' Pit Credits earned. ' + ms.label + ' unlocked forever.', 'milestone');
+    }
+  });
+}
+function checkPitMegabuckMilestones() {
+  const lifetime = state.pitLifetimeCredits || 0;
+  if (!state.pitMegabucksReached) state.pitMegabucksReached = {};
+  PIT_MEGABUCK_MILESTONES.forEach(threshold => {
+    if (lifetime >= threshold && !state.pitMegabucksReached[threshold]) {
+      state.pitMegabucksReached[threshold] = true;
+      state.megabucks = (state.megabucks || 0) + 1;
+      SFX.milestone();
+      celebrate('💎 PIT LEGEND!', fmtNum(threshold) + ' lifetime credits — +1 Megabuck!');
+      addNews('💎 PIT LEGEND', fmtNum(threshold) + ' lifetime pit credits — +1 Megabuck earned!', 'milestone');
     }
   });
 }
@@ -4091,6 +4147,14 @@ function renderPitTab() {
       </div>
       <div class="pit-progress-bar"><div class="pit-progress-fill" style="width:${pct}%;"></div></div>
       ${unlocked ? '<div style="font-size:11px;color:#2ecc71;text-align:center;margin-bottom:4px;">Orders now earn £500 per credit — keep filling!</div>' : ''}
+      ${(function() {
+        const lifetime = state.pitLifetimeCredits || 0;
+        const nextThreshold = PIT_MEGABUCK_MILESTONES.find(t => !(state.pitMegabucksReached?.[t]));
+        if (!nextThreshold) return '<div style="font-size:11px;color:#ffd700;text-align:center;margin-top:4px;">💎 All Pit Megabucks earned!</div>';
+        const prevThreshold = PIT_MEGABUCK_MILESTONES.filter(t => t < nextThreshold).pop() || 0;
+        const pctMB = Math.min(100, ((lifetime - prevThreshold) / (nextThreshold - prevThreshold)) * 100).toFixed(0);
+        return `<div style="font-size:11px;color:rgba(255,200,80,0.8);text-align:center;margin-top:4px;">💎 Next Megabuck: ${fmtNum(lifetime)}/${fmtNum(nextThreshold)} lifetime credits (${pctMB}%)</div>`;
+      })()}
     </div>
     <div class="pit-arena" id="pitOrderZone" style="height:220px;"></div>
     <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;padding:6px;">Tap before expiry • ⚡FLASH = 3× value, 2.5s • 🔥 3-in-a-row = +50% combo</div>
@@ -4414,6 +4478,25 @@ const RIVALS = [
 const SEC_COMPLAINT_COST = 25; // gold
 const RIVAL_BUFF_DURATION = 10 * 60 * 1000; // 10 minutes
 const RIVAL_BUFF_MULT = 1.05; // +5% global payouts
+// Rival raids — periodically a rival attacks and slashes income until you file an SEC complaint
+const RIVAL_RAID_INCOME_PENALTY = 0.05; // -5% all income during a raid
+const RIVAL_RAID_DURATION = 20 * 60 * 1000; // raids last 20 minutes
+const RIVAL_RAID_CHANCE = 0.15; // 15% chance each minute of a new raid starting
+const RIVAL_RAID_SUPPRESS = 30 * 60 * 1000; // 30-min suppression after filing SEC complaint
+
+function maybeStartRivalRaid() {
+  const now = Date.now();
+  if (state.rivalRaid && now < state.rivalRaid.until) return; // raid already active
+  if (now < (state.rivalRaidSuppressedUntil || 0)) return;   // suppressed by recent SEC complaint
+  if (now < (state._nextRivalRaidCheck || 0)) return;         // throttle to once per minute
+  state._nextRivalRaidCheck = now + 60000;
+  if (Math.random() > RIVAL_RAID_CHANCE) return;
+  const raider = RIVALS[Math.floor(Math.random() * RIVALS.length)];
+  state.rivalRaid = { until: now + RIVAL_RAID_DURATION, rivalId: raider.id, rivalName: raider.name };
+  toast('⚔️ ' + raider.name + ' is raiding you! –5% income. File SEC complaint to stop it.');
+  addNews('⚔️ RIVAL RAID: ' + raider.name, '–5% income for 20 min. File an SEC complaint to end the raid early.', 'bad');
+  if (state.activeTab === 'rivals') renderRivalsTab();
+}
 
 function fileSecComplaint(rivalId) {
   if ((state.gold || 0) < SEC_COMPLAINT_COST) { toast('Not enough gold.'); return; }
@@ -4422,9 +4505,14 @@ function fileSecComplaint(rivalId) {
   if (!state.secComplaints) state.secComplaints = {};
   state.secComplaints[rivalId] = Date.now() + 30 * 60 * 1000; // investigated for 30 min
   state.rivalBuff = { mult: RIVAL_BUFF_MULT, until: Date.now() + RIVAL_BUFF_DURATION };
+  // Cancel any active raid and suppress new raids for 30 minutes
+  const raidWasActive = state.rivalRaid && Date.now() < state.rivalRaid.until;
+  state.rivalRaid = null;
+  state.rivalRaidSuppressedUntil = Date.now() + RIVAL_RAID_SUPPRESS;
   const rival = RIVALS.find(r => r.id === rivalId);
   SFX.achievement();
-  toast('SEC complaint filed against ' + rival.name + '. +5% payouts for 10 min.');
+  const raidMsg = raidWasActive ? ' Raid stopped.' : '';
+  toast('SEC complaint filed against ' + rival.name + '. +5% payouts 10 min.' + raidMsg);
   addNews('SEC: ' + rival.name, '+5% global payout buff for 10 minutes. Investigations take time.', 'milestone');
   renderCash();
   renderRivalsTab();
@@ -4435,13 +4523,22 @@ function renderRivalsTab() {
   const root = document.getElementById('tab-rivals');
   if (!root) return;
   const playerVal = state.allTimeEarnings || 0;
+  const now = Date.now();
   let html = `
     <div class="panel-title">🏆 Rival Firms</div>
-    <div class="panel-sub">Your competition. File SEC complaints to hamstring them and earn a temporary buff.</div>
+    <div class="panel-sub">Your competition. File SEC complaints to hamstring them — and stop their raids.</div>
   `;
+  // Active raid warning
+  if (state.rivalRaid && now < state.rivalRaid.until) {
+    const minsLeft = Math.ceil((state.rivalRaid.until - now) / 60000);
+    html += `<div style="text-align:center;background:rgba(220,50,50,0.18);border:1px solid #e04040;border-radius:8px;padding:10px 8px;margin:6px 8px;font-size:13px;color:#ff6060;">
+      ⚔️ <strong>${state.rivalRaid.rivalName}</strong> IS RAIDING YOU<br>
+      <span style="font-size:11px;opacity:0.85;">–5% income · ${minsLeft}m remaining · File an SEC Complaint to end it now</span>
+    </div>`;
+  }
   // Active buff display
-  if (state.rivalBuff && Date.now() < state.rivalBuff.until) {
-    const secsLeft = Math.ceil((state.rivalBuff.until - Date.now()) / 1000);
+  if (state.rivalBuff && now < state.rivalBuff.until) {
+    const secsLeft = Math.ceil((state.rivalBuff.until - now) / 1000);
     html += `<div style="text-align:center;background:rgba(46,204,113,0.15);border:1px solid #2ecc71;border-radius:8px;padding:8px;margin:6px 8px;font-size:13px;color:#2ecc71;">⚖️ SEC Buff Active: +5% payouts · ${secsLeft}s remaining</div>`;
   }
   // Your own rank card
@@ -4527,6 +4624,7 @@ function tick() {
 
   maybeFireEvent();
   maybeFirePump();
+  maybeStartRivalRaid();
 
   // Chicago Pit — spawn/expire orders when PIT tab is active
   pitTick();
@@ -4760,6 +4858,10 @@ function renderAssets() {
         const prev = marketAssets[idx - 1];
         incomeText = 'LOCKED &middot; BUY 1 ' + (prev ? prev.ticker : '?') + ' FIRST';
       }
+    } else if (asset.market === 'blackmkt') {
+      // Show the laundering cost and gold reward so player knows what clicking will do
+      const lCost = (asset.launderCost || 0) * s.owned;
+      incomeText = 'LAUNDER ' + fmt(lCost) + ' &rarr; +' + fmt(payoutOf(asset), 'gold');
     } else {
       incomeText = s.hired ? fmtAsset(payoutOf(asset), asset) + ' /trade' : 'TAP TO TRADE &middot; ' + fmtAsset(payoutOf(asset), asset);
     }
@@ -4831,7 +4933,7 @@ function renderAssets() {
           <button class="buy-btn" style="flex:1;" ${(function(){const qty=state.buyQty||1;if(!unlocked)return 'disabled';const need=qty===0?costOf(asset):(costOf(asset));return money>=need?'':'disabled';})()}
             onclick="${state.buyQty===1?`buyAsset('${asset.id}')`:state.buyQty===0?`buyN('${asset.id}',0)`:(`buyN('${asset.id}',${state.buyQty})`)}">
             <span class="label">${(function(){if(state.buyQty!==0)return 'BUY x'+(state.buyQty||1);const n=maxBuyable(asset);return n>0?'BUY x'+n:'BUY MAX';})()}</span>
-            <span class="price">${(function(){const qty=state.buyQty||1;if(qty===1)return fmtAsset(buyCost,asset);const can=maxBuyable(asset);if(can===0)return 'TOO COSTLY';const actual=Math.min(qty===0?100:qty,can);return fmtAsset((()=>{const a2=state.assets[asset.id];const orig=a2.owned;let tot=0;for(let i=0;i<actual;i++){a2.owned=orig+i;tot+=costOf(asset);}a2.owned=orig;return tot;})(),asset);})()}</span>
+            <span class="price">${(function(){const qty=state.buyQty||1;if(qty===1)return buyFmt(asset,buyCost);const can=maxBuyable(asset);if(can===0)return 'TOO COSTLY';const actual=Math.min(qty===0?100:qty,can);return buyFmt(asset,(()=>{const a2=state.assets[asset.id];const orig=a2.owned;let tot=0;for(let i=0;i<actual;i++){a2.owned=orig+i;tot+=costOf(asset);}a2.owned=orig;return tot;})());})()}</span>
           </button>
           ${(function(){
             const _next = nextMilestone(asset);
@@ -5603,7 +5705,9 @@ function save() {
       dailyEarnGbpStart:  state.dailyEarnGbpStart  || 0,
       // Chicago
       pitCredits: state.pitCredits || 0,
+      pitLifetimeCredits: state.pitLifetimeCredits || 0,
       pitMilestonesReached: state.pitMilestonesReached || {},
+      pitMegabucksReached: state.pitMegabucksReached || {},
       activeSqueeze: state.activeSqueeze || null,
       squeezeCooldownUntil: state.squeezeCooldownUntil || 0,
       // Options
@@ -5612,6 +5716,8 @@ function save() {
       // Rivals
       secComplaints: state.secComplaints || {},
       rivalBuff: state.rivalBuff || null,
+      rivalRaid: state.rivalRaid || null,
+      rivalRaidSuppressedUntil: state.rivalRaidSuppressedUntil || 0,
       lastSavedAt: Date.now(),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(out));
@@ -5680,13 +5786,17 @@ function load() {
     if (state.activeMarket === 'london' && !state.londonUnlocked) state.activeMarket = 'wallst';
     if (state.activeMarket === 'tokyo'  && !state.tokyoUnlocked)  state.activeMarket = 'wallst';
     state.pitCredits = data.pitCredits || 0;
+    state.pitLifetimeCredits = data.pitLifetimeCredits || 0;
     state.pitMilestonesReached = data.pitMilestonesReached || {};
+    state.pitMegabucksReached = data.pitMegabucksReached || {};
     state.activeSqueeze = data.activeSqueeze || null;
     state.squeezeCooldownUntil = data.squeezeCooldownUntil || 0;
     state.optionsCooldownUntil = data.optionsCooldownUntil || 0;
     state.optionsLeverage = data.optionsLeverage || null;
     state.secComplaints = data.secComplaints || {};
     state.rivalBuff = data.rivalBuff || null;
+    state.rivalRaid = data.rivalRaid || null;
+    state.rivalRaidSuppressedUntil = data.rivalRaidSuppressedUntil || 0;
     if (data.assets) {
       ASSETS.forEach(a => {
         if (data.assets[a.id]) {
@@ -5700,7 +5810,7 @@ function load() {
     // Offline earnings (capped at 4 hours, half rate) — computed per-market so both Wall St and Tokyo earn
     if (data.lastSavedAt) {
       const offlineSec = Math.min((Date.now() - data.lastSavedAt) / 1000, 4 * 3600);
-      if (offlineSec > 30) {
+      if (offlineSec > 120) {  // skip the modal for very short sessions (< 2 min away)
         let wallstRate = 0, tokyoRate = 0, londonRate = 0, blackRate = 0;
         ASSETS.forEach(a => {
           const s = state.assets[a.id];
@@ -5708,7 +5818,7 @@ function load() {
           const rate = payoutOf(a) / timeOf(a);
           if (a.market === 'tokyo')    tokyoRate  += rate;
           else if (a.market === 'london')   londonRate += rate;
-          else if (a.market === 'blackmkt') blackRate  += rate;
+          else if (a.market === 'blackmkt') { /* BM is manual-only — no offline gold */ }
           else wallstRate += rate;
         });
         const cashGain   = wallstRate * 0.5 * offlineSec;
@@ -5800,7 +5910,7 @@ function boot() {
   // Refresh doubler UI in case a saved doubler timer is still running
   updateDoublerUI();
   // Keep the doubler chip / ad button live — check every minute
-  setInterval(updateDoublerUI, 60000);
+  setInterval(updateDoublerUI, 1000);
 }
 boot();
 </script>
