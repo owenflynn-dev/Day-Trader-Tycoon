@@ -1699,6 +1699,20 @@
     <button class="modal-btn" style="background:linear-gradient(180deg,#f8d860,#c89a18);border-color:#6a4f0a;color:#0a0e1a;margin-bottom:6px;" onclick="Monetization.purchaseIAP('starter_pack', onStarterPackPurchased)">
       Starter Pack — 50 Gold + No Ads &middot; <span style="color:#0a0e1a;">$2.99</span>
     </button>
+    <div style="font-family:'Lilita One',sans-serif;color:#d49aff;font-size:13px;margin:8px 0 5px;">💎 Buy Megabucks</div>
+    <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">Used for Leverage, Time Warps, and top-tier Lifestyle upgrades.</div>
+    <button class="modal-btn" style="background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#4a235a;margin-bottom:5px;" onclick="Monetization.purchaseIAP('mb_5', s => onMegabucksPurchased('mb_5', s))">
+      💎 5 Megabucks &mdash; Pocket Change &middot; $0.99
+    </button>
+    <button class="modal-btn" style="background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#4a235a;margin-bottom:5px;" onclick="Monetization.purchaseIAP('mb_15', s => onMegabucksPurchased('mb_15', s))">
+      💎 15 Megabucks &mdash; Day Trader &middot; $2.99
+    </button>
+    <button class="modal-btn" style="background:linear-gradient(180deg,#7a1daa,#4a0a6a);border-color:#6a1a8a;margin-bottom:5px;" onclick="Monetization.purchaseIAP('mb_50', s => onMegabucksPurchased('mb_50', s))">
+      💎 50 Megabucks &mdash; Whale Move &middot; $7.99
+    </button>
+    <button class="modal-btn" style="background:linear-gradient(180deg,#5a0d8a,#2a0040);border-color:#9b3dca;margin-bottom:6px;" onclick="Monetization.purchaseIAP('mb_150', s => onMegabucksPurchased('mb_150', s))">
+      💎 150 Megabucks &mdash; Federal Reserve &middot; $19.99
+    </button>
     <button class="modal-btn" style="background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#4a235a;margin-bottom:6px;" onclick="Monetization.showRewardedAd('income_boost', onIncomeBoostRewarded)">
       📺 Watch Ad — 2× Income for 2 hours
     </button>
@@ -1829,11 +1843,11 @@ function nextMilestone(asset) {
 }
 
 const BOOSTS = [
-  { id: 'morningCoffee',  name: 'Morning Coffee',        desc: 'All payouts +2%',           mult: 1.02, cost: 5000,         icon: '&#9749;' },
-  { id: 'bloomberg',      name: 'Bloomberg Terminal',    desc: 'All payouts +5.5%',           mult: 1.055,  cost: 250000,       icon: '&#128187;' },
-  { id: 'cornerOffice',   name: 'Corner Office',         desc: 'All payouts +12%',          mult: 1.12,  cost: 10000000,     icon: '&#127970;' },
-  { id: 'privateJet',     name: 'NetJets Membership',    desc: 'All payouts +25%',          mult: 1.25,  cost: 500000000,    icon: '&#128747;' },
-  { id: 'congressBuddy',  name: 'Congressional Buddy',   desc: 'All payouts +70%',          mult: 1.70,  cost: 25000000000,  icon: '&#127963;' },
+  { id: 'morningCoffee',  name: 'Morning Coffee',        desc: 'All payouts +2%',           mult: 1.02, cost: 5e5,         icon: '&#9749;' },
+  { id: 'bloomberg',      name: 'Bloomberg Terminal',    desc: 'All payouts +5%',           mult: 1.05,  cost: 2e6,       icon: '&#128187;' },
+  { id: 'cornerOffice',   name: 'Corner Office',         desc: 'All payouts +8%',          mult: 1.08,  cost: 1e8,     icon: '&#127970;' },
+  { id: 'privateJet',     name: 'NetJets Membership',    desc: 'All payouts +12%',          mult: 1.12,  cost: 5e10,    icon: '&#128747;' },
+  { id: 'congressBuddy',  name: 'Congressional Buddy',   desc: 'All payouts +20%',          mult: 1.20,  cost: 2e13,  icon: '&#127963;' },
 ];
 
 // HFT Speed Perks — cash-cost, permanent cycle time reductions. Stack multiplicatively.
@@ -2516,9 +2530,16 @@ const Monetization = (() => {
     purchaseIAP(productId, callback) {
       // Capacitor native hook (uncomment in App Store build):
       // if (window.Capacitor?.Plugins?.InAppPurchase2) { ... return; }
-      // Web fallback: show a friendly message
-      toast('💳 Available in the App Store version.');
-      setTimeout(() => callback(false), 400);
+      // Web fallback: simulate purchase (itch.io / demo — gives full item)
+      const label = {
+        starter_pack: 'Starter Pack — 50 Gold',
+        mb_5:  '5 Megabucks',
+        mb_15: '15 Megabucks',
+        mb_50: '50 Megabucks',
+        mb_150:'150 Megabucks',
+      }[productId] || productId;
+      const confirmed = confirm('💳 Simulate purchase: ' + label + '?\n\n(Web demo — free. Real payments in the App Store version.)');
+      setTimeout(() => callback(confirmed), 100);
     },
   };
 })();
@@ -2542,6 +2563,24 @@ function onStarterPackPurchased(success) {
   state.starterPackOwned = true;
   celebrate('💎 STARTER PACK', '+50 Gold added to your account!');
   addNews('STARTER PACK', '+50 Gold credited.', 'milestone');
+  renderCash();
+  save();
+}
+
+// MB IAP packages — amounts match product IDs mb_5 / mb_15 / mb_50 / mb_150
+const MB_PACKAGES = [
+  { id: 'mb_5',   amount: 5,   price: '$0.99',  label: 'Pocket Change' },
+  { id: 'mb_15',  amount: 15,  price: '$2.99',  label: 'Day Trader'    },
+  { id: 'mb_50',  amount: 50,  price: '$7.99',  label: 'Whale Move'    },
+  { id: 'mb_150', amount: 150, price: '$19.99', label: 'Federal Reserve' },
+];
+function onMegabucksPurchased(productId, success) {
+  if (!success) return;
+  const pkg = MB_PACKAGES.find(p => p.id === productId);
+  if (!pkg) return;
+  state.megabucks = (state.megabucks || 0) + pkg.amount;
+  celebrate('💎 ' + pkg.amount + ' MEGABUCKS', pkg.label + ' — go spend them wisely.');
+  addNews('MEGABUCKS: +' + pkg.amount + ' 💎', pkg.label + ' package purchased.', 'milestone');
   renderCash();
   save();
 }
