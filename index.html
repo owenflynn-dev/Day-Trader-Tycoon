@@ -2010,7 +2010,7 @@ const QUESTS = [
   { id: 'q_gold_vault',    icon: '&#127963;', name: 'Vault Operator',      desc: 'Earn 10,000 gold lifetime on the Black Market.',target: () => 10000, progress: () => state.lifetimeGold || 0,                                               reward: 125 },
   { id: 'q_gbp_billionaire',icon: '&#163;',  name: 'City of London',      desc: 'Earn £1,000,000,000 lifetime on London Exchange.',target: () => 1e9, progress: () => state.lifetimeGbp || 0,                                                 reward: 60 },
   { id: 'q_click_1k',      icon: '&#128075;', name: 'Chronic Clicker',     desc: 'Manually execute 1,000 trades.',            target: () => 1000, progress: () => state.manualTrades || 0,                                                     reward: 25 },
-  { id: 'q_all_premium',   icon: '&#127881;', name: 'Full House',          desc: 'Hire all 4 Wall Street premium managers.',  target: () => 4,   progress: () => ['senator','quant','cfo','whistleblower'].filter(id => state.premiumOwned?.[id]).length, reward: 75 },
+  { id: 'q_all_premium',   icon: '&#127881;', name: 'Full House',          desc: 'Hire all 5 Wall Street premium managers.',  target: () => 5,   progress: () => ['senator','quant','cfo','whistleblower','the_algorithm'].filter(id => state.premiumOwned?.[id]).length, reward: 75 },
   { id: 'q_max_leverage',  icon: '&#128640;', name: 'Max Leverage',        desc: 'Activate 10x leverage.',                    target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 10 ? 1 : 0,                                   reward: 15 },
   { id: 'q_ipo_25',        icon: '&#128276;', name: 'Dynasty Builder',     desc: 'Take your firm public 25 times.',           target: () => 25,  progress: () => state.totalIPOs || 0,                                                          reward: 200 },
   { id: 'q_yen_trillion',  icon: '&#165;',    name: 'Tokyo Titan',         desc: 'Earn ¥1,000,000,000,000 lifetime.',         target: () => 1e12, progress: () => state.lifetimeYen || 0,                                                       reward: 80 },
@@ -2018,43 +2018,45 @@ const QUESTS = [
   { id: 'q_bm_all',        icon: '&#9899;',   name: 'Dark Operator',       desc: 'Own at least 1 of every Black Market asset.', target: () => 6, progress: () => ASSETS.filter(a => a.market === 'blackmkt' && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 30 },
 ];
 
-// Premium managers — now cost Influence (prestige currency), not gold.
-// Influence is scarce. Hiring a manager means banking fewer passive tokens — a real tradeoff.
+// Premium managers — cost Influence (prestige currency).
+// Costs follow an exponential ladder: entry-level at 5K, endgame at 50B.
+// After enough IPOs this feels like AdCap angel-buy — early tiers drop fast, top tiers stay elite.
 const PREMIUM_MANAGERS = [
-  { id: 'senator',       name: 'The Senator',       role: 'Inside Source',          icon: '&#127963;', influenceCost: 5,
+  // === Wall Street — global multipliers ===
+  { id: 'senator',       name: 'The Senator',       role: 'Inside Source',          icon: '&#127963;', influenceCost: 5000,
     desc: '+10% all payouts, plus a 5-second heads-up before any market event fires.',
     bio: '"Old friend from college. Never asks where the campaign donations come from."',
     mult: 1.10 },
-  { id: 'quant',         name: 'The Quant',         role: 'Algorithmic Trader',     icon: '&#129302;', influenceCost: 15,
+  { id: 'quant',         name: 'The Quant',         role: 'Algorithmic Trader',     icon: '&#129302;', influenceCost: 75000,
     desc: '+15% all payouts. Auto-trades execute 10% faster.',
     bio: '"PhD from MIT. Hasn\'t slept since 2019. Speaks only in Greek letters."',
     mult: 1.15 },
-  { id: 'cfo',           name: 'The CFO',           role: 'Chief Financial Officer',icon: '&#128188;', influenceCost: 40,
+  { id: 'cfo',           name: 'The CFO',           role: 'Chief Financial Officer',icon: '&#128188;', influenceCost: 2500000,
     desc: '+30% all payouts. Knows where every penny is.',
     bio: '"Former Goldman exec. Knows things about you that you don\'t know."',
     mult: 1.30 },
-  { id: 'whistleblower', name: 'The Whistleblower', role: 'Receipt Keeper',         icon: '&#128264;', influenceCost: 100,
+  { id: 'whistleblower', name: 'The Whistleblower', role: 'Receipt Keeper',         icon: '&#128264;', influenceCost: 100000000,
     desc: '+20% all payouts. Once per IPO cycle, trigger a guaranteed 5x bullish event for 30s.',
     bio: '"Used to work for a big bank. Now works for you. Still has all the receipts."',
     mult: 1.20, hasAbility: true },
   // === Tokyo Trading Floor premium roster ===
-  { id: 'shogun',     name: 'The Shogun',     role: 'Tokyo Floor Boss',       icon: '&#128483;', influenceCost: 20, market: 'tokyo',
-    desc: '+25% Tokyo payouts. Demands respect. Runs the floor with quiet menace.',
-    bio: '"Shows up in a perfectly tailored suit. Has never raised his voice. Everyone is terrified."',
-    mult: 1.25 },
-  { id: 'sensei',     name: 'The Sensei',     role: 'Master of the Spread',   icon: '&#127891;', influenceCost: 35, market: 'tokyo',
-    desc: '+10% Tokyo payouts AND +10% faster Tokyo auto-trades. Decades of wisdom.',
-    bio: '"Has been trading since before you were born. Drinks one cup of tea per market session. Always right."',
-    mult: 1.10 },
-  { id: 'kaiju',      name: 'The Kaiju',      role: 'Volatility Beast',       icon: '&#129422;', influenceCost: 80, market: 'tokyo',
-    desc: '+30% Tokyo payouts. Tokyo events fire 50% more often. Embrace chaos.',
-    bio: '"Eight feet tall and twice as wide. Cannot be reasoned with. The market moves when he enters the room."',
-    mult: 1.30 },
-  { id: 'salaryman',  name: 'The Salaryman',  role: '12-Hour Loyalty',        icon: '&#128104;&#8205;&#128188;', influenceCost: 10, market: 'tokyo',
+  { id: 'salaryman',  name: 'The Salaryman',  role: '12-Hour Loyalty',        icon: '&#128104;&#8205;&#128188;', influenceCost: 15000, market: 'tokyo',
     desc: '+15% Tokyo payouts. Never sleeps. Never complains. Drinks too much sake on Fridays.',
     bio: '"Has worked here for 23 years. You\'ve seen him cry once. You will not bring it up."',
     mult: 1.15 },
-  // London premium managers — goldCost (rare, gold-gated)
+  { id: 'shogun',     name: 'The Shogun',     role: 'Tokyo Floor Boss',       icon: '&#128483;', influenceCost: 250000, market: 'tokyo',
+    desc: '+25% Tokyo payouts. Demands respect. Runs the floor with quiet menace.',
+    bio: '"Shows up in a perfectly tailored suit. Has never raised his voice. Everyone is terrified."',
+    mult: 1.25 },
+  { id: 'sensei',     name: 'The Sensei',     role: 'Master of the Spread',   icon: '&#127891;', influenceCost: 5000000, market: 'tokyo',
+    desc: '+10% Tokyo payouts AND +10% faster Tokyo auto-trades. Decades of wisdom.',
+    bio: '"Has been trading since before you were born. Drinks one cup of tea per market session. Always right."',
+    mult: 1.10 },
+  { id: 'kaiju',      name: 'The Kaiju',      role: 'Volatility Beast',       icon: '&#129422;', influenceCost: 750000000, market: 'tokyo',
+    desc: '+30% Tokyo payouts. Tokyo events fire 50% more often. Embrace chaos.',
+    bio: '"Eight feet tall and twice as wide. Cannot be reasoned with. The market moves when he enters the room."',
+    mult: 1.30 },
+  // === London premium managers — goldCost (rare, gold-gated) ===
   { id: 'governor',   name: 'The Governor',   role: 'Central Bank Chief',     icon: '&#127981;', goldCost: 5, market: 'london',
     desc: '+40% London payouts. Controls interest rates personally. You are just borrowing his market.',
     bio: '"Speaks in compound sentences only. Has never said the word \'inflation\' out loud. Just gestures vaguely."',
@@ -2063,6 +2065,12 @@ const PREMIUM_MANAGERS = [
     desc: '+20% London payouts. All London assets 20% faster. Was knighted for "services to velocity."',
     bio: '"Was a derivatives trader before derivatives existed. Invented three of the four instruments he uses."',
     mult: 1.20, speedMult: 0.80 },
+  // === THE ALGORITHM — ultimate endgame manager. 50B influence. ===
+  // Achievable only after dozens of IPOs, but once you get there it's transformative.
+  { id: 'the_algorithm', name: 'The Algorithm', role: 'Autonomous Trading Singularity', icon: '&#129504;', influenceCost: 50000000000,
+    desc: '+400% all payouts (×5) and all cycle times 40% faster. It doesn\'t sleep. It doesn\'t eat. It doesn\'t lose.',
+    bio: '"No one knows who built it. It arrived in a pull request at 3:47am on a Sunday. The commit message was: done."',
+    mult: 5.00, speedMult: 0.60 },
 ];
 
 // Lifestyle upgrades — cash + gold. Permanent multipliers + speed bonuses.
@@ -2115,17 +2123,19 @@ const INFLUENCE_SHOP = [
 // Mega Tickets — once per asset, gold cost. +5x payout AND instant reset (bar never pauses).
 // Hired mega-ticket assets loop continuously with no idle pause between cycles.
 const MEGA_TICKET_MULT = 5;
-const MEGA_TICKET_COSTS_WALLST = [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200];
-const MEGA_TICKET_COSTS_TOKYO  = [100, 200, 400, 800, 1600, 3200];
+// Mega Tickets cost market currency (cash for Wall St, yen for Tokyo). Not gold — gold is ultra-scarce.
+// Costs scale with asset value so earlier assets are reachable mid-game.
+const MEGA_TICKET_COSTS_WALLST = [1e6, 5e6, 20e6, 100e6, 500e6, 2.5e9, 10e9, 50e9, 200e9, 1e12];
+const MEGA_TICKET_COSTS_TOKYO  = [5000, 25000, 100000, 500000, 2e6, 10e6];
 const MEGA_TICKETS = [
   ...ASSETS.filter(a => a.market === 'wallst').map((a, i) => ({
     id: 'mt_' + a.id, assetId: a.id, ticker: a.ticker, name: a.name + ' Mega Ticket',
-    goldCost: MEGA_TICKET_COSTS_WALLST[i] || 100000,
+    cashCost: MEGA_TICKET_COSTS_WALLST[i] || 1e12,
     market: 'wallst',
   })),
   ...ASSETS.filter(a => a.market === 'tokyo').map((a, i) => ({
     id: 'mt_' + a.id, assetId: a.id, ticker: a.ticker, name: a.name + ' Mega Ticket',
-    goldCost: MEGA_TICKET_COSTS_TOKYO[i] || 100000,
+    yenCost: MEGA_TICKET_COSTS_TOKYO[i] || 1e9,
     market: 'tokyo',
   })),
 ];
@@ -2133,21 +2143,22 @@ const MEGA_TICKETS = [
 // Leverage — tiered consumables. Activate to multiply ALL income (both markets) for a duration.
 // Higher tiers = more powerful but shorter (more dramatic moments). Only one active at a time.
 // Players get a starter gift of 1× [2x/5x/10x] at first boot.
+// Costs Megabucks (MB) — the ultra-premium currency earned at IPO milestones (3rd, 10th, 25th IPO).
 const LEVERAGE_TIERS = [
-  { id: 'lv_2x',   mult: 2,   name: '2x Leverage',   icon: '&#128640;', goldCost: 10,   minutes: 30 },
-  { id: 'lv_5x',   mult: 5,   name: '5x Leverage',   icon: '&#128640;', goldCost: 50,   minutes: 20 },
-  { id: 'lv_10x',  mult: 10,  name: '10x Leverage',  icon: '&#128640;', goldCost: 200,  minutes: 15 },
-  { id: 'lv_20x',  mult: 20,  name: '20x Leverage',  icon: '&#128640;', goldCost: 800,  minutes: 10 },
-  { id: 'lv_100x', mult: 100, name: '100x Leverage', icon: '&#128640;', goldCost: 5000, minutes: 5  },
+  { id: 'lv_2x',   mult: 2,   name: '2x Leverage',   icon: '&#128640;', mbCost: 1,  minutes: 30 },
+  { id: 'lv_5x',   mult: 5,   name: '5x Leverage',   icon: '&#128640;', mbCost: 2,  minutes: 20 },
+  { id: 'lv_10x',  mult: 10,  name: '10x Leverage',  icon: '&#128640;', mbCost: 4,  minutes: 15 },
+  { id: 'lv_20x',  mult: 20,  name: '20x Leverage',  icon: '&#128640;', mbCost: 8,  minutes: 10 },
+  { id: 'lv_100x', mult: 100, name: '100x Leverage', icon: '&#128640;', mbCost: 20, minutes: 5  },
 ];
 const LEVERAGE_STARTER = { lv_2x: 1, lv_5x: 1, lv_10x: 1 };
 
-// Time Warps — consumable, gold cost. Instant cash = passiveIncomePerSec * duration.
+// Time Warps — consumable, MB cost. Instant cash = passiveIncomePerSec * duration.
 // Pricing tiers down per hour as you buy bigger packages — bulk discount.
 const TIME_WARPS = [
-  { id: 'tw_1h',  name: '1-Hour Time Warp',  icon: '&#9203;', goldCost: 25,  hours: 1 },
-  { id: 'tw_8h',  name: '8-Hour Time Warp',  icon: '&#9203;', goldCost: 100, hours: 8 },
-  { id: 'tw_24h', name: '24-Hour Time Warp', icon: '&#9203;', goldCost: 250, hours: 24 },
+  { id: 'tw_1h',  name: '1-Hour Time Warp',  icon: '&#9203;', mbCost: 1, hours: 1 },
+  { id: 'tw_8h',  name: '8-Hour Time Warp',  icon: '&#9203;', mbCost: 3, hours: 8 },
+  { id: 'tw_24h', name: '24-Hour Time Warp', icon: '&#9203;', mbCost: 6, hours: 24 },
 ];
 
 // Black Swan events — extremely rare, cataclysmic. Capped at MAX_BLACK_SWANS lifetime.
@@ -2961,6 +2972,7 @@ function timeOf(asset) {
   if (state.premiumOwned?.quant) t *= 0.90; // The Quant: 10% faster auto-trades (all markets)
   if (asset.market === 'tokyo' && state.premiumOwned?.sensei) t *= 0.90; // The Sensei: 10% faster Tokyo
   if (asset.market === 'london' && state.premiumOwned?.knight) t *= 0.80; // The Knight: 20% faster London
+  if (state.premiumOwned?.the_algorithm) t *= 0.60; // The Algorithm: 40% faster ALL cycles
   // HFT Speed Perks — stacked speed reductions from gold-cost perk purchases
   HFT_PERKS.forEach(p => { if (state.hftPerksOwned?.[p.id]) t *= p.speedMult; });
   // Skill Tree — Trading Floor speed nodes
@@ -3145,9 +3157,11 @@ function updateTabBadges() {
   const staffBtn = document.querySelector('.tab-btn[data-tab="managers"]');
   if (staffBtn && state.activeTab !== 'managers') staffBtn.classList.toggle('has-news', canAffordManager);
 
-  // PERKS tab: any un-bought HFT perk or lifestyle item the player can afford
+  // PERKS tab: any un-bought HFT perk, mega ticket, or lifestyle item the player can afford
   const canAffordPerk =
     HFT_PERKS.some(p => !state.hftPerksOwned?.[p.id] && (state.cash || 0) >= p.cashCost) ||
+    MEGA_TICKETS.some(t => !state.megaTicketsOwned?.[t.id] &&
+      (t.yenCost ? (state.yen || 0) >= t.yenCost : (state.cash || 0) >= t.cashCost)) ||
     LIFESTYLE.some(l => !state.lifestyleOwned?.[l.id] &&
       (state.cash || 0) >= (l.cashCost || 0) &&
       (l.megabucksCost ? (state.megabucks || 0) >= l.megabucksCost : (state.gold || 0) >= (l.goldCost || 0)));
@@ -3187,15 +3201,12 @@ function totalIncomePerSec() {
   return total;
 }
 function prestigeGain() {
-  // Influence is scarce — AdC angel style. Fewer tokens, each worth more.
-  // Formula: 8 * sqrt(Earnings / 1M). First prestige at $1M gives 8 tokens.
-  // $100M → 80, $1B → 253, $10B → 800. Encourages going deep before resetting.
-  // Cap: max 1000 tokens per individual IPO to prevent runaway multiplier from mega-sessions.
+  // AdVenture Capitalist angel style — no cap. Go deeper, earn more.
+  // Formula: 8 * sqrt(Earnings / 1M). $1M → 8, $100M → 80, $1B → 253, $10B → 800, $1T → 8,000.
   if (state.lifetimeEarnings < 1e6) return 0;
   let totalPossible = Math.floor(8 * Math.sqrt(state.lifetimeEarnings / 1e6));
-  let alreadyHave = state.influence + (state.influenceSpent || 0);
-  let pending = totalPossible - alreadyHave;
-  return Math.min(1000, Math.max(0, pending));
+  let pending = totalPossible - (state.influence + (state.influenceSpent || 0));
+  return Math.max(0, pending);
 }
 
 function nextPrestigeAt() {
@@ -3572,6 +3583,41 @@ function buyPremiumManager(id) {
   save();
 }
 
+// Hire every affordable premium manager in one tap — AdCap quick-buy feel.
+function hireAllAffordable() {
+  const eligible = PREMIUM_MANAGERS.filter(p => {
+    if (state.premiumOwned[p.id]) return false;
+    if (p.goldCost) return (state.gold || 0) >= p.goldCost;
+    return (state.influence || 0) >= p.influenceCost;
+  });
+  if (!eligible.length) { toast('No managers you can afford right now.'); return; }
+  let hired = [];
+  // Sort cheapest first so we spend optimally
+  eligible.sort((a, b) => (a.influenceCost || a.goldCost || 0) - (b.influenceCost || b.goldCost || 0));
+  for (const p of eligible) {
+    // Re-check after each purchase since influence/gold balance changes
+    const canAfford = p.goldCost ? (state.gold || 0) >= p.goldCost : (state.influence || 0) >= p.influenceCost;
+    if (!canAfford) continue;
+    if (p.goldCost) {
+      state.gold -= p.goldCost;
+    } else {
+      state.influence -= p.influenceCost;
+      state.influenceSpent = (state.influenceSpent || 0) + p.influenceCost;
+    }
+    state.premiumOwned[p.id] = true;
+    hired.push(p.name);
+    addNews('HIRED: ' + p.name, p.role + ' — ' + (p.mult ? '+' + Math.round((p.mult-1)*100) + '% mult' : ''), 'milestone');
+  }
+  if (hired.length) {
+    SFX.hire();
+    celebrate('HIRED ' + hired.length + ' MANAGER' + (hired.length > 1 ? 'S' : ''), hired.join(' · '));
+    renderCash();
+    renderManagersTab();
+    renderPrestige();
+    save();
+  }
+}
+
 function buyInfluenceShop(id) {
   if (state.influenceShopOwned?.[id]) return;
   const item = INFLUENCE_SHOP.find(s => s.id === id);
@@ -3594,11 +3640,17 @@ function buyMegaTicket(id) {
   if (state.megaTicketsOwned?.[id]) return;
   const t = MEGA_TICKETS.find(x => x.id === id);
   if (!t) return;
-  if ((state.gold || 0) < t.goldCost) { toast('Not enough gold.'); return; }
-  state.gold -= t.goldCost;
+  // Deduct market currency (cash for Wall St, yen for Tokyo)
+  if (t.yenCost) {
+    if ((state.yen || 0) < t.yenCost) { toast('Not enough ¥ Yen.'); return; }
+    state.yen -= t.yenCost;
+  } else {
+    if ((state.cash || 0) < t.cashCost) { toast('Not enough cash.'); return; }
+    state.cash -= t.cashCost;
+  }
   if (!state.megaTicketsOwned) state.megaTicketsOwned = {};
   state.megaTicketsOwned[id] = true;
-  SFX.gold();
+  SFX.buy();
   celebrate('MEGA TICKET: ' + t.ticker, '+' + MEGA_TICKET_MULT + 'x ' + t.ticker + ' payouts forever');
   addNews('MEGA TICKET: ' + t.ticker, 'Asset payout permanently +' + MEGA_TICKET_MULT + 'x', 'milestone');
   renderCash();
@@ -3612,8 +3664,8 @@ function buyLeverage(id) {
   if (!(state.totalIPOs >= 1)) { toast('Leverage unlocks after your first IPO.'); return; }
   const t = LEVERAGE_TIERS.find(x => x.id === id);
   if (!t) return;
-  if ((state.gold || 0) < t.goldCost) { toast('Not enough gold.'); return; }
-  state.gold -= t.goldCost;
+  if ((state.megabucks || 0) < t.mbCost) { toast('Not enough Megabucks (MB).'); return; }
+  state.megabucks -= t.mbCost;
   if (!state.leverageInventory) state.leverageInventory = {};
   state.leverageInventory[id] = (state.leverageInventory[id] || 0) + 1;
   toast('+1 ' + t.name);
@@ -3663,11 +3715,11 @@ function useTimeWarp(id) {
   if (!(state.totalIPOs >= 1)) { toast('Time Warps unlock after your first IPO.'); return; }
   const w = TIME_WARPS.find(x => x.id === id);
   if (!w) return;
-  if ((state.gold || 0) < w.goldCost) { toast('Not enough gold.'); return; }
+  if ((state.megabucks || 0) < w.mbCost) { toast('Not enough Megabucks (MB).'); return; }
   const rate = totalIncomePerSec();
   if (rate <= 0) { toast('No passive income to warp. Hire a trader first.'); return; }
   const gain = rate * w.hours * 3600;
-  state.gold -= w.goldCost;
+  state.megabucks -= w.mbCost;
   state.cash += gain;
   state.lifetimeEarnings += gain;
   state.allTimeEarnings += gain;
@@ -5299,6 +5351,14 @@ function renderManagersTab() {
   if (PREMIUM_MANAGERS.length) {
     const wallstTokyo = PREMIUM_MANAGERS.filter(p => !p.goldCost);
     const londonPrem  = PREMIUM_MANAGERS.filter(p =>  p.goldCost);
+    // Quick-hire button — AdCap style: tap once to grab everything you can afford
+    const anyAffordable = PREMIUM_MANAGERS.some(p => !state.premiumOwned[p.id] && (p.goldCost ? (state.gold || 0) >= p.goldCost : (state.influence || 0) >= p.influenceCost));
+    html += `<div style="padding:10px 14px 4px;">
+      <button class="buy-btn inf-btn" style="width:100%;${anyAffordable ? '' : 'opacity:0.4;'}" ${anyAffordable ? '' : 'disabled'} onclick="hireAllAffordable()">
+        <span class="label">⚡ HIRE ALL AFFORDABLE</span>
+        <span class="price">Spend Influence &amp; Gold</span>
+      </button>
+    </div>`;
     const renderPremBlock = (list, label, labelColor) => {
       if (!list.length) return '';
       let s = `<div class="panel-sub" style="padding:0 14px 4px;color:${labelColor};font-family:'Lilita One',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;">${label}</div>`;
@@ -5306,7 +5366,7 @@ function renderManagersTab() {
         const owned = !!state.premiumOwned[p.id];
         const isGold = !!p.goldCost;
         const can = isGold ? (state.gold || 0) >= p.goldCost : (state.influence || 0) >= p.influenceCost;
-        const priceLabel = isGold ? p.goldCost + ' 🥇' : p.influenceCost + ' 🔔';
+        const priceLabel = isGold ? p.goldCost + ' 🥇' : fmt(p.influenceCost) + ' 🔔';
         const btnClass = isGold ? 'gold-btn' : 'inf-btn';
         s += `
           <div class="manager-card${owned ? '' : ' unhired'}" style="border-color:${owned ? '#5a3f08' : 'var(--panel-dark)'};${owned ? 'background:linear-gradient(180deg, #2a2030, #1a1424);' : ''}">
@@ -5464,19 +5524,20 @@ function renderPerksTab() {
       const unlocked = !prevInMarket || (state.assets[prevInMarket.id]?.owned || 0) >= 1;
 
       const owned = !!state.megaTicketsOwned?.[t.id];
-      const can = (state.gold || 0) >= t.goldCost;
+      const can = t.yenCost ? (state.yen || 0) >= t.yenCost : (state.cash || 0) >= t.cashCost;
+      const costStr = t.yenCost ? fmt(t.yenCost, 'yen') : fmt(t.cashCost, 'cash');
       html += `
         <div class="perk-card${owned ? ' owned' : ''}" style="${unlocked ? '' : 'opacity:0.45;'}">
-          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--gold), #6a4f0a);'}">${asset.icon}</div>
+          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--green), #1a5c2a);'}">${asset.icon}</div>
           <div>
             <div class="perk-name">${t.ticker} Mega Ticket</div>
             <div class="perk-desc">+${MEGA_TICKET_MULT}x ${t.ticker} payouts + Instant Reset &middot; permanent &middot; one-time</div>
           </div>
           ${owned
             ? `<button class="buy-btn" disabled><span class="price">USED</span></button>`
-            : `<button class="buy-btn gold-btn" ${(can && unlocked) ? '' : 'disabled'} onclick="buyMegaTicket('${t.id}')">
+            : `<button class="buy-btn" ${(can && unlocked) ? '' : 'disabled'} onclick="buyMegaTicket('${t.id}')">
                 <span class="label">BUY</span>
-                <span class="price">${t.goldCost}&#129689;</span>
+                <span class="price">${costStr}</span>
               </button>`}
         </div>`;
     });
@@ -5518,7 +5579,7 @@ function renderPerksTab() {
       let html = '';
       LEVERAGE_TIERS.forEach(t => {
         const owned = (state.leverageInventory?.[t.id] || 0);
-        const canAfford = (state.gold || 0) >= t.goldCost;
+        const canAfford = (state.megabucks || 0) >= t.mbCost;
         const isActive = !!(state.activeLeverage && Date.now() < state.activeLeverage.until);
         html += `
           <div class="perk-card">
@@ -5532,9 +5593,9 @@ function renderPerksTab() {
                 <span class="label">USE</span>
                 <span class="price">x${t.mult}</span>
               </button>
-              <button class="buy-btn gold-btn" ${canAfford ? '' : 'disabled'} onclick="buyLeverage('${t.id}')" style="font-size:9px;padding:3px 6px;min-height:24px;">
+              <button class="buy-btn" ${canAfford ? '' : 'disabled'} onclick="buyLeverage('${t.id}')" style="font-size:9px;padding:3px 6px;min-height:24px;">
                 <span class="label" style="font-size:8px;">BUY</span>
-                <span class="price" style="font-size:10px;">${t.goldCost}&#129689;</span>
+                <span class="price" style="font-size:10px;">${t.mbCost} MB</span>
               </button>
             </div>
           </div>`;
@@ -5556,7 +5617,7 @@ function renderPerksTab() {
       const rate = totalIncomePerSec();
       let html = '';
       TIME_WARPS.forEach(w => {
-        const can = (state.gold || 0) >= w.goldCost && rate > 0;
+        const can = (state.megabucks || 0) >= w.mbCost && rate > 0;
         const projected = rate * w.hours * 3600;
         html += `
           <div class="perk-card">
@@ -5565,9 +5626,9 @@ function renderPerksTab() {
               <div class="perk-name">${w.name}</div>
               <div class="perk-desc">Instant: <b style="color:var(--green);">${fmt(projected)}</b> at current rate</div>
             </div>
-            <button class="buy-btn gold-btn" ${can ? '' : 'disabled'} onclick="useTimeWarp('${w.id}')">
+            <button class="buy-btn" ${can ? '' : 'disabled'} onclick="useTimeWarp('${w.id}')">
               <span class="label">USE</span>
-              <span class="price">${w.goldCost}&#129689;</span>
+              <span class="price">${w.mbCost} MB</span>
             </button>
           </div>`;
       });
