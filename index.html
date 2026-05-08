@@ -1839,10 +1839,10 @@ const BOOSTS = [
 // HFT Speed Perks — cash-cost, permanent cycle time reductions. Stack multiplicatively.
 // Each reduces ALL asset cycle times. Stacks with milestone speed, Quant manager, lifestyle speed, etc.
 const HFT_PERKS = [
-  { id: 'fiber_link',  name: 'Fiber Optic Uplink', icon: '&#128421;', cashCost: 10e6,   speedMult: 0.90, desc: '-10% all cycle times. You are faster than the retail crowd.' },
-  { id: 'microwave',   name: 'Microwave Relay',    icon: '&#128225;', cashCost: 500e6,  speedMult: 0.80, desc: '-20% all cycle times. Signal bounced off the building across the street.' },
-  { id: 'colocation',  name: 'Server Co-location', icon: '&#128442;', cashCost: 50e9,   speedMult: 0.75, desc: '-25% all cycle times. Your racks live inside the exchange itself.' },
-  { id: 'quantum',     name: 'Quantum Execution',  icon: '&#9889;',   cashCost: 10e12,  speedMult: 0.60, desc: '-40% all cycle times. Progress bars pulse electric blue. Unreal.' },
+  { id: 'fiber_link',  name: 'Fiber Optic Uplink', icon: '&#128421;', cashCost: 10e6,   speedMult: 0.97, desc: '-3% all cycle times. You are faster than the retail crowd.' },
+  { id: 'microwave',   name: 'Microwave Relay',    icon: '&#128225;', cashCost: 500e6,  speedMult: 0.93, desc: '-7% all cycle times. Signal bounced off the building across the street.' },
+  { id: 'colocation',  name: 'Server Co-location', icon: '&#128442;', cashCost: 50e9,   speedMult: 0.85, desc: '-15% all cycle times. Your racks live inside the exchange itself.' },
+  { id: 'quantum',     name: 'Quantum Execution',  icon: '&#9889;',   cashCost: 10e12,  speedMult: 0.80, desc: '-20% all cycle times. Progress bars pulse electric blue. Unreal.' },
 ];
 
 // Gold run milestones — gold awarded on IPO based on lifetime earnings reached that run.
@@ -2078,22 +2078,22 @@ const PREMIUM_MANAGERS = [
 // mid items (10-25g) require several IPOs, top items (50g+) are endgame goals.
 // speedMult: reduces all cycle times (stacks with HFT perks, milestones, manager bonuses).
 const LIFESTYLE = [
-  { id: 'penthouse',   name: 'Penthouse Apartment',  icon: '&#127961;', cashCost: 1e8,  goldCost: 2,
-    desc: 'Skyline views and private elevator. +25% all payouts, -10% all cycle times.', mult: 1.25, speedMult: 0.90 },
-  { id: 'yacht',       name: 'The Yacht',            icon: '&#128674;', cashCost: 1e9,  goldCost: 5,
-    desc: '47 meters of teak deck and contempt. +50% all payouts, -15% all cycle times.', mult: 1.50, speedMult: 0.85 },
-  { id: 'jet',         name: 'Private Jet',          icon: '&#128747;', cashCost: 1e10, goldCost: 10,
-    desc: 'No more middle seats, ever. +75% all payouts, -20% all cycle times.', mult: 1.75, speedMult: 0.80 },
-  { id: 'art',         name: 'Modern Art Collection',icon: '&#127912;', cashCost: 1e11, goldCost: 15,
-    desc: 'Tax-deductible scribbles by long-dead Europeans. +100% all payouts forever.', mult: 2.00 },
-  { id: 'island',      name: 'Private Island',       icon: '&#127965;', cashCost: 1e12, goldCost: 25,
-    desc: 'Your own zip code in international waters. +150% all payouts forever.', mult: 2.50 },
-  { id: 'nfl_team',    name: 'NFL Franchise',        icon: '&#127944;', cashCost: 1e14, goldCost: 50,
-    desc: 'You sit in the owner\'s box now. The league hates you. +250% all payouts, -0.2s all cycle floors.', mult: 3.50 },
-  { id: 'moon_colony', name: 'Moon Colony',          icon: '&#127769;', cashCost: 1e15, megabucksCost: 5,
-    desc: 'Low orbit, low taxes. +400% all payouts forever. Tax residency: space.', mult: 5.00 },
-  { id: 'fed_chair',   name: 'Federal Reserve Chair',icon: '&#127970;', cashCost: 1e18, megabucksCost: 10,
-    desc: 'You ARE the printer now. +800% all payouts forever. Jerome who?', mult: 9.00 },
+  { id: 'penthouse',   name: 'Penthouse Apartment',  icon: '&#127961;', cashCost: 1e9,  goldCost: 10,
+    desc: 'Skyline views and private elevator. +5% all payouts, -5% all cycle times.', mult: 1.05, speedMult: 0.95 },
+  { id: 'yacht',       name: 'The Yacht',            icon: '&#128674;', cashCost: 1e10,  goldCost: 25,
+    desc: '47 meters of teak deck and contempt. +15% all payouts, -10% all cycle times.', mult: 1.15, speedMult: 0.90 },
+  { id: 'jet',         name: 'Private Jet',          icon: '&#128747;', cashCost: 1e12, goldCost: 60,
+    desc: 'No more middle seats, ever. +25% all payouts, -15% all cycle times.', mult: 1.25, speedMult: 0.85 },
+  { id: 'art',         name: 'Modern Art Collection',icon: '&#127912;', cashCost: 1e14, goldCost: 85,
+    desc: 'Tax-deductible scribbles by long-dead Europeans. +50% all payouts forever.', mult: 1.50 },
+  { id: 'island',      name: 'Private Island',       icon: '&#127965;', cashCost: 1e16, goldCost: 100,
+    desc: 'Your own zip code in international waters. +100% all payouts forever.', mult: 2.00 },
+  { id: 'nfl_team',    name: 'NFL Franchise',        icon: '&#127944;', cashCost: 1e18, goldCost: 150,
+    desc: 'You sit in the owner\'s box now. The league hates you. +150% all payouts, -0.2s all cycle floors.', mult: 2.50 },
+  { id: 'moon_colony', name: 'Moon Colony',          icon: '&#127769;', cashCost: 1e20, megabucksCost: 10,
+    desc: 'Low orbit, low taxes. +300% all payouts forever. Tax residency: space.', mult: 4.00 },
+  { id: 'fed_chair',   name: 'Federal Reserve Chair',icon: '&#127970;', cashCost: 1e23, megabucksCost: 25,
+    desc: 'You ARE the printer now. +500% all payouts forever. Jerome who?', mult: 6.00 },
 ];
 
 // Influence Shop — spend Influence (prestige currency) on permanent upgrades.
@@ -2125,8 +2125,8 @@ const INFLUENCE_SHOP = [
 const MEGA_TICKET_MULT = 5;
 // Mega Tickets cost market currency (cash for Wall St, yen for Tokyo). Not gold — gold is ultra-scarce.
 // Costs scale with asset value so earlier assets are reachable mid-game.
-const MEGA_TICKET_COSTS_WALLST = [1e6, 5e6, 20e6, 100e6, 500e6, 2.5e9, 10e9, 50e9, 200e9, 1e12];
-const MEGA_TICKET_COSTS_TOKYO  = [5000, 25000, 100000, 500000, 2e6, 10e6];
+const MEGA_TICKET_COSTS_WALLST = [1e9, 5.5e10, 2e12, 1.5e14, 5e16, 2.5e18, 1e20, 5.5e22, 2e23, 1e24];
+const MEGA_TICKET_COSTS_TOKYO  = [5e10, 2.5e12, 1e14, 5e16, 2e18, 1e20];
 const MEGA_TICKETS = [
   ...ASSETS.filter(a => a.market === 'wallst').map((a, i) => ({
     id: 'mt_' + a.id, assetId: a.id, ticker: a.ticker, name: a.name + ' Mega Ticket',
