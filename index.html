@@ -34,13 +34,13 @@
   html, body {
     margin: 0;
     padding: 0;
+    height: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: 'Nunito', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     font-weight: 800;
     overscroll-behavior: none;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
   }
@@ -48,7 +48,9 @@
   #app {
     max-width: 480px;
     margin: 0 auto;
-    min-height: 100vh;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding-bottom: 90px;
     background:
       radial-gradient(ellipse at top, rgba(74,144,226,0.08), transparent 60%),
