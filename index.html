@@ -2118,22 +2118,22 @@ const LIFESTYLE = [
 // Bought once per shop item; survives across IPO resets.
 // Costs rebalanced 2026-04-26 — should feel like genuine endgame purchases, not session-2 buys.
 const INFLUENCE_SHOP = [
-  { id: 'heavens_lottery',     icon: '&#128276;', name: "Heaven's Lottery",  cost: 150,
+  { id: 'heavens_lottery',     icon: '&#128276;', name: "Heaven's Lottery",  cost: 1e4,
     desc: 'Each Influence token is worth +8% (was +4%). Doubles your prestige power forever.' },
-  { id: 'fed_friend',          icon: '&#127970;', name: 'Federal Reserve Friend', cost: 200,
-    desc: '+50% all payouts forever. Bipartisan but expensive.', mult: 1.5 },
-  { id: 'senate_connections',  icon: '&#127963;', name: 'Senate Connections', cost: 125,
+  { id: 'fed_friend',          icon: '&#127970;', name: 'Federal Reserve Friend', cost: 5e4,
+    desc: '+33% all payouts forever. Bipartisan but expensive.', mult: 1.33 },
+  { id: 'senate_connections',  icon: '&#127963;', name: 'Senate Connections', cost: 1e5,
     desc: 'Market events fire ~25% more often. More chaos = more chances.' },
-  { id: 'plutocracy',          icon: '&#128737;', name: 'Plutocracy',         cost: 100,
+  { id: 'plutocracy',          icon: '&#128737;', name: 'Plutocracy',         cost: 1e6,
     desc: '+5% all payouts per hired trader (max +30%).' },
   // ── Synergy upgrades — cross-asset bonuses that reward portfolio thinking ──
-  { id: 'penny_pipeline',      icon: '&#128279;', name: 'Penny Pipeline',     cost: 75,
+  { id: 'penny_pipeline',      icon: '&#128279;', name: 'Penny Pipeline',     cost: 5e6,
     desc: '$PNNY earns +1% for every 10 Hedge Fund positions you own. Blue chips backstop penny plays.',
     synergy: { sourceId: 'pnny', targetId: 'hedg', bonusPct: 0.01, per: 10 } },
-  { id: 'volatility_hedge',    icon: '&#127774;', name: 'Volatility Hedge',   cost: 100,
-    desc: '$MEME earns +2% for every 5 AI Bubble positions you own. Chaos funds chaos.',
-    synergy: { sourceId: 'meme', targetId: 'aibl', bonusPct: 0.02, per: 5 } },
-  { id: 'dark_pool',           icon: '&#128202;', name: 'Dark Pool Network',  cost: 175,
+  { id: 'volatility_hedge',    icon: '&#127774;', name: 'Volatility Hedge',   cost: 1e7,
+    desc: '$MEME earns +2% for every 50 AI Bubble positions you own. Chaos funds chaos.',
+    synergy: { sourceId: 'meme', targetId: 'aibl', bonusPct: 0.02, per: 50 } },
+  { id: 'dark_pool',           icon: '&#128202;', name: 'Dark Pool Network',  cost: 5e7,
     desc: 'All assets earn +0.5% for each asset type where you hold ≥25 positions. Go wide.',
     synergy: { sourceId: 'all', threshold: 25, bonusPct: 0.005 } },
 ];
