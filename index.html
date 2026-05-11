@@ -1515,6 +1515,32 @@
     transition: opacity 0.3s;
   }
   .toast.show { opacity: 1; }
+
+  /* Market Whisper — subtle intel banner shown before positive events */
+  .whisper-toast {
+    position: fixed;
+    top: 55px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    background: linear-gradient(180deg, #1a2a1a, #0e1a0e);
+    border: 1px solid rgba(46, 204, 113, 0.4);
+    color: rgba(180, 255, 180, 0.9);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    z-index: 302;
+    letter-spacing: 0.3px;
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.2);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s, transform 0.4s;
+    white-space: nowrap;
+  }
+  .whisper-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 </style>
 </head>
 <body>
@@ -1548,6 +1574,12 @@
     <span class="event-timer" id="eventTimer"></span>
     <div class="event-headline" id="eventHeadline"></div>
     <div class="event-detail" id="eventDetail"></div>
+    <div id="hedgeContainer" style="display:none;margin-top:8px;text-align:right;">
+      <button id="hedgeBtn" onclick="hedgeEvent()" style="background:linear-gradient(180deg,#1a6a2a,#0e3a18);border:2px solid #2ecc71;border-radius:8px;color:#fff;font-size:11px;font-weight:900;padding:5px 10px;cursor:pointer;font-family:'Nunito',sans-serif;letter-spacing:0.3px;">
+        🛡️ HEDGE &nbsp;<span style="color:#ffd700;font-size:10px;">30 🥇</span>
+      </button>
+      <div id="hedgeTimer" style="font-size:10px;opacity:0.7;margin-top:2px;font-weight:700;"></div>
+    </div>
   </div>
 
   <div class="main-row">
@@ -1777,6 +1809,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="whisper-toast" id="whisperToast"></div>
 
 <script>
 // ============ GAME DATA ============
@@ -3285,6 +3318,15 @@ const EVENTS = [
   { sector: 't_industry',    mult: 3,    dur: 25, headline: 'NEW CONSOLE LAUNCH',    detail: 'Gamers lining up around the block in Akihabara.',       bad: false, weight: 5 },
   { sector: 'all',           mult: 0.2,  dur: 25, headline: 'GODZILLA WARNING',      detail: "It's just a movie promo, but the city panicked anyway.",bad: true,  weight: 2 },
   { sector: 't_industry',    mult: 5,    dur: 30, headline: 'MAGLEV BREAKTHROUGH',   detail: 'Tokyo to Osaka in record time sends stocks soaring.',   bad: false, weight: 2 },
+
+  // London Stock Exchange events — only fire after London is unlocked
+  { sector: 'l_finance',   mult: 3,    dur: 20, headline: 'BANKER BONUS SEASON',     detail: 'City bonuses reinstated. Porsche sales up 400%.',            bad: false, weight: 8,  londonOnly: true },
+  { sector: 'l_energy',   mult: 4,    dur: 18, headline: 'OIL PRICE SPIKE',          detail: 'Brent Crude hits a 12-year high. Your desk is printing.',    bad: false, weight: 5,  londonOnly: true },
+  { sector: 'l_forex',    mult: 3.5,  dur: 22, headline: 'STERLING SURGE',           detail: 'GBP hits a 12-month high. The pound is back, baby.',          bad: false, weight: 6,  londonOnly: true },
+  { sector: 'l_property', mult: 2.5,  dur: 25, headline: 'ROYAL ESTATE FRENZY',      detail: 'Posh postcodes up 40%. Estate agents weeping tears of joy.',  bad: false, weight: 6,  londonOnly: true },
+  { sector: 'l_commodity',mult: 3.5,  dur: 15, headline: 'TEA FUTURES SQUEEZE',      detail: 'Drought in Darjeeling. Tea futures through the roof.',         bad: false, weight: 5,  londonOnly: true },
+  { sector: 'l_finance',  mult: 0.45, dur: 18, headline: 'BANK HOLIDAY SHUTDOWN',    detail: 'Three bank holidays in a row. The City is closed. Naturally.', bad: true,  weight: 4,  londonOnly: true },
+  { sector: 'l_energy',   mult: 0.3,  dur: 20, headline: 'PIPELINE RUPTURE',         detail: 'North Sea supply line offline. Crude futures dive hard.',       bad: true,  weight: 3,  londonOnly: true },
 ];
 
 // Lifetime cap on rug pulls per save — they should be a story, not a recurring event.
@@ -3292,14 +3334,16 @@ const MAX_RUG_PULLS = 2;
 
 // Weighted random pick — picks an event with probability proportional to its weight.
 // Skips rug pull events if the player has already experienced the lifetime cap.
+// Skips London-only events until London is unlocked.
 function pickWeightedEvent() {
   // Skill: Event Bias — 20% chance to force a positive event
   if (state.skillsOwned?.sk_bias && Math.random() < 0.20) {
-    const positives = EVENTS.filter(e => !e.bad && !e.rugPull);
+    const positives = EVENTS.filter(e => !e.bad && !e.rugPull && (!e.londonOnly || state.londonUnlocked));
     if (positives.length) return positives[Math.floor(Math.random() * positives.length)];
   }
   const eligible = EVENTS.filter(e => {
     if (e.rugPull && (state.rugPullsExperienced || 0) >= MAX_RUG_PULLS) return false;
+    if (e.londonOnly && !state.londonUnlocked) return false;
     return true;
   });
   const total = eligible.reduce((s, e) => s + (e.weight || 10), 0);
@@ -3351,8 +3395,13 @@ function fireEvent() {
   const ev = pickWeightedEvent();
   state.lastEventAt = Date.now(); // gate further rolls immediately so we don't double-fire during the delay
   if (state.premiumOwned.senator) {
+    // Senator gives full headline 5s ahead
     toast('INSIDER ALERT: ' + ev.headline + ' incoming in 5s', 4500);
     setTimeout(() => activateEvent(ev), 5000);
+  } else if (!ev.bad && !ev.rugPull && Math.random() < 0.25) {
+    // Market Whisper — 25% chance: vague sector hint 8s before positive events
+    showWhisperToast(ev.sector, 8);
+    setTimeout(() => activateEvent(ev), 8000);
   } else {
     activateEvent(ev);
   }
@@ -3403,6 +3452,8 @@ function activateEvent(ev) {
     until: Date.now() + dur * 1000,
     headline: ev.headline, detail: ev.detail, bad: ev.bad, rugPull: !!ev.rugPull,
   };
+  // Bad non-rug events get a 12-second hedge window (rug pulls and black swans are not hedgeable)
+  state._hedgeWindowUntil = (ev.bad && !ev.rugPull) ? Date.now() + 12000 : 0;
   if (ev.rugPull) state.rugPullsExperienced = (state.rugPullsExperienced || 0) + 1;
   // Daily quest: event tracking
   if (!state.dailyProgress) state.dailyProgress = {};
@@ -3419,9 +3470,53 @@ function showEvent() {
   document.getElementById('eventDetail').textContent = state.activeEvent.detail;
   banner.classList.add('show');
   banner.classList.toggle('bad', state.activeEvent.bad);
+  updateHedgeUI();
 }
 function hideEvent() {
   document.getElementById('eventBanner').classList.remove('show');
+  const hc = document.getElementById('hedgeContainer');
+  if (hc) hc.style.display = 'none';
+}
+
+// Hedge Fund — costs 30 gold, reduces an active bad event's damage toward neutral.
+// Mechanic: new_mult = clamp(old_mult * 2.5, 0, 0.72) — e.g. 0.20 → 0.50, 0.30 → 0.72.
+// Only available for 12s after a bad event fires; one use per event.
+const HEDGE_COST = 30;
+function hedgeEvent() {
+  if (!state.activeEvent || !state.activeEvent.bad || state.activeEvent.hedged) return;
+  if ((state.gold || 0) < HEDGE_COST) { toast('Not enough gold to hedge.'); return; }
+  if (!state._hedgeWindowUntil || Date.now() > state._hedgeWindowUntil) { toast('Hedge window expired.'); return; }
+  state.gold -= HEDGE_COST;
+  // Soften the blow — at minimum brings mult to 0.50 regardless of original severity
+  state.activeEvent.mult = Math.min(Math.max(state.activeEvent.mult * 2.5, 0.50), 0.72);
+  state.activeEvent.hedged = true;
+  state._hedgeWindowUntil = 0; // one-time use
+  Haptic.success();
+  SFX.buy();
+  toast('🛡️ Hedged! Crash softened to ' + (state.activeEvent.mult * 100).toFixed(0) + '%.');
+  addNews('🛡️ HEDGE ACTIVATED', 'Market crash softened. Cost: 30 gold.', 'good');
+  updateHedgeUI();
+  renderCash();
+  renderAssets();
+  save();
+}
+
+function updateHedgeUI() {
+  const hc = document.getElementById('hedgeContainer');
+  const hb = document.getElementById('hedgeBtn');
+  const ht = document.getElementById('hedgeTimer');
+  if (!hc || !hb || !ht) return;
+  const now = Date.now();
+  const windowOpen = state._hedgeWindowUntil && now < state._hedgeWindowUntil
+    && state.activeEvent?.bad && !state.activeEvent?.hedged && !state.activeEvent?.rugPull;
+  hc.style.display = windowOpen ? '' : 'none';
+  if (windowOpen) {
+    const secsLeft = Math.ceil((state._hedgeWindowUntil - now) / 1000);
+    const canAfford = (state.gold || 0) >= HEDGE_COST;
+    hb.disabled = !canAfford;
+    hb.style.opacity = canAfford ? '1' : '0.5';
+    ht.textContent = secsLeft + 's remaining · ' + (canAfford ? 'halves the damage' : 'need ' + HEDGE_COST + 'g');
+  }
 }
 
 // ============ ACTIONS ============
@@ -3987,14 +4082,16 @@ function buyHFTPerk(id) {
 
 // ============ CHICAGO OPEN OUTCRY PIT ============
 const PIT_MILESTONES = [
-  { credits:     5000, mult: 1.05, label: '+5% all payouts'  },
-  { credits:    25000, mult: 1.08, label: '+8% all payouts'  },
-  { credits:   100000, mult: 1.12, label: '+12% all payouts' },
-  { credits:   500000, mult: 1.20, label: '+20% all payouts' },
-  { credits:  2500000, mult: 1.30, label: '+30% all payouts' },
+  { credits:      5000, mult: 1.05, label: '+5% all payouts'  },
+  { credits:     25000, mult: 1.08, label: '+8% all payouts'  },
+  { credits:    100000, mult: 1.12, label: '+12% all payouts' },
+  { credits:    500000, mult: 1.20, label: '+20% all payouts' },
+  { credits:   2500000, mult: 1.30, label: '+30% all payouts' },
+  { credits:  10000000, mult: 1.40, label: '+40% all payouts' },
+  { credits:  50000000, mult: 1.50, label: '+50% all payouts' },
 ];
 // Lifetime credit milestones that award Megabucks (💎) — uses pitLifetimeCredits (never decreases)
-const PIT_MEGABUCK_MILESTONES = [2500, 5000, 10000, 25000, 50000];
+const PIT_MEGABUCK_MILESTONES = [2500, 5000, 10000, 25000, 50000, 100000, 250000];
 const SQUEEZE_COST     = 500;    // Pit Credits
 const SQUEEZE_MULT     = 2.5;    // ×2.5 on the chosen asset
 const SQUEEZE_DURATION = 90000;  // 90 seconds
@@ -4795,6 +4892,13 @@ function tick() {
     const remaining = Math.max(0, Math.ceil((state.activeEvent.until - now) / 1000));
     const t = document.getElementById('eventTimer');
     if (t) t.textContent = remaining + 's';
+    // Keep hedge button countdown live
+    if (state._hedgeWindowUntil && now < state._hedgeWindowUntil) updateHedgeUI();
+    else if (state._hedgeWindowUntil && now >= state._hedgeWindowUntil) {
+      state._hedgeWindowUntil = 0;
+      const hc = document.getElementById('hedgeContainer');
+      if (hc) hc.style.display = 'none';
+    }
   }
 
   maybeFireEvent();
@@ -5848,6 +5952,25 @@ function toast(msg, durationMs) {
   t.classList.add('show');
   clearTimeout(t._h);
   t._h = setTimeout(() => t.classList.remove('show'), durationMs || 1800);
+}
+
+// Market Whisper — subtle pre-event intel shown before positive events fire.
+// Displayed as a dim green banner distinct from regular toasts.
+const _SECTOR_LABELS = {
+  all: 'all markets', crypto: 'Crypto', meme: 'Meme Coins',
+  tech: 'Tech', retail: 'Retail', institutional: 'Institutional',
+  t_culture: 'Tokyo Culture', t_food: 'Tokyo Markets', t_industry: 'Tokyo Industry',
+  l_finance: 'London Finance', l_energy: 'London Energy',
+  l_forex: 'Sterling FX', l_property: 'London Property', l_commodity: 'London Commodities',
+};
+function showWhisperToast(sector, delaySec) {
+  const label = _SECTOR_LABELS[sector] || sector;
+  const el = document.getElementById('whisperToast');
+  if (!el) return;
+  el.textContent = '🤫 Market Whisper: ' + label + ' heating up in ~' + delaySec + 's';
+  el.classList.add('show');
+  clearTimeout(el._wh);
+  el._wh = setTimeout(() => el.classList.remove('show'), (delaySec * 1000) + 200);
 }
 
 // ============ SAVE / LOAD ============
