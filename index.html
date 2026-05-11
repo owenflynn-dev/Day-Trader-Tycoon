@@ -1541,6 +1541,111 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+
+  /* ── Tutorial / Onboarding ── */
+  #tutorialOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    pointer-events: none;
+  }
+  /* The highlight ring — a transparent box with a massive box-shadow that dims everything around it */
+  #tutorialHighlight {
+    position: fixed;
+    border-radius: 12px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
+    transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease;
+    pointer-events: none;
+    z-index: 501;
+    border: 2px solid rgba(74, 144, 226, 0.7);
+  }
+  /* Tooltip card pinned to bottom of screen */
+  #tutorialCard {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 440px;
+    background: linear-gradient(180deg, #1b2440, #131a2b);
+    border: 2px solid #4a90e2;
+    border-radius: 16px;
+    padding: 16px 18px 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(74,144,226,0.2);
+    pointer-events: all;
+    z-index: 502;
+    animation: tutorialCardIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes tutorialCardIn {
+    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+    to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+  }
+  #tutorialStep {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+  #tutorialTitle {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  #tutorialBody {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  #tutorialBody strong { color: var(--text); }
+  #tutorialFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  #tutorialSkip {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+  }
+  #tutorialNext {
+    background: linear-gradient(180deg, var(--blue), var(--blue-dark));
+    border: 2px solid var(--blue-dark);
+    border-bottom-width: 4px;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 13px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    padding: 8px 18px;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    box-shadow: var(--shadow);
+  }
+  #tutorialNext:active { transform: translateY(2px); border-bottom-width: 2px; }
+  .tutorial-arrow {
+    position: fixed;
+    font-size: 28px;
+    z-index: 503;
+    pointer-events: none;
+    animation: tutorialBounce 0.8s ease-in-out infinite alternate;
+  }
+  @keyframes tutorialBounce {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-8px); }
+  }
 </style>
 </head>
 <body>
@@ -1658,7 +1763,7 @@
         <span class="tab-icon">&#127942;</span>GOALS
         <span class="tab-dot"></span>
       </button>
-      <button class="tab-btn" data-tab="managers" onclick="switchTab('managers')">
+      <button class="tab-btn" id="tab-managers-btn" data-tab="managers" onclick="switchTab('managers')">
         <span class="tab-icon">&#128188;</span>STAFF
         <span class="tab-dot"></span>
       </button>
@@ -1810,6 +1915,21 @@
 
 <div class="toast" id="toast"></div>
 <div class="whisper-toast" id="whisperToast"></div>
+
+<!-- Tutorial / Onboarding overlay -->
+<div id="tutorialOverlay" style="display:none;">
+  <div id="tutorialHighlight"></div>
+  <div id="tutorialArrow" class="tutorial-arrow" style="display:none;">👆</div>
+  <div id="tutorialCard">
+    <div id="tutorialStep"></div>
+    <div id="tutorialTitle"></div>
+    <div id="tutorialBody"></div>
+    <div id="tutorialFooter">
+      <button id="tutorialSkip" onclick="skipTutorial()">Skip tutorial</button>
+      <button id="tutorialNext" onclick="advanceTutorial()">Got it →</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ============ GAME DATA ============
@@ -4904,6 +5024,7 @@ function tick() {
   maybeFireEvent();
   maybeFirePump();
   maybeStartRivalRaid();
+  maybeTutorialAutoAdvance();
 
   // Chicago Pit — spawn/expire orders when PIT tab is active
   pitTick();
@@ -5973,6 +6094,129 @@ function showWhisperToast(sector, delaySec) {
   el._wh = setTimeout(() => el.classList.remove('show'), (delaySec * 1000) + 200);
 }
 
+// ============ TUTORIAL / ONBOARDING ============
+// 3-step spotlight tutorial shown only on first ever run.
+// State: state.tutorialStep — undefined/null = not started, 0/1/2 = active step, 'done' = complete.
+// Steps auto-advance on in-game triggers (buy, first trade) then finish with a manual tap.
+
+const TUTORIAL_STEPS = [
+  {
+    targetId: 'asset-pnny',
+    title: 'Make your first trade 📈',
+    body: 'Tap <strong>BUY</strong> on Penny Stocks to buy your first position. The progress bar will start filling automatically.',
+    arrowBelow: true,
+  },
+  {
+    targetId: 'cash',
+    title: 'Watch the money roll in 💵',
+    body: 'Your position is trading! When the bar fills, <strong>cash lands in your account</strong>. Hire a manager and it trades automatically — forever.',
+    arrowBelow: true,
+  },
+  {
+    targetId: 'tab-managers-btn',
+    title: 'Hire your first manager 🧑‍💼',
+    body: 'Open the <strong>STAFF tab</strong> and hire a manager to auto-trade your assets — even when you\'re away. That\'s the whole game.',
+    arrowBelow: false,
+  },
+];
+
+function startTutorial() {
+  if (state.tutorialStep === 'done') return;
+  // Resume from current step if mid-tutorial, else start fresh
+  const step = (typeof state.tutorialStep === 'number') ? state.tutorialStep : 0;
+  state.tutorialStep = step;
+  document.getElementById('tutorialOverlay').style.display = '';
+  showTutorialStep(step);
+}
+
+function showTutorialStep(n) {
+  const step = TUTORIAL_STEPS[n];
+  if (!step) { finishTutorial(); return; }
+
+  // Populate card
+  document.getElementById('tutorialStep').textContent = 'Step ' + (n + 1) + ' of ' + TUTORIAL_STEPS.length;
+  document.getElementById('tutorialTitle').innerHTML = step.title;
+  document.getElementById('tutorialBody').innerHTML = step.body;
+
+  // Last step: change button label
+  const nextBtn = document.getElementById('tutorialNext');
+  nextBtn.textContent = n === TUTORIAL_STEPS.length - 1 ? "Let's go! 🚀" : 'Got it →';
+
+  // Re-trigger card animation by cloning
+  const card = document.getElementById('tutorialCard');
+  card.style.animation = 'none';
+  card.offsetHeight; // force reflow
+  card.style.animation = '';
+
+  // Position highlight over target element
+  positionTutorialHighlight(step.targetId, step.arrowBelow);
+}
+
+function positionTutorialHighlight(targetId, arrowBelow) {
+  const el = document.getElementById(targetId);
+  const hl = document.getElementById('tutorialHighlight');
+  const arrow = document.getElementById('tutorialArrow');
+  if (!el || !hl) return;
+
+  const rect = el.getBoundingClientRect();
+  const PAD = 8;
+  hl.style.top    = (rect.top    - PAD) + 'px';
+  hl.style.left   = (rect.left   - PAD) + 'px';
+  hl.style.width  = (rect.width  + PAD * 2) + 'px';
+  hl.style.height = (rect.height + PAD * 2) + 'px';
+
+  // Floating arrow above the target element
+  if (arrowBelow && arrow) {
+    arrow.style.display = '';
+    arrow.style.top  = (rect.bottom + 4) + 'px';
+    arrow.style.left = (rect.left + rect.width / 2 - 14) + 'px';
+    arrow.textContent = '👆';
+  } else if (arrow) {
+    // Arrow pointing to STAFF tab on right edge
+    arrow.style.display = '';
+    arrow.style.top  = (rect.top + rect.height / 2 - 14) + 'px';
+    arrow.style.left = (rect.left - 38) + 'px';
+    arrow.textContent = '👉';
+  }
+}
+
+function advanceTutorial() {
+  if (state.tutorialStep === 'done') return;
+  const next = (state.tutorialStep || 0) + 1;
+  if (next >= TUTORIAL_STEPS.length) {
+    finishTutorial();
+  } else {
+    state.tutorialStep = next;
+    showTutorialStep(next);
+  }
+}
+
+function skipTutorial() {
+  finishTutorial();
+}
+
+function finishTutorial() {
+  state.tutorialStep = 'done';
+  document.getElementById('tutorialOverlay').style.display = 'none';
+  save();
+}
+
+// Called from tick — auto-advances steps based on in-game triggers
+function maybeTutorialAutoAdvance() {
+  if (state.tutorialStep === 'done' || state.tutorialStep === null || state.tutorialStep === undefined) return;
+  const step = state.tutorialStep;
+  // Step 0 → 1: player bought their first asset
+  if (step === 0 && (state.assets?.pnny?.owned || 0) > 0) {
+    state.tutorialStep = 1;
+    showTutorialStep(1);
+  }
+  // Step 1 → 2: first trade completed (first automatic payout)
+  if (step === 1 && (state.totalTrades || 0) > 0) {
+    state.tutorialStep = 2;
+    showTutorialStep(2);
+  }
+}
+
 // ============ SAVE / LOAD ============
 const SAVE_KEY = 'dayTraderTycoonSave_v1';
 function save() {
@@ -6026,6 +6270,7 @@ function save() {
       blackmktUnlocked: !!state.blackmktUnlocked,
       influenceInvested: state.influenceInvested || 0,
       hideClaimedQuests: !!state.hideClaimedQuests,
+      tutorialStep: state.tutorialStep ?? null,
       // Income doubler + IAP
       incomeDoublerUntil: state.incomeDoublerUntil || 0,
       starterPackOwned: !!state.starterPackOwned,
@@ -6107,6 +6352,7 @@ function load() {
     state.blackmktUnlocked = !!data.blackmktUnlocked;
     state.influenceInvested = data.influenceInvested || 0;
     state.hideClaimedQuests = !!data.hideClaimedQuests;
+    state.tutorialStep = data.tutorialStep ?? null;
     state.incomeDoublerUntil = data.incomeDoublerUntil || 0;
     state.starterPackOwned   = !!data.starterPackOwned;
     state.dailyQuestDate     = data.dailyQuestDate  || '';
@@ -6246,6 +6492,10 @@ function boot() {
   updateDoublerUI();
   // Keep the doubler chip / ad button live — check every minute
   setInterval(updateDoublerUI, 1000);
+  // Start tutorial for first-time players (delay slightly so renderAll() has built the DOM)
+  if (state.tutorialStep !== 'done') {
+    setTimeout(startTutorial, 900);
+  }
 }
 boot();
 </script>
