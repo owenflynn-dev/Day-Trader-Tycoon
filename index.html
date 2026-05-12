@@ -3305,7 +3305,7 @@ function megaTicketMultOf(asset) {
 function addNews(headline, detail, kind) {
   state.newsLog.unshift({ ts: Date.now(), headline, detail: detail || '', kind: kind || 'good' });
   if (state.newsLog.length > NEWS_MAX) state.newsLog.length = NEWS_MAX;
-  if (state.activeTab !== 'news') {
+  if (state.activeTab !== 'news' && !state.hasUnseenNews) {
     state.hasUnseenNews = true;
     document.querySelector('.tab-btn[data-tab="news"]').classList.add('has-news');
   }
@@ -5575,17 +5575,17 @@ function renderQuestsTab() {
                    <div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;font-weight:800;">REWARD</div>
                  </div>`;
     }
-    // Format progress numbers smartly based on currency type
-    const cashQuests = ['q_first_million', 'q_day_trader', 'q_wall_st_tycoon'];
-    const yenQuests  = ['q_yen_millionaire', 'q_yen_trillion'];
-    const gbpQuests  = ['q_gbp_billionaire'];
-    const goldQuests = ['q_goldsmith', 'q_gold_master', 'q_gold_vault'];
-    let progStr;
-    if (cashQuests.includes(q.id))      progStr = fmt(prog) + ' / ' + fmt(tgt);
-    else if (yenQuests.includes(q.id))  progStr = fmt(prog, 'yen') + ' / ' + fmt(tgt, 'yen');
-    else if (gbpQuests.includes(q.id))  progStr = fmt(prog, 'gbp') + ' / ' + fmt(tgt, 'gbp');
-    else if (goldQuests.includes(q.id)) progStr = fmt(prog, 'gold') + ' / ' + fmt(tgt, 'gold');
-    else                                progStr = fmtNum(prog) + ' / ' + fmtNum(tgt);
+    // Format progress numbers using the quest's declared currency.
+    // Add an entry here whenever a new quest with currency progress is added to QUESTS.
+    const QUEST_CURRENCY_MAP = {
+      q_first_million:   'cash', q_day_trader:     'cash', q_wall_st_tycoon:  'cash',
+      q_yen_millionaire: 'yen',  q_yen_trillion:   'yen',
+      q_gbp_billionaire: 'gbp',
+      q_goldsmith:       'gold', q_gold_master:    'gold', q_gold_vault:      'gold',
+    };
+    const qCurrency = QUEST_CURRENCY_MAP[q.id];
+    const progStr = qCurrency ? fmt(prog, qCurrency === 'cash' ? undefined : qCurrency) + ' / ' + fmt(tgt, qCurrency === 'cash' ? undefined : qCurrency)
+                               : fmtNum(prog) + ' / ' + fmtNum(tgt);
     html += `
       <div class="quest-card ${cls}">
         <div class="quest-icon">${q.icon}</div>
@@ -6122,9 +6122,18 @@ const TUTORIAL_STEPS = [
 
 function startTutorial() {
   if (state.tutorialStep === 'done') return;
+  // Always start on home tab, Wall St market, so #asset-pnny is in the DOM
+  switchTab('home');
+  if (typeof switchMarket === 'function') switchMarket('wallst');
   // Resume from current step if mid-tutorial, else start fresh
   const step = (typeof state.tutorialStep === 'number') ? state.tutorialStep : 0;
   state.tutorialStep = step;
+  // Capture baselines so auto-advance tracks NEW activity during this tutorial session,
+  // not historical data (a returning player may already have thousands of trades/assets)
+  if (step === 0) {
+    state._tutorialPnnyBaseline  = state.assets?.pnny?.owned ?? 0;
+    state._tutorialTradesBaseline = state.totalTrades ?? 0;
+  }
   document.getElementById('tutorialOverlay').style.display = '';
   showTutorialStep(step);
 }
@@ -6185,6 +6194,8 @@ function advanceTutorial() {
   const next = (state.tutorialStep || 0) + 1;
   if (next >= TUTORIAL_STEPS.length) {
     finishTutorial();
+    // Take the player straight to STAFF so they can act on the instruction immediately
+    switchTab('managers');
   } else {
     state.tutorialStep = next;
     showTutorialStep(next);
@@ -6205,13 +6216,16 @@ function finishTutorial() {
 function maybeTutorialAutoAdvance() {
   if (state.tutorialStep === 'done' || state.tutorialStep === null || state.tutorialStep === undefined) return;
   const step = state.tutorialStep;
-  // Step 0 → 1: player bought their first asset
-  if (step === 0 && (state.assets?.pnny?.owned || 0) > 0) {
+  // Step 0 → 1: player bought a penny stock DURING this tutorial session
+  // Compare against baseline captured at startTutorial() so returning players don't skip instantly
+  if (step === 0 && (state.assets?.pnny?.owned || 0) > (state._tutorialPnnyBaseline ?? 0)) {
+    // Update trades baseline now so step 1 waits for a trade that happens after the buy
+    state._tutorialTradesBaseline = state.totalTrades ?? 0;
     state.tutorialStep = 1;
     showTutorialStep(1);
   }
-  // Step 1 → 2: first trade completed (first automatic payout)
-  if (step === 1 && (state.totalTrades || 0) > 0) {
+  // Step 1 → 2: a trade completed DURING this tutorial session
+  if (step === 1 && (state.totalTrades || 0) > (state._tutorialTradesBaseline ?? 0)) {
     state.tutorialStep = 2;
     showTutorialStep(2);
   }
@@ -6462,7 +6476,9 @@ function boot() {
   buildTicker();
   setInterval(buildTicker, 3000);  // fast enough to catch squeeze/options bonuses
   const had = load();
-  if (!had) openModal('welcomeModal');
+  // Only show the static welcome modal if the tutorial is already done (e.g. was skipped).
+  // For first-time players the tutorial is the welcome experience — showing both is cluttered.
+  if (!had && state.tutorialStep === 'done') openModal('welcomeModal');
   resetDailyQuestsIfNeeded();
   renderAll();
   // Initial unlock pass + restore the tab the player was on
