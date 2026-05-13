@@ -5616,54 +5616,8 @@ function renderManagersTab() {
   if (!root) return;
   let html = '';
 
-  // Premium managers — Wall St + Tokyo cost Influence; London managers cost Gold
-  if (PREMIUM_MANAGERS.length) {
-    const wallstTokyo = PREMIUM_MANAGERS.filter(p => !p.goldCost);
-    const londonPrem  = PREMIUM_MANAGERS.filter(p =>  p.goldCost);
-    // Quick-hire button — AdCap style: tap once to grab everything you can afford
-    const anyAffordable = PREMIUM_MANAGERS.some(p => !state.premiumOwned[p.id] && (p.goldCost ? (state.gold || 0) >= p.goldCost : (state.influence || 0) >= p.influenceCost));
-    html += `<div style="padding:10px 14px 4px;">
-      <button class="buy-btn inf-btn" style="width:100%;${anyAffordable ? '' : 'opacity:0.4;'}" ${anyAffordable ? '' : 'disabled'} onclick="hireAllAffordable()">
-        <span class="label">⚡ HIRE ALL AFFORDABLE</span>
-        <span class="price">Spend Influence &amp; Gold</span>
-      </button>
-    </div>`;
-    const renderPremBlock = (list, label, labelColor) => {
-      if (!list.length) return '';
-      let s = `<div class="panel-sub" style="padding:0 14px 4px;color:${labelColor};font-family:'Lilita One',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;">${label}</div>`;
-      list.forEach(p => {
-        const owned = !!state.premiumOwned[p.id];
-        const isGold = !!p.goldCost;
-        const can = isGold ? (state.gold || 0) >= p.goldCost : (state.influence || 0) >= p.influenceCost;
-        const priceLabel = isGold ? p.goldCost + ' 🥇' : fmt(p.influenceCost) + ' 🔔';
-        const btnClass = isGold ? 'gold-btn' : 'inf-btn';
-        s += `
-          <div class="manager-card${owned ? '' : ' unhired'}" style="border-color:${owned ? '#5a3f08' : 'var(--panel-dark)'};${owned ? 'background:linear-gradient(180deg, #2a2030, #1a1424);' : ''}">
-            <div class="manager-portrait" style="${owned ? 'background:radial-gradient(circle at 35% 30%, var(--gold), #6a4f0a);' : ''}">${p.icon}</div>
-            <div>
-              <div class="manager-name" style="color:var(--gold);">${p.name}</div>
-              <div class="manager-role">${p.role} &middot; ${p.desc}</div>
-              <div class="manager-bio">${p.bio}</div>
-            </div>
-            ${owned
-              ? (p.hasAbility
-                  ? `<button class="buy-btn gold-btn manager-hire" ${state.whistleblowerUsedThisRun ? 'disabled' : ''} onclick="useWhistleblower()">
-                      <span class="label">${state.whistleblowerUsedThisRun ? 'USED' : 'USE LEAK'}</span>
-                      <span class="price">${state.whistleblowerUsedThisRun ? 'Resets at IPO' : 'Trigger 5x event'}</span>
-                    </button>`
-                  : `<div class="manager-hire" style="text-align:center;color:var(--gold);font-family:'Lilita One',sans-serif;font-size:14px;">&#10003; ON RETAINER</div>`)
-              : `<button class="buy-btn ${btnClass} manager-hire" ${can ? '' : 'disabled'} onclick="buyPremiumManager('${p.id}')">
-                  <span class="label">HIRE</span>
-                  <span class="price">${priceLabel}</span>
-                </button>`}
-          </div>`;
-      });
-      return s;
-    };
-    html += renderPremBlock(wallstTokyo, 'Premium Roster · costs Influence 🔔', 'var(--gold)');
-    if (state.londonUnlocked) html += renderPremBlock(londonPrem, 'London Premium · costs Gold 🥇', '#4af');
-    html += '<div class="panel-sub" style="padding:8px 14px 4px;font-family:\'Lilita One\',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);">Standard Roster</div>';
-  }
+  // ── Standard Roster first ──────────────────────────────────────────────────
+  html += '<div class="panel-sub" style="padding:8px 14px 4px;font-family:\'Lilita One\',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);">Your Trading Floor</div>';
 
   ASSETS.forEach(a => {
     const s = state.assets[a.id];
@@ -5695,6 +5649,47 @@ function renderManagersTab() {
                 </button>`)}
       </div>`;
   });
+
+  // ── Premium Roster after standard ─────────────────────────────────────────
+  if (PREMIUM_MANAGERS.length) {
+    const wallstTokyo = PREMIUM_MANAGERS.filter(p => !p.goldCost);
+    const londonPrem  = PREMIUM_MANAGERS.filter(p =>  p.goldCost);
+    const renderPremBlock = (list, label, labelColor) => {
+      if (!list.length) return '';
+      let s = `<div class="panel-sub" style="padding:8px 14px 4px;color:${labelColor};font-family:'Lilita One',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:1px;">${label}</div>`;
+      list.forEach(p => {
+        const owned = !!state.premiumOwned[p.id];
+        const isGold = !!p.goldCost;
+        const can = isGold ? (state.gold || 0) >= p.goldCost : (state.influence || 0) >= p.influenceCost;
+        const priceLabel = isGold ? p.goldCost + ' 🥇' : fmt(p.influenceCost) + ' 🔔';
+        const btnClass = isGold ? 'gold-btn' : 'inf-btn';
+        s += `
+          <div class="manager-card${owned ? '' : ' unhired'}" style="border-color:${owned ? '#5a3f08' : 'var(--panel-dark)'};${owned ? 'background:linear-gradient(180deg, #2a2030, #1a1424);' : ''}">
+            <div class="manager-portrait" style="${owned ? 'background:radial-gradient(circle at 35% 30%, var(--gold), #6a4f0a);' : ''}">${p.icon}</div>
+            <div>
+              <div class="manager-name" style="color:var(--gold);">${p.name}</div>
+              <div class="manager-role">${p.role} &middot; ${p.desc}</div>
+              <div class="manager-bio">${p.bio}</div>
+            </div>
+            ${owned
+              ? (p.hasAbility
+                  ? `<button class="buy-btn gold-btn manager-hire" ${state.whistleblowerUsedThisRun ? 'disabled' : ''} onclick="useWhistleblower()">
+                      <span class="label">${state.whistleblowerUsedThisRun ? 'USED' : 'USE LEAK'}</span>
+                      <span class="price">${state.whistleblowerUsedThisRun ? 'Resets at IPO' : 'Trigger 5x event'}</span>
+                    </button>`
+                  : `<div class="manager-hire" style="text-align:center;color:var(--gold);font-family:'Lilita One',sans-serif;font-size:14px;">&#10003; ON RETAINER</div>`)
+              : `<button class="buy-btn ${btnClass} manager-hire" ${can ? '' : 'disabled'} onclick="buyPremiumManager('${p.id}')">
+                  <span class="label">HIRE</span>
+                  <span class="price">${priceLabel}</span>
+                </button>`}
+          </div>`;
+      });
+      return s;
+    };
+    html += renderPremBlock(wallstTokyo, 'Premium Roster · costs Influence 🔔', 'var(--gold)');
+    if (state.londonUnlocked) html += renderPremBlock(londonPrem, 'London Premium · costs Gold 🥇', '#4af');
+  }
+
   root.innerHTML = html;
 }
 
