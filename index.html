@@ -6110,7 +6110,7 @@ const TUTORIAL_STEPS = [
   {
     targetId: 'tab-managers-btn',
     title: 'Hire your first manager 🧑‍💼',
-    body: 'Open the <strong>STAFF tab</strong> and hire a manager to auto-trade your assets — even when you\'re away. That\'s the whole game.',
+    body: 'When you\'re ready, tap <strong>STAFF</strong> to hire a manager who auto-trades for you — even when you\'re away. That\'s the whole game.',
     arrowBelow: false,
   },
 ];
@@ -6189,8 +6189,6 @@ function advanceTutorial() {
   const next = (state.tutorialStep || 0) + 1;
   if (next >= TUTORIAL_STEPS.length) {
     finishTutorial();
-    // Take the player straight to STAFF so they can act on the instruction immediately
-    switchTab('managers');
   } else {
     state.tutorialStep = next;
     showTutorialStep(next);
