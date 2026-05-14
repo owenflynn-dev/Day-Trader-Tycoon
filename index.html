@@ -3177,7 +3177,7 @@ function maxBuyable(asset) {
   let money = getMoney(asset);
   let count = 0;
   try {
-    while (count < 100) {
+    while (count < 100000) {
       a.owned = origOwned + count;
       const cost = costOf(asset);
       if (money < cost) break;
@@ -3791,10 +3791,10 @@ function executeTrade(id, evt) {
 
 
 function buyN(id, n) {
-  // n=0 means buy max (up to 100). n>0 means buy exactly n if affordable.
+  // n=0 means buy max (unlimited). n>0 means buy exactly n if affordable.
   const asset = ASSETS.find(a => a.id === id);
   const before = state.assets[id].owned;
-  const limit = (n === 0) ? 100 : n;
+  const limit = (n === 0) ? 100000 : n;
   let bought = 0;
   while (getMoney(asset) >= costOf(asset) && bought < limit) {
     spendMoney(asset, costOf(asset));
@@ -5346,6 +5346,9 @@ function refreshButtonStates() {
         btn.disabled = n === 0;
         const priceEl = btn.querySelector('.price');
         if (priceEl) priceEl.textContent = 'x' + n;
+      } else if (onclick.startsWith('buyN')) {
+        // Enable if player can afford at least one unit — buyN caps internally to what's affordable
+        btn.disabled = !(getMoney(asset) >= costOf(asset) && unlocked);
       } else if (onclick.startsWith('hireTrader')) {
         btn.disabled = !(getMoney(asset) >= asset.hireCost && !s.hired && s.owned > 0);
       }
@@ -6669,6 +6672,10 @@ function load() {
         });
       }
     }
+    // If all rivals are already beaten (e.g. legacy save), grant champion status immediately
+    if (!state.rivalChampion && state.rivalsBeaten && Object.keys(state.rivalsBeaten).length >= RIVALS.length) {
+      state.rivalChampion = true;
+    }
     if (data.assets) {
       ASSETS.forEach(a => {
         if (data.assets[a.id]) {
@@ -6771,10 +6778,13 @@ function boot() {
   const muteBtn = document.getElementById('muteBtn');
   if (muteBtn) muteBtn.textContent = SFX.isMuted() ? '🔇' : '🔊';
   state.lastTick = Date.now();
-  setInterval(tick, 100);
-  setInterval(save, 5000);
-  // 60fps render loop for smooth progress bars — game logic stays on the 100ms tick
-  (function rafLoop() { renderProgressBars(); requestAnimationFrame(rafLoop); })();
+  // Interval guards — prevent duplicates if boot() is ever called more than once
+  if (!window._tickInterval)    window._tickInterval    = setInterval(tick, 100);
+  if (!window._saveInterval)    window._saveInterval    = setInterval(save, 5000);
+  // 60fps render loop — pauses automatically when tab is hidden (saves battery on mobile)
+  let _rafPaused = false;
+  document.addEventListener('visibilitychange', () => { _rafPaused = document.hidden; });
+  (function rafLoop() { if (!_rafPaused) renderProgressBars(); requestAnimationFrame(rafLoop); })();
   window.addEventListener('beforeunload', save);
   // Show Welcome Back modal after UI is ready (if offline earnings exist)
   if (state._pendingOfflineData) {
@@ -6785,11 +6795,15 @@ function boot() {
   }
   // Refresh doubler UI in case a saved doubler timer is still running
   updateDoublerUI();
-  // Keep the doubler chip / ad button live — check every minute
-  setInterval(updateDoublerUI, 1000);
+  // Keep the doubler chip / ad button live — check every second
+  if (!window._doublerInterval) window._doublerInterval = setInterval(updateDoublerUI, 1000);
   // Start tutorial for first-time players (delay slightly so renderAll() has built the DOM)
   if (state.tutorialStep !== 'done') {
     setTimeout(startTutorial, 900);
+  }
+  // Prompt for firm name if never set — catches both new players (post-tutorial) and existing saves
+  if (state.tutorialStep === 'done' && !state.firmName) {
+    setTimeout(renameFirm, 1200);
   }
 }
 boot();
