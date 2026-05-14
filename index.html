@@ -1682,7 +1682,7 @@
   <div class="header">
     <div class="brand">
       Day Trader Tycoon
-      <span class="sub">Wall St. Capital Partners LLC</span>
+      <span class="sub" id="firmNameDisplay" onclick="renameFirm()" style="cursor:pointer;" title="Tap to rename">Wall St. Capital Partners LLC</span>
     </div>
     <div class="cash-display" id="cash">$0</div>
     <div class="income-rate" id="incomeRate">$0/sec passive income</div>
@@ -1905,6 +1905,27 @@
     <p style="color:var(--gold);">Watch for market events &mdash; rate cuts boost your gains, SEC investigations crash them. Time your trades.</p>
     <p>Eventually, IPO your firm to start over with permanent multipliers. The grind never ends.</p>
     <button class="modal-btn" onclick="closeModal('welcomeModal')">Let's Make Money</button>
+  </div>
+</div>
+
+<!-- Options Desk first-unlock intro -->
+<div class="modal-bg" id="optionsIntroModal">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:32px;margin-bottom:6px;">📊</div>
+    <h2 style="color:#4af;">Options Desk Unlocked</h2>
+    <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.6;">
+      Your derivatives level just hit 3. Time to play the crash game.
+    </p>
+    <div style="text-align:left;background:rgba(255,255,255,0.05);border-radius:8px;padding:12px;margin:12px 0;font-size:13px;line-height:1.8;">
+      <div>📌 Pick any <strong>asset</strong></div>
+      <div>📌 Choose <strong>CALL</strong> or <strong>PUT</strong></div>
+      <div>📌 Tap <strong>BOOST</strong> to raise your multiplier</div>
+      <div>📌 <strong>CASH OUT</strong> before the hidden crash point</div>
+    </div>
+    <p style="font-size:12px;color:rgba(255,255,255,0.5);">
+      Win → 3-min leverage on that asset &nbsp;·&nbsp; Crash → 2-min cooldown
+    </p>
+    <button class="modal-btn" onclick="closeModal('optionsIntroModal')">Let's Trade 📈</button>
   </div>
 </div>
 
@@ -5267,6 +5288,7 @@ function tick() {
     refreshButtonStates();
     checkUnlocks();
     updateTabBadges();
+    maybeShowOptionsIntro();
     // Re-render the active side panel if it shows live data
     if (state.activeTab === 'unlocks') renderGoalsTab();
     else if (state.activeTab === 'perks') renderPerksTab();
@@ -6377,6 +6399,29 @@ function advanceTutorial() {
   }
 }
 
+// ── Firm name ─────────────────────────────────────────────────────────────
+function renameFirm() {
+  const current = state.firmName || 'Wall St. Capital Partners LLC';
+  const input = prompt('Name your firm:', current);
+  if (input === null) return; // cancelled
+  const name = input.trim().slice(0, 40) || current;
+  state.firmName = name;
+  const el = document.getElementById('firmNameDisplay');
+  if (el) el.textContent = name;
+  renderRivalsTab(); // update leaderboard card
+  save();
+}
+
+// ── Options Desk first-unlock intro ───────────────────────────────────────
+function maybeShowOptionsIntro() {
+  if (state.optionsTutorialShown) return;
+  if (!optionsUnlocked()) return;
+  state.optionsTutorialShown = true;
+  switchTab('options');
+  setTimeout(() => openModal('optionsIntroModal'), 300);
+  save();
+}
+
 function skipTutorial() {
   finishTutorial();
 }
@@ -6460,6 +6505,8 @@ function save() {
       influenceInvested: state.influenceInvested || 0,
       hideClaimedQuests: !!state.hideClaimedQuests,
       tutorialStep: state.tutorialStep ?? null,
+      optionsTutorialShown: !!state.optionsTutorialShown,
+      firmName: state.firmName || '',
       // Income doubler + IAP
       incomeDoublerUntil: state.incomeDoublerUntil || 0,
       starterPackOwned: !!state.starterPackOwned,
@@ -6545,6 +6592,8 @@ function load() {
     state.influenceInvested = data.influenceInvested || 0;
     state.hideClaimedQuests = !!data.hideClaimedQuests;
     state.tutorialStep = data.tutorialStep ?? null;
+    state.optionsTutorialShown = !!data.optionsTutorialShown;
+    state.firmName = data.firmName || '';
     state.incomeDoublerUntil = data.incomeDoublerUntil || 0;
     state.starterPackOwned   = !!data.starterPackOwned;
     state.dailyQuestDate     = data.dailyQuestDate  || '';
@@ -6685,6 +6734,8 @@ function boot() {
   // Initial unlock pass + restore the tab the player was on
   checkUnlocks();
   switchTab(state.activeTab || 'home');
+  // Apply saved firm name to header
+  if (state.firmName) { const el = document.getElementById('firmNameDisplay'); if (el) el.textContent = state.firmName; }
   // One-time leverage starter gift
   maybeGrantLeverageStarter();
   // Daily login bonus prompt for returning players (give the welcome modal priority for new ones)
