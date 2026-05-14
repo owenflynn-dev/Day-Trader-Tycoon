@@ -1682,7 +1682,7 @@
   <div class="header">
     <div class="brand">
       Day Trader Tycoon
-      <span class="sub" id="firmNameDisplay" onclick="renameFirm()" style="cursor:pointer;" title="Tap to rename">Wall St. Capital Partners LLC</span>
+      <span class="sub" onclick="renameFirm()" style="cursor:pointer;" title="Tap to rename"><span id="firmNameDisplay">Wall St. Capital Partners LLC</span> <span style="font-size:9px;opacity:0.5;">✏️</span></span>
     </div>
     <div class="cash-display" id="cash">$0</div>
     <div class="income-rate" id="incomeRate">$0/sec passive income</div>
@@ -1905,6 +1905,23 @@
     <p style="color:var(--gold);">Watch for market events &mdash; rate cuts boost your gains, SEC investigations crash them. Time your trades.</p>
     <p>Eventually, IPO your firm to start over with permanent multipliers. The grind never ends.</p>
     <button class="modal-btn" onclick="closeModal('welcomeModal')">Let's Make Money</button>
+  </div>
+</div>
+
+<!-- Firm name modal (post-tutorial) -->
+<div class="modal-bg" id="firmNameModal">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:36px;margin-bottom:6px;">🏢</div>
+    <h2 style="color:#4af;">Name Your Firm</h2>
+    <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.6;margin-bottom:14px;">
+      Every empire needs a name. What are you trading under?
+    </p>
+    <input id="firmNameInput" type="text" maxlength="40" placeholder="e.g. Flynn Capital LLC"
+      style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px 12px;font-size:15px;color:#fff;font-family:'Nunito',sans-serif;outline:none;margin-bottom:14px;" />
+    <button class="modal-btn" onclick="confirmFirmName()">Open for Business 🚀</button>
+    <div style="margin-top:10px;">
+      <button onclick="closeModal('firmNameModal')" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;">Skip for now</button>
+    </div>
   </div>
 </div>
 
@@ -5103,7 +5120,7 @@ function renderRivalsTab() {
         <div class="lb-rank">${badge}</div>
         <div class="lb-icon">🏢</div>
         <div class="lb-body">
-          <div class="lb-name lb-player-name">${state.firmName || 'Your Firm'}</div>
+          <div class="lb-name lb-player-name">${state.firmName || 'Wall St. Capital Partners LLC'}</div>
           <div class="lb-strategy">Wall St. Capital Partners</div>
           <div class="lb-wealth">${fmt(playerVal)} all-time</div>
           <div class="lb-gap" style="color:#4af;">${yourRank}</div>
@@ -6401,13 +6418,21 @@ function advanceTutorial() {
 
 // ── Firm name ─────────────────────────────────────────────────────────────
 function renameFirm() {
-  const current = state.firmName || 'Wall St. Capital Partners LLC';
-  const input = prompt('Name your firm:', current);
-  if (input === null) return; // cancelled
-  const name = input.trim().slice(0, 40) || current;
+  const input = document.getElementById('firmNameInput');
+  if (input) input.value = state.firmName || '';
+  openModal('firmNameModal');
+  // Focus the input after modal opens
+  setTimeout(() => { const el = document.getElementById('firmNameInput'); if (el) el.focus(); }, 150);
+}
+
+function confirmFirmName() {
+  const input = document.getElementById('firmNameInput');
+  const raw = input ? input.value.trim().slice(0, 40) : '';
+  const name = raw || state.firmName || 'Wall St. Capital Partners LLC';
   state.firmName = name;
   const el = document.getElementById('firmNameDisplay');
   if (el) el.textContent = name;
+  closeModal('firmNameModal');
   renderRivalsTab(); // update leaderboard card
   save();
 }
@@ -6430,6 +6455,8 @@ function finishTutorial() {
   state.tutorialStep = 'done';
   document.getElementById('tutorialOverlay').style.display = 'none';
   save();
+  // Prompt for firm name on first run (after tutorial overlay has closed)
+  if (!state.firmName) setTimeout(renameFirm, 400);
 }
 
 // Called from tick — auto-advances steps based on in-game triggers
