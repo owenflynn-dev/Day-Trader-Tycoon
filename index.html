@@ -668,20 +668,45 @@
   }
   @keyframes crashShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
 
-  /* Rivals */
-  .rival-card {
+  /* Rivals — leaderboard */
+  .lb-row {
+    display: flex; align-items: center; gap: 10px;
     background: linear-gradient(180deg, #150a25, #0a0515);
     border: 2px solid #4a1a7a;
-    border-radius: 10px;
-    padding: 12px;
-    margin: 6px;
+    border-radius: 10px; padding: 10px 12px; margin: 5px 6px;
+    position: relative;
   }
-  .rival-card.investigated { border-color: #e04040; }
-  .rival-name { font-size: 15px; font-weight: bold; color: #c888ff; }
-  .rival-val { font-size: 13px; color: #ffd700; }
-  .rival-tag { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; }
-  .rival-btn { padding: 7px 14px; font-size: 12px; background: linear-gradient(180deg, #4a1a7a, #2a0a4a); border: 1px solid #7a3a9a; border-radius: 6px; color: #fff; cursor: pointer; margin-top: 8px; }
+  .lb-row.lb-player  { border-color: #4af; }
+  .lb-row.lb-beaten  { border-color: #2ecc71; background: linear-gradient(180deg,#071a0f,#030d07); }
+  .lb-row.lb-ahead   { border-color: #c0392b; background: linear-gradient(180deg,#1a0505,#0d0202); }
+  .lb-rank {
+    font-family: 'Lilita One', sans-serif; font-size: 18px;
+    min-width: 32px; text-align: center; flex-shrink: 0;
+  }
+  .lb-icon { font-size: 22px; flex-shrink: 0; }
+  .lb-body { flex: 1; min-width: 0; }
+  .lb-name { font-size: 14px; font-weight: bold; color: #c888ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-name.lb-player-name { color: #4af; }
+  .lb-strategy { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.05em; }
+  .lb-wealth { font-size: 13px; color: #ffd700; margin-top: 2px; }
+  .lb-gap { font-size: 11px; margin-top: 3px; }
+  .lb-taunt { font-size: 11px; color: rgba(255,255,255,0.4); font-style: italic; margin-top: 3px; }
+  .lb-bar-track { height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-top: 5px; }
+  .lb-bar-fill  { height: 3px; border-radius: 2px; transition: width 0.4s; }
+  .lb-action { flex-shrink: 0; text-align: right; }
+  .lb-beaten-badge {
+    font-size: 10px; font-weight: 800; color: #2ecc71; letter-spacing: 0.05em;
+    text-transform: uppercase; padding: 2px 6px; border: 1px solid #2ecc71;
+    border-radius: 4px; white-space: nowrap;
+  }
+  .lb-reward-label { font-size: 10px; color: rgba(46,204,113,0.7); margin-top: 3px; }
+  .rival-btn { padding: 7px 10px; font-size: 11px; background: linear-gradient(180deg, #4a1a7a, #2a0a4a); border: 1px solid #7a3a9a; border-radius: 6px; color: #fff; cursor: pointer; }
   .rival-btn:disabled { opacity: 0.4; cursor: default; }
+  .lb-champion-banner {
+    margin: 8px 6px; padding: 12px; border-radius: 10px; text-align: center;
+    background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(46,204,113,0.10));
+    border: 2px solid #ffd700;
+  }
 
   .gold-chip {
     display: inline-flex;
@@ -3283,6 +3308,10 @@ function globalMult(market) {
   if (state.incomeDoublerUntil && Date.now() < state.incomeDoublerUntil) m *= 2;
   // Rival raid — active raid reduces all income by 5%
   if (state.rivalRaid && Date.now() < state.rivalRaid.until) m *= (1 - RIVAL_RAID_INCOME_PENALTY);
+  // Rival beats — permanent bonus for each rival overtaken
+  RIVALS.forEach(r => { if (state.rivalsBeaten?.[r.id] && r.reward?.mult) m *= (1 + r.reward.mult); });
+  // Champion bonus — beat all 5
+  if (state.rivalChampion) m *= 1.20;
   return m;
 }
 
@@ -4853,12 +4882,49 @@ function renderOptionsTab() {
 }
 
 // ============ AI RIVALS ============
+// Each rival grows at incomeFrac × player's current passive income rate per second.
+// startFrac = fraction of player's allTimeEarnings used to initialise wealth for existing saves.
+// freshStart = absolute $ wealth for brand-new games (gives new players real milestones to chase).
 const RIVALS = [
-  { id: 'r_bear', name: 'Bearish Capital LLC',   icon: '🐻', strategy: 'Short Everything',     pctOfPlayer: 0.08, desc: 'Shorting your positions since day one. You\'re still up.' },
-  { id: 'r_bro',  name: 'WallStBros Fund',        icon: '🚀', strategy: 'Meme Momentum',        pctOfPlayer: 0.15, desc: '"To the moon!" — filed for bankruptcy twice. Still here.' },
-  { id: 'r_algo', name: 'QuantMatrix Alpha',      icon: '🤖', strategy: 'ML Algo Trading',      pctOfPlayer: 0.30, desc: 'Their model has 4,000 parameters. Nobody knows what it does.' },
-  { id: 'r_old',  name: 'Worthington & Sons',     icon: '🎩', strategy: 'Old Money Value',      pctOfPlayer: 0.55, desc: 'Founded 1887. The sons are in their 70s. The money is patient.' },
-  { id: 'r_dark', name: 'Dark Pool Partners',     icon: '🌑', strategy: 'Invisible Execution',  pctOfPlayer: 0.85, desc: 'You\'ve never seen their trades. Regulators haven\'t either.' },
+  { id: 'r_bear', name: 'Bearish Capital LLC', icon: '🐻', strategy: 'Short Seller',
+    incomeFrac: 0.04, startFrac: 0.06, freshStart: 1e4,
+    desc: 'Shorting your positions since day one. You\'re still up.',
+    tauntAhead:  'Your collapse is imminent. I\'m patient.',
+    tauntBehind: 'Okay. Fine. It\'s fine.',
+    defeatQuote: 'I\'ll be back. The market corrects everything.',
+    reward: { gold: 30, label: '+30 Gold' } },
+
+  { id: 'r_bro', name: 'WallStBros Fund', icon: '🚀', strategy: 'Meme Momentum',
+    incomeFrac: 0.09, startFrac: 0.18, freshStart: 1e6,
+    desc: '"To the moon!" — filed for bankruptcy twice. Still here.',
+    tauntAhead:  'WAGMI. You\'re not invited.',
+    tauntBehind: 'bro no way bro',
+    defeatQuote: 'It\'s a short squeeze. We planned this.',
+    reward: { mult: 0.10, label: '+10% all payouts forever' } },
+
+  { id: 'r_algo', name: 'QuantMatrix Alpha', icon: '🤖', strategy: 'Algo Trader',
+    incomeFrac: 0.20, startFrac: 0.35, freshStart: 1e9,
+    desc: 'Their model has 4,000 parameters. Nobody knows what it does.',
+    tauntAhead:  'Prediction: you lose. Confidence: 94.7%.',
+    tauntBehind: 'Recalibrating... recalibrating...',
+    defeatQuote: 'Error: unexpected human behaviour. Logging for retraining.',
+    reward: { mult: 0.15, label: '+15% all payouts forever' } },
+
+  { id: 'r_old', name: 'Worthington & Sons', icon: '🎩', strategy: 'Old Money',
+    incomeFrac: 0.38, startFrac: 0.58, freshStart: 1e12,
+    desc: 'Founded 1887. The sons are in their 70s. The money is patient.',
+    tauntAhead:  'Old money always wins. Eventually.',
+    tauntBehind: 'Father will hear about this.',
+    defeatQuote: 'We\'ll recoup in the next generation. As always.',
+    reward: { mult: 0.20, gold: 75, label: '+20% payouts + 75 Gold forever' } },
+
+  { id: 'r_dark', name: 'Dark Pool Partners', icon: '🌑', strategy: 'Invisible Execution',
+    incomeFrac: 0.60, startFrac: 0.87, freshStart: 1e15,
+    desc: 'You\'ve never seen their trades. Regulators haven\'t either.',
+    tauntAhead:  '',
+    tauntBehind: '...',
+    defeatQuote: '',
+    reward: { mult: 0.30, megabucks: 3, label: '+30% payouts + 3 Megabucks forever' } },
 ];
 const SEC_COMPLAINT_COST = 25; // gold
 const RIVAL_BUFF_DURATION = 10 * 60 * 1000; // 10 minutes
@@ -4868,6 +4934,59 @@ const RIVAL_RAID_INCOME_PENALTY = 0.05; // -5% all income during a raid
 const RIVAL_RAID_DURATION = 20 * 60 * 1000; // raids last 20 minutes
 const RIVAL_RAID_CHANCE = 0.15; // 15% chance each minute of a new raid starting
 const RIVAL_RAID_SUPPRESS = 30 * 60 * 1000; // 30-min suppression after filing SEC complaint
+
+// ── Rival leaderboard tick ────────────────────────────────────────────────
+// Rivals grow at incomeFrac × player's measured passive income rate.
+// We sample the player's real earnings delta every 3 seconds for the rate.
+function tickRivals(dt) {
+  const now = Date.now();
+  // Sample passive income rate every 3 s
+  if (now - (state._rivalRateTs || 0) > 3000) {
+    const elapsed = Math.max((now - (state._rivalRateTs || now)) / 1000, 1);
+    state._rivalPassiveRate = Math.max(0, ((state.allTimeEarnings || 0) - (state._rivalRateBase || 0)) / elapsed);
+    state._rivalRateBase = state.allTimeEarnings || 0;
+    state._rivalRateTs   = now;
+  }
+  const rate = state._rivalPassiveRate || 0;
+  if (!state.rivalWealth)  state.rivalWealth  = {};
+  if (!state.rivalsBeaten) state.rivalsBeaten = {};
+  RIVALS.forEach(r => {
+    if (state.rivalsBeaten[r.id]) return; // frozen once beaten
+    state.rivalWealth[r.id] = (state.rivalWealth[r.id] || 0) + rate * r.incomeFrac * dt;
+    // Beat check: player's all-time earnings surpassed rival's accumulated wealth
+    if ((state.allTimeEarnings || 0) > (state.rivalWealth[r.id] || 0) && (state.rivalWealth[r.id] || 0) > 0) {
+      beatRival(r);
+    }
+  });
+}
+
+function beatRival(rival) {
+  if (state.rivalsBeaten[rival.id]) return;
+  state.rivalsBeaten[rival.id] = Date.now();
+  // Grant rewards
+  const r = rival.reward;
+  if (r.gold)      { state.gold = (state.gold || 0) + r.gold; state.lifetimeGold = (state.lifetimeGold || 0) + r.gold; }
+  if (r.megabucks) { state.megabucks = (state.megabucks || 0) + r.megabucks; }
+  SFX.milestone();
+  Haptic.heavy();
+  celebrate('RIVAL BEATEN: ' + rival.name, rival.reward.label);
+  addNews('RIVAL OVERTAKEN: ' + rival.name, rival.reward.label + ' — ' + rival.defeatQuote, 'milestone');
+  renderCash();
+  if (state.activeTab === 'rivals') renderRivalsTab();
+  checkRivalChampion();
+  save();
+}
+
+function checkRivalChampion() {
+  if (state.rivalChampion) return;
+  if (!state.rivalsBeaten || Object.keys(state.rivalsBeaten).length < RIVALS.length) return;
+  state.rivalChampion = true;
+  state.megabucks = (state.megabucks || 0) + 1;
+  celebrate('LEADERBOARD DOMINATION 🏆', 'All rivals crushed. +20% global payouts forever. +1 Megabuck.');
+  addNews('🏆 CHAMPION', 'All 5 rivals beaten. +20% permanent global boost. Wall Street is yours.', 'milestone');
+  renderCash();
+  save();
+}
 
 function maybeStartRivalRaid() {
   const now = Date.now();
@@ -4909,55 +5028,117 @@ function renderRivalsTab() {
   if (!root) return;
   const playerVal = state.allTimeEarnings || 0;
   const now = Date.now();
-  let html = `
-    <div class="panel-title">🏆 Rival Firms</div>
-    <div class="panel-sub">Your competition. File SEC complaints to hamstring them — and stop their raids.</div>
-  `;
+  const RANK_BADGES = ['🥇','🥈','🥉','4','5','6'];
+
+  // Build participant list: player + rivals with their current wealth
+  const participants = [
+    { isPlayer: true, wealth: playerVal },
+    ...RIVALS.map(r => ({
+      ...r,
+      wealth: state.rivalWealth?.[r.id] || 0,
+      beaten:       !!state.rivalsBeaten?.[r.id],
+      investigated: !!(state.secComplaints?.[r.id] && now < state.secComplaints[r.id]),
+    })),
+  ].sort((a, b) => b.wealth - a.wealth);
+
+  const topWealth = Math.max(1, participants[0].wealth);
+  const beatenCount = RIVALS.filter(r => state.rivalsBeaten?.[r.id]).length;
+
+  let html = `<div class="panel-title">🏆 Leaderboard</div>
+    <div class="panel-sub">Beat every rival to earn permanent bonuses. ${beatenCount}/5 rivals crushed.</div>`;
+
+  // Champion banner
+  if (state.rivalChampion) {
+    html += `<div class="lb-champion-banner">
+      <div style="font-family:'Lilita One',sans-serif;font-size:16px;color:#ffd700;">🏆 LEADERBOARD DOMINATION</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px;">All rivals beaten · +20% global payouts · Wall Street is yours.</div>
+    </div>`;
+  }
+
   // Active raid warning
   if (state.rivalRaid && now < state.rivalRaid.until) {
     const minsLeft = Math.ceil((state.rivalRaid.until - now) / 60000);
-    html += `<div style="text-align:center;background:rgba(220,50,50,0.18);border:1px solid #e04040;border-radius:8px;padding:10px 8px;margin:6px 8px;font-size:13px;color:#ff6060;">
-      ⚔️ <strong>${state.rivalRaid.rivalName}</strong> IS RAIDING YOU<br>
-      <span style="font-size:11px;opacity:0.85;">–5% income · ${minsLeft}m remaining · File an SEC Complaint to end it now</span>
-    </div>`;
+    html += `<div style="background:rgba(220,50,50,0.18);border:1px solid #e04040;border-radius:8px;padding:10px 12px;margin:5px 6px;font-size:13px;color:#ff6060;">
+      ⚔️ <strong>${state.rivalRaid.rivalName}</strong> IS RAIDING YOU &nbsp;·&nbsp; –5% income · ${minsLeft}m left
+      <div style="font-size:11px;margin-top:3px;opacity:0.8;">File an SEC Complaint to end it early.</div></div>`;
   }
-  // Active buff display
+  // Active SEC buff
   if (state.rivalBuff && now < state.rivalBuff.until) {
     const secsLeft = Math.ceil((state.rivalBuff.until - now) / 1000);
-    html += `<div style="text-align:center;background:rgba(46,204,113,0.15);border:1px solid #2ecc71;border-radius:8px;padding:8px;margin:6px 8px;font-size:13px;color:#2ecc71;">⚖️ SEC Buff Active: +5% payouts · ${secsLeft}s remaining</div>`;
+    html += `<div style="background:rgba(46,204,113,0.12);border:1px solid #2ecc71;border-radius:8px;padding:8px 12px;margin:5px 6px;font-size:12px;color:#2ecc71;">
+      ⚖️ SEC Buff Active: +5% payouts · ${secsLeft}s remaining</div>`;
   }
-  // Your own rank card
-  html += `<div class="rival-card" style="border-color:#4af;margin-bottom:10px;">
-    <div class="rival-name" style="color:#4af;">🏢 Your Firm</div>
-    <div class="rival-val">${fmt(playerVal)} all-time</div>
-    <div class="rival-tag">THAT'S YOU</div>
-  </div>`;
-  // Sort rivals by valuation (closest to player = most threatening)
-  const sorted = RIVALS.map(r => ({
-    ...r,
-    val: playerVal * r.pctOfPlayer,
-    investigated: state.secComplaints?.[r.id] && Date.now() < state.secComplaints[r.id],
-  })).sort((a, b) => b.pctOfPlayer - a.pctOfPlayer);
 
-  sorted.forEach(r => {
-    const canComplain = (state.gold || 0) >= SEC_COMPLAINT_COST && !r.investigated;
-    html += `<div class="rival-card ${r.investigated ? 'investigated' : ''}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div>
-          <div class="rival-name">${r.icon} ${r.name}</div>
-          <div class="rival-tag">${r.strategy}</div>
-          <div class="rival-val">${fmt(r.val)} AUM</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;font-style:italic;">${r.desc}</div>
+  // Leaderboard rows
+  participants.forEach((p, idx) => {
+    const rank = idx + 1;
+    const badge = RANK_BADGES[idx] || String(rank);
+    const barPct = topWealth > 0 ? Math.max(2, (p.wealth / topWealth) * 100) : 2;
+    const barColor = p.isPlayer ? '#4af' : p.beaten ? '#2ecc71' : '#c0392b';
+
+    if (p.isPlayer) {
+      const yourRank = rank === 1 ? 'You\'re #1 — holding the top spot.' : `You\'re ranked #${rank} of 6.`;
+      html += `<div class="lb-row lb-player">
+        <div class="lb-rank">${badge}</div>
+        <div class="lb-icon">🏢</div>
+        <div class="lb-body">
+          <div class="lb-name lb-player-name">${state.firmName || 'Your Firm'}</div>
+          <div class="lb-strategy">Wall St. Capital Partners</div>
+          <div class="lb-wealth">${fmt(playerVal)} all-time</div>
+          <div class="lb-gap" style="color:#4af;">${yourRank}</div>
+          <div class="lb-bar-track"><div class="lb-bar-fill" style="width:${barPct}%;background:#4af;"></div></div>
         </div>
-        <div style="text-align:right;">
-          ${r.investigated
-            ? `<div style="color:#e04040;font-size:11px;font-weight:bold;">🔍 UNDER INVESTIGATION</div>`
-            : `<button class="rival-btn" onclick="fileSecComplaint('${r.id}')" ${canComplain?'':'disabled'}>SEC Complaint<br><span style="font-size:10px;color:#ffd700;">25 🥇</span></button>`
-          }
+      </div>`;
+      return;
+    }
+
+    if (p.beaten) {
+      const defeatLine = p.defeatQuote ? `<div class="lb-taunt">"${p.defeatQuote}"</div>` : '';
+      html += `<div class="lb-row lb-beaten">
+        <div class="lb-rank">${badge}</div>
+        <div class="lb-icon">${p.icon}</div>
+        <div class="lb-body">
+          <div class="lb-name">${p.name}</div>
+          <div class="lb-strategy">${p.strategy}</div>
+          <div class="lb-wealth">${fmt(p.wealth)} AUM</div>
+          ${defeatLine}
+          <div class="lb-reward-label">✓ ${p.reward.label}</div>
+          <div class="lb-bar-track"><div class="lb-bar-fill" style="width:${barPct}%;background:#2ecc71;"></div></div>
         </div>
+        <div class="lb-action"><span class="lb-beaten-badge">BEATEN</span></div>
+      </div>`;
+      return;
+    }
+
+    // Unbeaten rival — show gap and action
+    const isAhead = p.wealth > playerVal;
+    const gap = playerVal > 0 && p.wealth > 0
+      ? (isAhead ? ((p.wealth - playerVal) / playerVal * 100).toFixed(0) + '% ahead'
+                 : ((playerVal - p.wealth) / playerVal * 100).toFixed(0) + '% behind you')
+      : (p.wealth === 0 ? 'Growing...' : 'Ahead');
+    const gapColor = isAhead ? '#e74c3c' : '#f39c12';
+    const taunt = isAhead ? p.tauntAhead : p.tauntBehind;
+    const canComplain = (state.gold || 0) >= SEC_COMPLAINT_COST && !p.investigated;
+    const actionHtml = p.investigated
+      ? `<div style="font-size:10px;color:#e04040;font-weight:bold;text-align:center;">🔍 UNDER<br>INVESTIGATION</div>`
+      : `<button class="rival-btn" onclick="fileSecComplaint('${p.id}')" ${canComplain?'':'disabled'} style="font-size:10px;padding:6px 8px;">SEC<br>Complaint<br><span style="color:#ffd700;">25🥇</span></button>`;
+
+    html += `<div class="lb-row ${isAhead ? 'lb-ahead' : ''}">
+      <div class="lb-rank">${badge}</div>
+      <div class="lb-icon">${p.icon}</div>
+      <div class="lb-body">
+        <div class="lb-name">${p.name}</div>
+        <div class="lb-strategy">${p.strategy} · <span style="font-size:10px;color:rgba(255,255,255,0.35);">${p.desc}</span></div>
+        <div class="lb-wealth">${fmt(p.wealth)} AUM</div>
+        <div class="lb-gap" style="color:${gapColor};">${gap}</div>
+        ${taunt ? `<div class="lb-taunt">"${taunt}"</div>` : ''}
+        <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">Beat them: ${p.reward.label}</div>
+        <div class="lb-bar-track"><div class="lb-bar-fill" style="width:${barPct}%;background:${barColor};"></div></div>
       </div>
+      <div class="lb-action">${actionHtml}</div>
     </div>`;
   });
+
   root.innerHTML = html;
 }
 
@@ -5024,6 +5205,7 @@ function tick() {
   maybeFireEvent();
   maybeFirePump();
   maybeStartRivalRaid();
+  tickRivals(dt);
   maybeTutorialAutoAdvance();
 
   // Chicago Pit — spawn/expire orders when PIT tab is active
@@ -6305,6 +6487,9 @@ function save() {
       rivalBuff: state.rivalBuff || null,
       rivalRaid: state.rivalRaid || null,
       rivalRaidSuppressedUntil: state.rivalRaidSuppressedUntil || 0,
+      rivalWealth: state.rivalWealth || {},
+      rivalsBeaten: state.rivalsBeaten || {},
+      rivalChampion: !!state.rivalChampion,
       lastSavedAt: Date.now(),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(out));
@@ -6385,6 +6570,29 @@ function load() {
     state.rivalBuff = data.rivalBuff || null;
     state.rivalRaid = data.rivalRaid || null;
     state.rivalRaidSuppressedUntil = data.rivalRaidSuppressedUntil || 0;
+    state.rivalsBeaten  = data.rivalsBeaten  || {};
+    state.rivalChampion = !!data.rivalChampion;
+    // Initialise rival wealth — new field for existing saves
+    if (data.rivalWealth && Object.keys(data.rivalWealth).length > 0) {
+      state.rivalWealth = data.rivalWealth;
+    } else {
+      // First load with this system — seed rivals relative to player progress
+      const base = state.allTimeEarnings || 0;
+      const isVet = base > 1e6;
+      const freshStarts = { r_bear: 1e4, r_bro: 1e6, r_algo: 1e9, r_old: 1e12, r_dark: 1e15 };
+      state.rivalWealth = {};
+      RIVALS.forEach(r => {
+        state.rivalWealth[r.id] = isVet ? base * r.startFrac : freshStarts[r.id];
+      });
+      // Silently mark rivals already behind the player as beaten (no rewards for legacy progress)
+      if (isVet) {
+        RIVALS.forEach(r => {
+          if (base > state.rivalWealth[r.id] && !state.rivalsBeaten[r.id]) {
+            state.rivalsBeaten[r.id] = Date.now();
+          }
+        });
+      }
+    }
     if (data.assets) {
       ASSETS.forEach(a => {
         if (data.assets[a.id]) {
