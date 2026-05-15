@@ -50,13 +50,17 @@
     margin: 0 auto;
     height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
     padding-bottom: 90px;
     background:
       radial-gradient(ellipse at top, rgba(74,144,226,0.08), transparent 60%),
       linear-gradient(180deg, #0e1326 0%, #0a0e1a 100%);
     position: relative;
   }
+  #app::-webkit-scrollbar { display: none; } /* Chrome/Safari/iOS */
+
   /* Subtle vignette */
   #app::after {
     content: '';
@@ -3878,6 +3882,8 @@ function claimQuest(id) {
   state.questsClaimed[id] = true;
   state.gold = (state.gold || 0) + q.reward;
   state.lifetimeGold = (state.lifetimeGold || 0) + q.reward;
+  Haptic.success();
+  SFX.gold();
   toast('+' + q.reward + ' GOLD: ' + q.name);
   addNews('QUEST: ' + q.name, '+' + q.reward + ' gold rewarded.', 'milestone');
   renderCash();
