@@ -1,0 +1,11 @@
+{
+  "appId": "com.owenflynndev.daytradertycoon",
+  "appName": "Day Trader Tycoon",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "always"
+  }
+}

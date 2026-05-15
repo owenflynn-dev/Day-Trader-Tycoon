@@ -1,0 +1,17 @@
+{
+  "name": "day-trader-tycoon",
+  "version": "1.0.0",
+  "description": "Wall Street satire idle game",
+  "scripts": {
+    "sync": "cp index.html www/index.html && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/app": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}
