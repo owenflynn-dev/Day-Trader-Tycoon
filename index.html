@@ -1003,33 +1003,33 @@
     animation: barStream 0.9s linear infinite;
   }
   /* ── Skill Tree ── */
-  .skill-tree { display: flex; gap: 8px; padding: 8px 10px; }
-  .skill-branch { flex: 1; display: flex; flex-direction: column; gap: 0; }
+  .skill-tree { display: flex; gap: 8px; padding: 10px 8px 4px; }
+  .skill-branch { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0; }
   .skill-branch-header {
     text-align: center; font-family: 'Lilita One', sans-serif; font-size: 11px;
-    padding: 5px 4px; border-radius: 8px 8px 0 0; margin-bottom: 0;
-    text-transform: uppercase; letter-spacing: 1px;
+    padding: 6px 4px; border-radius: 8px; width: 100%; box-sizing: border-box;
+    margin-bottom: 8px; letter-spacing: 0.5px;
   }
   .skill-node {
-    position: relative; background: var(--panel); border: 2px solid var(--panel-2);
-    border-radius: 8px; padding: 7px 8px; margin: 0; cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-    text-align: center;
+    position: relative; width: 100%; background: var(--panel); border: 2px solid var(--panel-2);
+    border-radius: 10px; padding: 10px 6px 8px; text-align: center;
+    cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box;
   }
-  .skill-node.owned { border-color: var(--green); background: linear-gradient(180deg, #0e2a1a, #071410); }
-  .skill-node.locked { opacity: 0.45; cursor: pointer; }
+  .skill-node.owned { border-color: var(--green); background: linear-gradient(180deg, #0e2a1a 0%, #071410 100%); }
   .skill-node.available { border-color: var(--blue); }
-  .skill-connector {
-    width: 2px; height: 14px; margin: 0 auto;
-    background: var(--panel-2);
-  }
+  .skill-node.available.can-afford { border-color: var(--gold); box-shadow: 0 0 10px rgba(255,215,0,0.2); }
+  .skill-node.locked { opacity: 0.35; pointer-events: none; }
+  .skill-connector { width: 3px; height: 18px; margin: 0 auto; background: var(--panel-2); border-radius: 2px; }
   .skill-connector.lit { background: var(--green); }
-  .skill-node-icon { font-size: 20px; line-height: 1; margin-bottom: 3px; }
-  .skill-node-name { font-size: 9px; font-family: 'Lilita One', sans-serif; color: var(--text); line-height: 1.2; }
-  .skill-node-cost { font-size: 8px; color: var(--text-dim); margin-top: 2px; }
-  .skill-node.owned .skill-node-cost { color: var(--green); }
-  .skill-node-desc { font-size: 7.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.3; display: none; }
-  .skill-node:not(.locked):hover .skill-node-desc { display: block; }
+  .skill-node-icon { font-size: 26px; line-height: 1; margin-bottom: 5px; }
+  .skill-node-name { font-size: 10px; font-family: 'Lilita One', sans-serif; color: var(--text); line-height: 1.2; margin-bottom: 5px; }
+  .skill-cost-chip {
+    display: inline-block; font-size: 10px; font-family: 'Lilita One', sans-serif;
+    background: rgba(255,215,0,0.12); color: var(--gold);
+    border: 1px solid rgba(255,215,0,0.25); border-radius: 20px; padding: 2px 8px; line-height: 1.5;
+  }
+  .skill-node.owned .skill-cost-chip { background: rgba(46,204,113,0.12); color: var(--green); border-color: rgba(46,204,113,0.25); }
+  .skill-node.locked .skill-cost-chip { background: rgba(255,255,255,0.04); color: var(--text-dim); border-color: rgba(255,255,255,0.08); }
 
   /* Quantum Execution HFT perk — electric blue progress bars */
   .income-fill.quantum-bar {
@@ -1771,7 +1771,7 @@
       </div>
       <div class="tab-panel" id="tab-skills">
         <div class="panel-title">Skill Tree</div>
-        <div class="panel-sub">Spend <b>Influence</b> on permanent firm upgrades. Each branch unlocks top to bottom. Hover a node to preview its effect.</div>
+        <div class="panel-sub">Spend <b>Gold 🥇</b> on permanent firm upgrades. Each branch unlocks top to bottom. Tap any node to see its effect.</div>
         <div id="skillTreeRoot"></div>
       </div>
       <div class="tab-panel" id="tab-news">
@@ -1813,7 +1813,6 @@
       </button>
       <button class="tab-btn" data-tab="rivals" onclick="switchTab('rivals')">
         <span class="tab-icon">&#127942;</span>RIVALS
-        <span class="tab-dot"></span>
       </button>
       <button class="tab-btn" data-tab="news" onclick="switchTab('news')">
         <span class="tab-icon">&#128240;</span>NEWS
@@ -2172,37 +2171,37 @@ function goldEarnedFromRun(lifetimeEarnings) {
 }
 
 // Skill Tree — 3 branches, 5 nodes each, unlocked sequentially.
-// Early/mid nodes cost cash (grind for them). Top nodes cost gold (rare, IPO-earned).
+// All skills cost gold. Cheapest: 25-50g. Mid: 75-175g. Expensive: 250-500g.
 // Effects wired directly into timeOf(), globalMult(), executeTrade(), and events.
 const SKILL_TREE = [
   {
     id: 'speed', name: 'Trading Floor', icon: '&#9889;', color: '#4a90e2',
     nodes: [
-      { id: 'sk_fast_hands',   name: 'Fast Hands',        icon: '&#128075;', cashCost: 50000,        desc: '+10% payout on every manual trade you click.' },
-      { id: 'sk_pre_market',   name: 'Pre-Market Access', icon: '&#128338;', cashCost: 5e6,          desc: '-10% all asset cycle times.' },
-      { id: 'sk_algo_edge',    name: 'Algorithmic Edge',  icon: '&#129302;', cashCost: 1e9,          desc: '-15% all cycle times (stacks).' },
-      { id: 'sk_light_speed',  name: 'Light Speed',       icon: '&#128640;', cashCost: 500e9,        desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
-      { id: 'sk_dark_pool',    name: 'Dark Pool Access',  icon: '&#127756;', goldCost: 8,            desc: '+30% all payouts permanently. Unlocks the ⚫ Black Market — manual gold farming.' },
+      { id: 'sk_fast_hands',   name: 'Fast Hands',        icon: '&#128075;', goldCost: 25,  desc: '+10% payout on every manual trade you click.' },
+      { id: 'sk_pre_market',   name: 'Pre-Market Access', icon: '&#128338;', goldCost: 50,  desc: '-10% all asset cycle times.' },
+      { id: 'sk_algo_edge',    name: 'Algorithmic Edge',  icon: '&#129302;', goldCost: 100, desc: '-15% all cycle times (stacks).' },
+      { id: 'sk_light_speed',  name: 'Light Speed',       icon: '&#128640;', goldCost: 200, desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
+      { id: 'sk_dark_pool',    name: 'Dark Pool Access',  icon: '&#127756;', goldCost: 400, desc: '+30% all payouts permanently. Unlocks the ⚫ Black Market — manual gold farming.' },
     ]
   },
   {
     id: 'intel', name: 'Market Intel', icon: '&#128225;', color: '#f3c74b',
     nodes: [
-      { id: 'sk_scanner',    name: 'Market Scanner',    icon: '&#128202;', cashCost: 100000,       desc: 'Positive events last 20% longer.' },
-      { id: 'sk_bull_ext',   name: 'Bull Extension',    icon: '&#128994;', cashCost: 10e6,         desc: 'Positive events last 40% longer total.' },
-      { id: 'sk_bear_buf',   name: 'Bear Buffer',       icon: '&#128308;', cashCost: 2e9,          desc: 'Negative events end 25% sooner.' },
-      { id: 'sk_bias',       name: 'Event Bias',        icon: '&#127775;', cashCost: 200e9,        desc: 'Each event roll has a 20% chance of being forced positive.' },
-      { id: 'sk_sentiment',  name: 'Sentiment Engine',  icon: '&#129504;', goldCost: 12,           desc: '+40% all payouts permanently. Events fire 50% more often. You feel the market.' },
+      { id: 'sk_scanner',    name: 'Market Scanner',    icon: '&#128202;', goldCost: 30,  desc: 'Positive events last 20% longer.' },
+      { id: 'sk_bull_ext',   name: 'Bull Extension',    icon: '&#128994;', goldCost: 75,  desc: 'Positive events last 40% longer total.' },
+      { id: 'sk_bear_buf',   name: 'Bear Buffer',       icon: '&#128308;', goldCost: 150, desc: 'Negative events end 25% sooner.' },
+      { id: 'sk_bias',       name: 'Event Bias',        icon: '&#127775;', goldCost: 300, desc: 'Each event roll has a 20% chance of being forced positive.' },
+      { id: 'sk_sentiment',  name: 'Sentiment Engine',  icon: '&#129504;', goldCost: 500, desc: '+40% all payouts permanently. Events fire 50% more often. You feel the market.' },
     ]
   },
   {
     id: 'capital', name: 'Capital', icon: '&#128176;', color: '#2ecc71',
     nodes: [
-      { id: 'sk_compound',   name: 'Compounding',       icon: '&#128200;', cashCost: 250000,       desc: '+5% all payouts per completed IPO (max bonus at 5 IPOs = +25%).' },
-      { id: 'sk_portfolio',  name: 'Portfolio Spread',  icon: '&#128203;', cashCost: 25e6,         desc: '+10% payouts when 5+ assets each have 10+ positions.' },
-      { id: 'sk_ms_amp',     name: 'Milestone Amp',     icon: '&#127942;', cashCost: 5e9,          desc: 'Each milestone multiplier is 20% stronger.' },
-      { id: 'sk_legend',     name: 'Wall St. Legend',   icon: '&#127775;', cashCost: 500e9,        desc: '+30% all payouts permanently. You made it.' },
-      { id: 'sk_dynasty',    name: 'Dynasty Protocol',  icon: '&#128081;', goldCost: 20,           desc: '+60% all payouts permanently. Unlock Influence Investing in the IPO menu.' },
+      { id: 'sk_compound',   name: 'Compounding',       icon: '&#128200;', goldCost: 25,  desc: '+5% all payouts per completed IPO (max bonus at 5 IPOs = +25%).' },
+      { id: 'sk_portfolio',  name: 'Portfolio Spread',  icon: '&#128203;', goldCost: 60,  desc: '+10% payouts when 5+ assets each have 10+ positions.' },
+      { id: 'sk_ms_amp',     name: 'Milestone Amp',     icon: '&#127942;', goldCost: 125, desc: 'Each milestone multiplier is 20% stronger.' },
+      { id: 'sk_legend',     name: 'Wall St. Legend',   icon: '&#127775;', goldCost: 250, desc: '+30% all payouts permanently. You made it.' },
+      { id: 'sk_dynasty',    name: 'Dynasty Protocol',  icon: '&#128081;', goldCost: 450, desc: '+60% all payouts permanently. Unlock Influence Investing in the IPO menu.' },
     ]
   },
 ];
@@ -3507,24 +3506,13 @@ function updateTabBadges() {
   const perksBtn = document.querySelector('.tab-btn[data-tab="perks"]');
   if (perksBtn && state.activeTab !== 'perks') perksBtn.classList.toggle('has-news', canAffordPerk);
 
-  // SKILLS tab: any un-bought skill the player can afford (cash, gold, or influence)
+  // SKILLS tab: any un-bought skill the player can afford (all skills cost gold)
   const canAffordSkill = SKILL_TREE.some(row =>
-    row.nodes.some(n => {
-      if (state.skillsOwned?.[n.id]) return false;
-      if (n.goldCost)  return (state.gold || 0) >= n.goldCost;
-      if (n.cashCost)  return (state.cash || 0) >= n.cashCost;
-      return (state.influence || 0) >= n.cost;
-    })
+    row.nodes.some(n => !state.skillsOwned?.[n.id] && (state.gold || 0) >= n.goldCost)
   );
   const skillsBtn = document.querySelector('.tab-btn[data-tab="skills"]');
   if (skillsBtn && state.activeTab !== 'skills') skillsBtn.classList.toggle('has-news', canAffordSkill);
 
-  // RIVALS tab: light up when a raid is active OR any unbeaten rival just surged past a warning threshold
-  const now_rb = Date.now();
-  const raidActive = !!(state.rivalRaid && now_rb < state.rivalRaid.until);
-  const rivalSurgeAlert = !!(state._rivalSurgeAlert);
-  const rivalsBtn = document.querySelector('.tab-btn[data-tab="rivals"]');
-  if (rivalsBtn && state.activeTab !== 'rivals') rivalsBtn.classList.toggle('has-news', raidActive || rivalSurgeAlert);
 }
 
 function timeAgo(ts) {
@@ -4223,19 +4211,9 @@ function buySkill(id) {
     const prev = branch.nodes[nodeIdx - 1];
     if (!state.skillsOwned?.[prev.id]) { toast('Unlock the previous skill first.'); return; }
   }
-  // Check and deduct cost — nodes are either cashCost, goldCost, or legacy influence cost
-  if (node.goldCost) {
-    if ((state.gold || 0) < node.goldCost) { toast('Not enough Gold. Earn gold by going deeper each IPO run.'); return; }
-    state.gold -= node.goldCost;
-  } else if (node.cashCost) {
-    if ((state.cash || 0) < node.cashCost) { toast('Not enough cash.'); return; }
-    state.cash -= node.cashCost;
-  } else {
-    // Legacy influence cost (fallback for any old nodes)
-    if ((state.influence || 0) < node.cost) { toast('Not enough Influence.'); return; }
-    state.influence -= node.cost;
-    state.influenceSpent = (state.influenceSpent || 0) + node.cost;
-  }
+  // All skills cost gold
+  if ((state.gold || 0) < node.goldCost) { toast('Not enough Gold 🥇 — earn gold via IPOs, daily quests, and the Black Market.'); return; }
+  state.gold -= node.goldCost;
   if (!state.skillsOwned) state.skillsOwned = {};
   state.skillsOwned[id] = true;
   // Dark Pool Access unlocks the Black Market
@@ -4308,38 +4286,26 @@ function renderSkillTree() {
     branch.nodes.forEach((node, idx) => {
       const owned = !!state.skillsOwned?.[node.id];
       const prevOwned = idx === 0 || !!state.skillsOwned?.[branch.nodes[idx-1].id];
-      let canAfford = false;
-      let costLabel = '';
-      if (node.goldCost) {
-        canAfford = (state.gold || 0) >= node.goldCost;
-        costLabel = node.goldCost + ' 🥇';
-      } else if (node.cashCost) {
-        canAfford = (state.cash || 0) >= node.cashCost;
-        costLabel = fmt(node.cashCost, 'cash');
-      } else {
-        canAfford = (state.influence || 0) >= node.cost;
-        costLabel = node.cost + ' ▲';
-      }
+      const canAfford = (state.gold || 0) >= node.goldCost;
       const available = !owned && prevOwned;
       const locked = !owned && !prevOwned;
-      // Connector line between nodes
       if (idx > 0) {
         html += `<div class="skill-connector${owned || prevOwned ? ' lit' : ''}"></div>`;
       }
-      const cls = owned ? 'owned' : locked ? 'locked' : available ? 'available' : '';
+      let cls = owned ? 'owned' : locked ? 'locked' : 'available';
+      if (available && canAfford) cls += ' can-afford';
+      const chipLabel = owned ? '✓ Owned' : node.goldCost + ' 🥇';
       html += `
         <div class="skill-node ${cls}" onclick="showSkillDetail('${node.id}')">
           <div class="skill-node-icon">${node.icon}</div>
           <div class="skill-node-name">${node.name}</div>
-          <div class="skill-node-cost">${owned ? '✓ OWNED' : locked ? '🔒 ' + costLabel : canAfford ? costLabel + ' · TAP' : costLabel + ' · NEED'}</div>
-          <div class="skill-node-desc">${node.desc}</div>
+          <div class="skill-cost-chip">${chipLabel}</div>
         </div>`;
     });
     html += `</div>`;
   });
   html += '</div>';
-  // Wallet reminder
-  html += `<div style="text-align:center;padding:8px;font-size:11px;color:var(--text-dim);">Cash: <b style="color:var(--text);">${fmt(state.cash, 'cash')}</b> &nbsp;|&nbsp; Gold: <b style="color:var(--gold);">${fmtNum(state.gold || 0)} 🥇</b> &nbsp;|&nbsp; Influence: <b style="color:#d88aff;">${fmtNum(state.influence || 0)} ▲</b></div>`;
+  html += `<div style="text-align:center;padding:6px 8px 10px;font-size:11px;color:var(--text-dim);">Gold balance: <b style="color:var(--gold);">${fmtNum(state.gold || 0)} 🥇</b></div>`;
   root.innerHTML = html;
 }
 
@@ -5066,10 +5032,6 @@ const RIVAL_RAID_INCOME_PENALTY = 0.05; // -5% all income during a raid
 const RIVAL_RAID_DURATION = 20 * 60 * 1000; // raids last 20 minutes
 const RIVAL_RAID_CHANCE = 0.15; // 15% chance each minute of a new raid starting
 const RIVAL_RAID_SUPPRESS = 30 * 60 * 1000; // 30-min suppression after filing SEC complaint
-// Rival surges — a rival catches up fast for a moment, pushing drama on the leaderboard
-const RIVAL_SURGE_INTERVAL = 5 * 60 * 1000;  // check every 5 min
-const RIVAL_SURGE_CHANCE = 0.35;              // 35% chance of a surge per check
-const RIVAL_SURGE_JUMP = 0.15;                // rival closes 15% of remaining gap in one burst
 
 // ── Rival leaderboard tick ────────────────────────────────────────────────
 // Rivals grow at incomeFrac × player's measured passive income rate.
@@ -5094,30 +5056,6 @@ function tickRivals(dt) {
       beatRival(r);
     }
   });
-
-  // ── Rival Surge mechanic ──────────────────────────────────────────────────
-  // Periodically a rival that's behind the player makes a sudden catch-up jump,
-  // pushing drama on the leaderboard and encouraging the player to check Rivals.
-  const now_surge = Date.now();
-  if (now_surge > (state._nextSurgeCheck || 0)) {
-    state._nextSurgeCheck = now_surge + RIVAL_SURGE_INTERVAL;
-    if (Math.random() < RIVAL_SURGE_CHANCE) {
-      // Pick an unbeaten rival that is currently behind the player
-      const playerVal = state.allTimeEarnings || 0;
-      const eligible = RIVALS.filter(r => !state.rivalsBeaten?.[r.id] && (state.rivalWealth?.[r.id] || 0) < playerVal && playerVal > 0);
-      if (eligible.length > 0) {
-        const r = eligible[Math.floor(Math.random() * eligible.length)];
-        const gap = playerVal - (state.rivalWealth[r.id] || 0);
-        const jump = gap * RIVAL_SURGE_JUMP;
-        state.rivalWealth[r.id] = (state.rivalWealth[r.id] || 0) + jump;
-        state._rivalSurgeAlert = true;
-        toast('📈 ' + r.name + ' is surging — they\'re closing the gap!');
-        addNews('📈 RIVAL SURGE: ' + r.name, 'They\'re making a run at you. File an SEC complaint if needed.', 'bad');
-        updateTabBadges();
-        if (state.activeTab === 'rivals') renderRivalsTab();
-      }
-    }
-  }
 }
 
 function beatRival(rival) {
@@ -5155,15 +5093,10 @@ function maybeStartRivalRaid() {
   if (now < (state._nextRivalRaidCheck || 0)) return;         // throttle to once per minute
   state._nextRivalRaidCheck = now + 60000;
   if (Math.random() > RIVAL_RAID_CHANCE) return;
-  // Only unbeaten rivals can raid
-  const unbeatenRivals = RIVALS.filter(r => !state.rivalsBeaten?.[r.id]);
-  if (unbeatenRivals.length === 0) return;
-  const raider = unbeatenRivals[Math.floor(Math.random() * unbeatenRivals.length)];
+  const raider = RIVALS[Math.floor(Math.random() * RIVALS.length)];
   state.rivalRaid = { until: now + RIVAL_RAID_DURATION, rivalId: raider.id, rivalName: raider.name };
-  state._rivalSurgeAlert = true;
   toast('⚔️ ' + raider.name + ' is raiding you! –5% income. File SEC complaint to stop it.');
   addNews('⚔️ RIVAL RAID: ' + raider.name, '–5% income for 20 min. File an SEC complaint to end the raid early.', 'bad');
-  updateTabBadges();
   if (state.activeTab === 'rivals') renderRivalsTab();
 }
 
@@ -5849,7 +5782,7 @@ function switchTab(name) {
   if (name !== 'options') stopCrashInterval();
   if (name === 'pit')     renderPitTab();
   if (name === 'options') renderOptionsTab();
-  if (name === 'rivals')  { state._rivalSurgeAlert = false; renderRivalsTab(); }
+  if (name === 'rivals')  renderRivalsTab();
   save();
 }
 
@@ -6433,20 +6366,9 @@ function showSkillDetail(id) {
   var owned = !!(state.skillsOwned && state.skillsOwned[id]);
   var prevOwned = nodeIdx === 0 || !!(state.skillsOwned && state.skillsOwned[branch.nodes[nodeIdx-1].id]);
   var available = !owned && prevOwned;
-  var canAfford = false, costLabel = '', costNote = '';
-  if (node.goldCost) {
-    canAfford = (state.gold || 0) >= node.goldCost;
-    costLabel = node.goldCost + ' Gold';
-    if (!canAfford) costNote = 'You have ' + fmtNum(state.gold || 0) + ' gold';
-  } else if (node.cashCost) {
-    canAfford = (state.cash || 0) >= node.cashCost;
-    costLabel = fmt(node.cashCost, 'cash');
-    if (!canAfford) costNote = 'You have ' + fmt(state.cash || 0, 'cash');
-  } else {
-    canAfford = (state.influence || 0) >= (node.cost || 0);
-    costLabel = fmtNum(node.cost || 0) + ' Influence';
-    if (!canAfford) costNote = 'You have ' + fmtNum(state.influence || 0);
-  }
+  var canAfford = (state.gold || 0) >= node.goldCost;
+  var costLabel = node.goldCost + ' Gold 🥇';
+  var costNote = canAfford ? '' : 'You have ' + fmtNum(state.gold || 0) + ' 🥇';
   document.getElementById('skillDetailIcon').innerHTML = node.icon;
   document.getElementById('skillDetailName').textContent = node.name;
   document.getElementById('skillDetailBranch').innerHTML = branch.icon + ' ' + branch.name + ' Branch';
@@ -6852,7 +6774,6 @@ function save() {
       rivalWealth: state.rivalWealth || {},
       rivalsBeaten: state.rivalsBeaten || {},
       rivalChampion: !!state.rivalChampion,
-      _nextSurgeCheck: state._nextSurgeCheck || 0,
       lastSavedAt: Date.now(),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(out));
@@ -6937,7 +6858,6 @@ function load() {
     state.rivalRaidSuppressedUntil = data.rivalRaidSuppressedUntil || 0;
     state.rivalsBeaten  = data.rivalsBeaten  || {};
     state.rivalChampion = !!data.rivalChampion;
-    state._nextSurgeCheck = data._nextSurgeCheck || 0;
     // Initialise rival wealth — new field for existing saves
     if (data.rivalWealth && Object.keys(data.rivalWealth).length > 0) {
       state.rivalWealth = data.rivalWealth;
