@@ -1017,7 +1017,7 @@
     text-align: center;
   }
   .skill-node.owned { border-color: var(--green); background: linear-gradient(180deg, #0e2a1a, #071410); }
-  .skill-node.locked { opacity: 0.45; cursor: default; }
+  .skill-node.locked { opacity: 0.45; cursor: pointer; }
   .skill-node.available { border-color: var(--blue); }
   .skill-connector {
     width: 2px; height: 14px; margin: 0 auto;
@@ -1112,6 +1112,7 @@
   .buy-btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+    pointer-events: none;
     background: linear-gradient(180deg, #3a4560 0%, #2a334a 50%, #1a2030 100%);
     border-color: #050810;
     box-shadow: 0 3px 0 #050810;
@@ -1692,7 +1693,7 @@
     <div class="income-rate" id="incomeRate">$0/sec passive income</div>
     <div id="otherMarketRates" style="font-size:10px;color:rgba(255,255,255,0.35);text-align:center;margin-top:1px;min-height:14px;letter-spacing:0.02em;"></div>
     <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
-      <div class="gold-chip" id="goldChip"><span class="gold-icon">&#129689;</span><span id="goldAmount">0</span> GOLD</div>
+      <div class="gold-chip" id="goldChip" onclick="showGoldInfo()" style="cursor:pointer;"><span class="gold-icon">&#129689;</span><span id="goldAmount">0</span> GOLD</div>
       <div class="gold-chip" id="megabucksChip" style="background:linear-gradient(180deg,#6a2a9a,#3d0a6a);border-color:#9b3dca;display:none;"><span class="gold-icon">&#128142;</span><span id="megabucksAmount">0</span> MB</div>
       <button id="watchAdBtn" onclick="Monetization.showRewardedAd('income_boost', onIncomeBoostRewarded)" title="Watch ad for 2× income" style="display:none;background:linear-gradient(180deg,#9b3dca,#6a1a8a);border:2px solid #4a235a;border-radius:8px;color:#fff;font-size:10px;font-weight:900;padding:4px 7px;cursor:pointer;line-height:1;letter-spacing:0.3px;text-transform:uppercase;">📺 2× Income</button>
       <button id="muteBtn" onclick="toggleSFX()" title="Toggle sound" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;font-size:15px;padding:4px 8px;cursor:pointer;line-height:1;">&#128266;</button>
@@ -1752,7 +1753,7 @@
         <div class="panel-sub">Firm-wide multipliers. Permanent. Not lost on IPO.</div>
         <div id="perksList"></div>
         <div class="panel-title" style="margin-top:8px;">HFT Speed</div>
-        <div class="panel-sub">Gold-cost. Permanently reduce <b>all</b> cycle times. Stack multiplicatively. Quantum turns bars electric blue.</div>
+        <div class="panel-sub">Cash-cost. Permanently reduce <b>all</b> cycle times. Stack multiplicatively. Quantum turns bars electric blue.</div>
         <div id="hftPerksList"></div>
         <div class="panel-title" style="margin-top:8px;">Lifestyle</div>
         <div class="panel-sub">Big-ticket purchases for the Wall Street lifestyle. Cost cash <i>and</i> <span style="color:var(--gold);">gold</span>. Permanent multipliers.</div>
@@ -1788,7 +1789,7 @@
       <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
         <span class="tab-icon">&#128200;</span>HOME
       </button>
-      <button class="tab-btn" data-tab="unlocks" onclick="switchTab('unlocks')">
+      <button class="tab-btn" id="tab-unlocks-btn" data-tab="unlocks" onclick="switchTab('unlocks')">
         <span class="tab-icon">&#127942;</span>GOALS
         <span class="tab-dot"></span>
       </button>
@@ -1812,6 +1813,7 @@
       </button>
       <button class="tab-btn" data-tab="rivals" onclick="switchTab('rivals')">
         <span class="tab-icon">&#127942;</span>RIVALS
+        <span class="tab-dot"></span>
       </button>
       <button class="tab-btn" data-tab="news" onclick="switchTab('news')">
         <span class="tab-icon">&#128240;</span>NEWS
@@ -1862,8 +1864,8 @@
     <h2>Menu</h2>
     <p>Your firm autosaves every few seconds. Be advised: the SEC is always watching.</p>
     <button class="modal-btn secondary" onclick="manualSave()">Save Now</button>
-    <button class="modal-btn secondary" onclick="exportSave()">Export Save Code</button>
-    <button class="modal-btn secondary" onclick="importSave()">Import Save Code</button>
+    <button class="modal-btn secondary" onclick="openExportSaveModal()">Export Save Code</button>
+    <button class="modal-btn secondary" onclick="openImportSaveModal()">Import Save Code</button>
     <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
     <div style="font-family:'Lilita One',sans-serif;color:var(--gold);font-size:14px;margin-bottom:6px;">💎 Support the Game</div>
     <button class="modal-btn" style="background:linear-gradient(180deg,#f8d860,#c89a18);border-color:#6a4f0a;color:#0a0e1a;margin-bottom:6px;" onclick="Monetization.purchaseIAP('starter_pack', onStarterPackPurchased)">
@@ -1887,7 +1889,7 @@
       📺 Watch Ad — 2× Income for 2 hours
     </button>
     <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
-    <button class="modal-btn secondary" style="color:var(--red);border-color:var(--red);" onclick="hardReset()">Liquidate Everything</button>
+    <button class="modal-btn secondary" style="color:var(--red);border-color:var(--red);" onclick="closeModal('settingsModal');openModal('hardResetModal')">Liquidate Everything</button>
     <button class="modal-btn" onclick="closeModal('settingsModal')">Back</button>
   </div>
 </div>
@@ -1902,13 +1904,42 @@
   </div>
 </div>
 
-<div class="modal-bg" id="welcomeModal" onclick="if(event.target===this)closeModal('welcomeModal')">
-  <div class="modal">
-    <h2>Welcome to Wall Street.</h2>
-    <p>You start with $4 and a dream. Buy positions in assets to generate cash. Tap the green progress bar to manually execute trades. Hire traders to automate.</p>
-    <p style="color:var(--gold);">Watch for market events &mdash; rate cuts boost your gains, SEC investigations crash them. Time your trades.</p>
-    <p>Eventually, IPO your firm to start over with permanent multipliers. The grind never ends.</p>
-    <button class="modal-btn" onclick="closeModal('welcomeModal')">Let's Make Money</button>
+<!-- Multi-step welcome intro -->
+<div class="modal-bg" id="welcomeModal">
+  <div class="modal" style="text-align:center;">
+    <div id="tutorialDots" style="display:flex;justify-content:center;gap:6px;margin-bottom:14px;"></div>
+    <div id="tutorialSlides"></div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button id="tutorialBackBtn" class="modal-btn secondary" onclick="tutorialNav(-1)" style="flex:1;display:none;">Back</button>
+      <button id="tutorialNextBtn" class="modal-btn" onclick="tutorialNav(1)" style="flex:1;">Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gold info modal -->
+<div class="modal-bg" id="goldInfoModal" onclick="if(event.target===this)closeModal('goldInfoModal')">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:44px;margin-bottom:6px;">&#129689;</div>
+    <h2 style="color:var(--gold);margin:0 0 10px;">Gold</h2>
+    <p style="font-size:13px;line-height:1.7;text-align:left;color:var(--text);">Gold is the rare premium currency. Unlike cash, it <b>survives every IPO</b> and is yours forever.</p>
+    <p style="font-size:13px;line-height:1.7;text-align:left;color:var(--text);"><b style="color:var(--gold);">How to earn gold:</b><br>Complete Daily Goals (&#11088; tab) &middot; Trade on the Black Market &middot; Reach IPO milestones</p>
+    <p style="font-size:13px;line-height:1.7;text-align:left;color:var(--text);"><b style="color:var(--gold);">What gold buys:</b><br>Premium Skills &middot; London Managers &middot; Lifestyle items &middot; Mega Tickets &middot; Hedge protection</p>
+    <div style="background:rgba(243,199,75,0.1);border:1px solid rgba(243,199,75,0.3);border-radius:8px;padding:10px;margin:10px 0;font-size:12px;color:var(--gold);">You currently have <b id="goldInfoAmount">0</b> &#129689; Gold</div>
+    <button class="modal-btn secondary" onclick="closeModal('goldInfoModal')">Got It</button>
+  </div>
+</div>
+
+<!-- Skill detail modal -->
+<div class="modal-bg" id="skillDetailModal" onclick="if(event.target===this)closeModal('skillDetailModal')">
+  <div class="modal" style="text-align:center;">
+    <div id="skillDetailIcon" style="font-size:44px;margin-bottom:6px;"></div>
+    <h2 id="skillDetailName" style="margin:0 0 8px;"></h2>
+    <div id="skillDetailBranch" style="font-size:11px;color:var(--text-dim);margin-bottom:10px;"></div>
+    <p id="skillDetailDesc" style="font-size:14px;line-height:1.6;color:var(--text);margin-bottom:14px;text-align:left;"></p>
+    <div id="skillDetailCost" style="font-size:13px;color:var(--gold);margin-bottom:4px;font-family:'Lilita One',sans-serif;"></div>
+    <div id="skillDetailStatus" style="font-size:11px;color:var(--text-dim);margin-bottom:14px;"></div>
+    <button id="skillDetailBuyBtn" class="modal-btn" onclick="confirmSkillBuy()" style="display:none;background:linear-gradient(180deg,#2ecc71,#1a8a4a);border-color:#0e5a2e;">Unlock Skill</button>
+    <button class="modal-btn secondary" onclick="closeModal('skillDetailModal')">Back</button>
   </div>
 </div>
 
@@ -1978,6 +2009,44 @@
     <div class="ad-sim-bar"><div class="ad-sim-fill" id="adSimFill" style="width:0%"></div></div>
   </div>
   <button class="ad-skip-btn" onclick="Monetization.skipAd()">✕ Skip (forfeit reward)</button>
+</div>
+
+<!-- Export Save modal -->
+<div class="modal-bg" id="exportSaveModal" onclick="if(event.target===this)closeModal('exportSaveModal')">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:32px;margin-bottom:6px;">💾</div>
+    <h2 style="margin:0 0 8px;">Export Save</h2>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Copy this code and keep it somewhere safe. Use Import Save to restore it on any device.</p>
+    <textarea id="exportSaveCode" readonly onclick="this.select()"
+      style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px;font-size:11px;color:var(--text-dim);font-family:monospace;height:100px;resize:none;outline:none;margin-bottom:10px;"></textarea>
+    <button class="modal-btn" onclick="copyExportCode()" id="exportCopyBtn">📋 Copy to Clipboard</button>
+    <button class="modal-btn secondary" style="margin-top:6px;" onclick="closeModal('exportSaveModal')">Close</button>
+  </div>
+</div>
+
+<!-- Import Save modal -->
+<div class="modal-bg" id="importSaveModal" onclick="if(event.target===this)closeModal('importSaveModal')">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:32px;margin-bottom:6px;">📂</div>
+    <h2 style="margin:0 0 8px;">Import Save</h2>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Paste your save code below. This will overwrite your current save immediately.</p>
+    <textarea id="importSaveCode" placeholder="Paste save code here…"
+      style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px;font-size:11px;color:#fff;font-family:monospace;height:100px;resize:none;outline:none;margin-bottom:10px;"></textarea>
+    <button class="modal-btn" onclick="confirmImportSave()">Load Save</button>
+    <button class="modal-btn secondary" style="margin-top:6px;" onclick="closeModal('importSaveModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Hard Reset confirmation modal -->
+<div class="modal-bg" id="hardResetModal" onclick="if(event.target===this)closeModal('hardResetModal')">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:40px;margin-bottom:6px;">💀</div>
+    <h2 style="color:var(--red);margin:0 0 8px;">Liquidate Everything?</h2>
+    <p style="font-size:13px;line-height:1.6;">This will permanently erase <b>all</b> progress — cash, assets, Influence, Gold, Megabucks. Everything. Gone.</p>
+    <p style="font-size:11px;color:var(--text-dim);">Export your save first if you want a backup.</p>
+    <button class="modal-btn" style="background:linear-gradient(180deg,#e74c3c,#a83025);border-color:#7a1a14;margin-top:4px;" onclick="confirmHardReset()">Yes, Liquidate Everything</button>
+    <button class="modal-btn secondary" style="margin-top:6px;" onclick="closeModal('hardResetModal')">Cancel — Keep Playing</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -2113,7 +2182,7 @@ const SKILL_TREE = [
       { id: 'sk_pre_market',   name: 'Pre-Market Access', icon: '&#128338;', cashCost: 5e6,          desc: '-10% all asset cycle times.' },
       { id: 'sk_algo_edge',    name: 'Algorithmic Edge',  icon: '&#129302;', cashCost: 1e9,          desc: '-15% all cycle times (stacks).' },
       { id: 'sk_light_speed',  name: 'Light Speed',       icon: '&#128640;', cashCost: 500e9,        desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
-      { id: 'sk_dark_pool',    name: 'Dark Pool Access',  icon: '&#127756;', goldCost: 8,            desc: '+30% all payouts permanently. Shadow liquidity. No questions asked.' },
+      { id: 'sk_dark_pool',    name: 'Dark Pool Access',  icon: '&#127756;', goldCost: 8,            desc: '+30% all payouts permanently. Unlocks the ⚫ Black Market — manual gold farming.' },
     ]
   },
   {
@@ -2638,7 +2707,7 @@ let state = {
   londonUnlocked: false,
   // Black Market
   lifetimeGold: 0,          // total gold earned from black market (never resets)
-  blackmktUnlocked: false,  // unlocks after sk_dark_terminal skill
+  blackmktUnlocked: false,  // unlocks after sk_dark_pool skill (Dark Pool Access)
   influenceInvested: 0,     // repeatable influence sink; each +1 = +0.5% global payout (unlocked by sk_dynasty)
   // Chicago Pit
   pitCredits: 0,            // spendable credits (can be consumed by Squeeze)
@@ -2763,8 +2832,9 @@ const Monetization = (() => {
         mb_50: '50 Megabucks',
         mb_150:'150 Megabucks',
       }[productId] || productId;
-      const confirmed = confirm('💳 Simulate purchase: ' + label + '?\n\n(Web demo — free. Real payments in the App Store version.)');
-      setTimeout(() => callback(confirmed), 100);
+      // Web demo: auto-confirm without native dialog (prompt/confirm not available in Capacitor WKWebView)
+      toast('💳 Demo purchase: ' + label + ' (free in web build)');
+      setTimeout(() => callback(true), 200);
     },
   };
 })();
@@ -3312,7 +3382,7 @@ function payoutOf(asset) {
 // Global multiplier — applies to all markets. Premium managers without a .market property are global;
 // market-specific premium managers (Tokyo, etc.) are layered on in marketMult() instead.
 // Black Market is fully isolated from Wall St progression — return 1 immediately so gold stays scarce.
-// BM-specific bonuses (sk_dark_terminal +20%, milestones) are applied directly in payoutOf().
+// BM-specific bonuses (sk_dark_pool +30% global, milestones) are applied directly in payoutOf().
 function globalMult(market) {
   if (market === 'blackmkt') return 1;
   // +4% per banked Influence token (was +2%). Heaven's Lottery doubles to +8%.
@@ -3425,8 +3495,9 @@ function updateTabBadges() {
   const staffBtn = document.querySelector('.tab-btn[data-tab="managers"]');
   if (staffBtn && state.activeTab !== 'managers') staffBtn.classList.toggle('has-news', canAffordManager);
 
-  // PERKS tab: any un-bought HFT perk, mega ticket, or lifestyle item the player can afford
+  // PERKS tab: any un-bought boost, HFT perk, mega ticket, or lifestyle item the player can afford
   const canAffordPerk =
+    BOOSTS.some(b => !state.boostsOwned?.[b.id] && (state.cash || 0) >= b.cost) ||
     HFT_PERKS.some(p => !state.hftPerksOwned?.[p.id] && (state.cash || 0) >= p.cashCost) ||
     MEGA_TICKETS.some(t => !state.megaTicketsOwned?.[t.id] &&
       (t.yenCost ? (state.yen || 0) >= t.yenCost : (state.cash || 0) >= t.cashCost)) ||
@@ -3447,6 +3518,13 @@ function updateTabBadges() {
   );
   const skillsBtn = document.querySelector('.tab-btn[data-tab="skills"]');
   if (skillsBtn && state.activeTab !== 'skills') skillsBtn.classList.toggle('has-news', canAffordSkill);
+
+  // RIVALS tab: light up when a raid is active OR any unbeaten rival just surged past a warning threshold
+  const now_rb = Date.now();
+  const raidActive = !!(state.rivalRaid && now_rb < state.rivalRaid.until);
+  const rivalSurgeAlert = !!(state._rivalSurgeAlert);
+  const rivalsBtn = document.querySelector('.tab-btn[data-tab="rivals"]');
+  if (rivalsBtn && state.activeTab !== 'rivals') rivalsBtn.classList.toggle('has-news', raidActive || rivalSurgeAlert);
 }
 
 function timeAgo(ts) {
@@ -3759,6 +3837,7 @@ function checkMilestoneCross(asset, ownedBefore, ownedAfter) {
 function hireTrader(id) {
   const asset = ASSETS.find(a => a.id === id);
   if (state.assets[id].hired) return;
+  if (!state.assets[id].owned) { toast('Buy a position first.'); return; }
   if (getMoney(asset) < asset.hireCost) { toast('Cannot afford trader.'); return; }
   spendMoney(asset, asset.hireCost);
   state.assets[id].hired = true;
@@ -4159,12 +4238,21 @@ function buySkill(id) {
   }
   if (!state.skillsOwned) state.skillsOwned = {};
   state.skillsOwned[id] = true;
+  // Dark Pool Access unlocks the Black Market
+  if (id === 'sk_dark_pool' && !state.blackmktUnlocked) {
+    state.blackmktUnlocked = true;
+    state.gold = (state.gold || 0) + 5; // small welcome bonus
+    state.lifetimeGold = (state.lifetimeGold || 0) + 5;
+    addNews('⚫ BLACK MARKET OPEN', 'Dark Pool Access granted. Switch to ⚫ Black Market in the HOME tab. Click bars to launder cash into Gold. +5 🥇 bonus.', 'milestone');
+    setTimeout(() => celebrate('BLACK MARKET UNLOCKED ⚫', 'Switch to ⚫ Black Market in HOME to farm Gold'), 400);
+  }
   SFX.skill();
   toast(node.name + ' unlocked!');
   addNews('SKILL: ' + node.name, node.desc, 'milestone');
-  celebrate('SKILL UNLOCKED', node.name);
+  if (id !== 'sk_dark_pool') celebrate('SKILL UNLOCKED', node.name); // avoid double celebrate
   renderCash();
   renderSkillTree();
+  renderAssets(); // refresh market switcher if Black Market just unlocked
   save();
 }
 
@@ -4240,10 +4328,10 @@ function renderSkillTree() {
       }
       const cls = owned ? 'owned' : locked ? 'locked' : available ? 'available' : '';
       html += `
-        <div class="skill-node ${cls}" ${available && canAfford ? `onclick="buySkill('${node.id}')"` : ''}>
+        <div class="skill-node ${cls}" onclick="showSkillDetail('${node.id}')">
           <div class="skill-node-icon">${node.icon}</div>
           <div class="skill-node-name">${node.name}</div>
-          <div class="skill-node-cost">${owned ? '✓ OWNED' : locked ? '🔒 ' + costLabel : canAfford ? costLabel + ' · BUY' : costLabel + ' · NEED'}</div>
+          <div class="skill-node-cost">${owned ? '✓ OWNED' : locked ? '🔒 ' + costLabel : canAfford ? costLabel + ' · TAP' : costLabel + ' · NEED'}</div>
           <div class="skill-node-desc">${node.desc}</div>
         </div>`;
     });
@@ -4978,6 +5066,10 @@ const RIVAL_RAID_INCOME_PENALTY = 0.05; // -5% all income during a raid
 const RIVAL_RAID_DURATION = 20 * 60 * 1000; // raids last 20 minutes
 const RIVAL_RAID_CHANCE = 0.15; // 15% chance each minute of a new raid starting
 const RIVAL_RAID_SUPPRESS = 30 * 60 * 1000; // 30-min suppression after filing SEC complaint
+// Rival surges — a rival catches up fast for a moment, pushing drama on the leaderboard
+const RIVAL_SURGE_INTERVAL = 5 * 60 * 1000;  // check every 5 min
+const RIVAL_SURGE_CHANCE = 0.35;              // 35% chance of a surge per check
+const RIVAL_SURGE_JUMP = 0.15;                // rival closes 15% of remaining gap in one burst
 
 // ── Rival leaderboard tick ────────────────────────────────────────────────
 // Rivals grow at incomeFrac × player's measured passive income rate.
@@ -5002,6 +5094,30 @@ function tickRivals(dt) {
       beatRival(r);
     }
   });
+
+  // ── Rival Surge mechanic ──────────────────────────────────────────────────
+  // Periodically a rival that's behind the player makes a sudden catch-up jump,
+  // pushing drama on the leaderboard and encouraging the player to check Rivals.
+  const now_surge = Date.now();
+  if (now_surge > (state._nextSurgeCheck || 0)) {
+    state._nextSurgeCheck = now_surge + RIVAL_SURGE_INTERVAL;
+    if (Math.random() < RIVAL_SURGE_CHANCE) {
+      // Pick an unbeaten rival that is currently behind the player
+      const playerVal = state.allTimeEarnings || 0;
+      const eligible = RIVALS.filter(r => !state.rivalsBeaten?.[r.id] && (state.rivalWealth?.[r.id] || 0) < playerVal && playerVal > 0);
+      if (eligible.length > 0) {
+        const r = eligible[Math.floor(Math.random() * eligible.length)];
+        const gap = playerVal - (state.rivalWealth[r.id] || 0);
+        const jump = gap * RIVAL_SURGE_JUMP;
+        state.rivalWealth[r.id] = (state.rivalWealth[r.id] || 0) + jump;
+        state._rivalSurgeAlert = true;
+        toast('📈 ' + r.name + ' is surging — they\'re closing the gap!');
+        addNews('📈 RIVAL SURGE: ' + r.name, 'They\'re making a run at you. File an SEC complaint if needed.', 'bad');
+        updateTabBadges();
+        if (state.activeTab === 'rivals') renderRivalsTab();
+      }
+    }
+  }
 }
 
 function beatRival(rival) {
@@ -5039,10 +5155,15 @@ function maybeStartRivalRaid() {
   if (now < (state._nextRivalRaidCheck || 0)) return;         // throttle to once per minute
   state._nextRivalRaidCheck = now + 60000;
   if (Math.random() > RIVAL_RAID_CHANCE) return;
-  const raider = RIVALS[Math.floor(Math.random() * RIVALS.length)];
+  // Only unbeaten rivals can raid
+  const unbeatenRivals = RIVALS.filter(r => !state.rivalsBeaten?.[r.id]);
+  if (unbeatenRivals.length === 0) return;
+  const raider = unbeatenRivals[Math.floor(Math.random() * unbeatenRivals.length)];
   state.rivalRaid = { until: now + RIVAL_RAID_DURATION, rivalId: raider.id, rivalName: raider.name };
+  state._rivalSurgeAlert = true;
   toast('⚔️ ' + raider.name + ' is raiding you! –5% income. File SEC complaint to stop it.');
   addNews('⚔️ RIVAL RAID: ' + raider.name, '–5% income for 20 min. File an SEC complaint to end the raid early.', 'bad');
+  updateTabBadges();
   if (state.activeTab === 'rivals') renderRivalsTab();
 }
 
@@ -5422,7 +5543,7 @@ function switchMarket(market) {
   if (!['wallst','tokyo','london','blackmkt'].includes(market)) return;
   if (market === 'tokyo'    && !state.tokyoUnlocked)   { toast('Tokyo unlocks after your first IPO.'); return; }
   if (market === 'london'   && !state.londonUnlocked)   { toast('London unlocks after the Chicago Pit challenge.'); return; }
-  if (market === 'blackmkt' && !state.blackmktUnlocked) { toast('Requires the Dark Web Terminal skill.'); return; }
+  if (market === 'blackmkt' && !state.blackmktUnlocked) { toast('Unlock Dark Pool Access in the Skills tree.'); return; }
   state.activeMarket = market;
   renderAll();
   save();
@@ -5453,7 +5574,7 @@ function renderAssets() {
       <button class="market-tab ${state.activeMarket === 'wallst' ? 'active' : ''}" onclick="switchMarket('wallst')">$ WALL ST</button>
       <button class="market-tab ${state.activeMarket === 'tokyo' ? 'active' : ''}" onclick="switchMarket('tokyo')">¥ TOKYO</button>
       ${state.londonUnlocked ? `<button class="market-tab ${state.activeMarket === 'london' ? 'active' : ''}" onclick="switchMarket('london')">£ LONDON</button>` : `<button class="market-tab locked-tab" title="Complete the Chicago Pit to unlock">🔒 LONDON</button>`}
-      <!-- Black Market is a Limited Time Event — not a permanent tab -->
+      ${state.blackmktUnlocked ? `<button class="market-tab blackmkt-tab ${state.activeMarket === 'blackmkt' ? 'active' : ''}" onclick="switchMarket('blackmkt')">⚫ BLACK</button>` : ''}
     `;
     list.appendChild(sw);
   }
@@ -5728,7 +5849,7 @@ function switchTab(name) {
   if (name !== 'options') stopCrashInterval();
   if (name === 'pit')     renderPitTab();
   if (name === 'options') renderOptionsTab();
-  if (name === 'rivals')  renderRivalsTab();
+  if (name === 'rivals')  { state._rivalSurgeAlert = false; renderRivalsTab(); }
   save();
 }
 
@@ -6006,11 +6127,21 @@ function renderPerksTab() {
   const mtroot = document.getElementById('megaTicketsList');
   if (mtroot) {
     let html = '';
+    let lastMarket = null;
+    const marketLabels = { wallst: '🗽 Wall Street', tokyo: '🗼 Tokyo Floor' };
     MEGA_TICKETS.forEach((t) => {
       const asset = ASSETS.find(a => a.id === t.assetId);
       if (!asset) return;
       // Hide Tokyo mega tickets entirely until Tokyo is unlocked
       if (asset.market === 'tokyo' && !state.tokyoUnlocked) return;
+      // Insert a sub-header when the market changes (only show Tokyo header if Tokyo is unlocked)
+      if (asset.market !== lastMarket) {
+        if (lastMarket !== null || state.tokyoUnlocked) {
+          const label = marketLabels[asset.market] || asset.market;
+          html += `<div style="font-family:'Lilita One',sans-serif;font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;padding:10px 12px 4px;opacity:0.7;">${label}</div>`;
+        }
+        lastMarket = asset.market;
+      }
       // Unlock check: previous asset within the SAME market must be owned >= 1
       const sameMarket = ASSETS.filter(a => a.market === asset.market);
       const idxInMarket = sameMarket.indexOf(asset);
@@ -6154,19 +6285,46 @@ function renderNewsTab() {
 
 function renderStats() {
   const body = document.getElementById('statsBody');
-  let html = '';
-  html += `<div class="row"><span>Cash</span><span class="v">${fmt(state.cash)}</span></div>`;
-  html += `<div class="row"><span>Lifetime Earnings (this run)</span><span class="v">${fmt(state.lifetimeEarnings)}</span></div>`;
-  html += `<div class="row"><span>Influence Tokens</span><span class="v">${fmtNum(state.influence)}</span></div>`;
-  html += `<div class="row"><span>Global Multiplier</span><span class="v">${fmtMult(globalMult())}x</span></div>`;
-  html += `<div class="row"><span>Passive Income</span><span class="v">${fmt(totalIncomePerSec())}/s</span></div>`;
-  html += `<div class="row"><span>Next IPO Threshold</span><span class="v">${fmt(nextPrestigeAt())}</span></div>`;
+  const rowStyle = 'display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;';
+  const secStyle = 'font-family:"Lilita One",sans-serif;color:var(--gold);font-size:13px;text-transform:uppercase;letter-spacing:0.5px;padding:12px 0 4px;';
+  const vStyle   = 'color:var(--text);font-family:"Lilita One",sans-serif;';
+  const row = (label, val) => `<div style="${rowStyle}"><span style="color:var(--text-dim);">${label}</span><span style="${vStyle}">${val}</span></div>`;
+
+  let html = `<div style="${secStyle}">💰 Finances</div>`;
+  html += row('Cash', fmt(state.cash));
+  if (state.tokyoUnlocked)   html += row('Yen', fmt(state.yen || 0, 'yen'));
+  if (state.londonUnlocked)  html += row('GBP', fmt(state.gbp || 0, 'gbp'));
+  html += row('Gold 🥇', fmtNum(state.gold || 0));
+  if ((state.megabucks || 0) > 0) html += row('Megabucks 💎', fmtNum(state.megabucks));
+  html += row('Influence Tokens', fmtNum(state.influence));
+
+  html += `<div style="${secStyle}">📊 This Run</div>`;
+  html += row('Lifetime Earnings', fmt(state.lifetimeEarnings));
+  html += row('Passive Income', fmt(totalIncomePerSec()) + '/s');
+  html += row('Global Multiplier', fmtMult(globalMult()) + 'x');
+  html += row('Next IPO At', fmt(nextPrestigeAt()));
+  html += row('Trades Executed', fmtNum(state.totalTrades || 0));
+  html += row('Manual Trades', fmtNum(state.manualTrades || 0));
+
+  html += `<div style="${secStyle}">🏦 All-Time</div>`;
+  html += row('All-Time Earnings', fmt(state.allTimeEarnings || 0));
+  if ((state.lifetimeYen || 0) > 0)  html += row('Lifetime Yen', fmt(state.lifetimeYen, 'yen'));
+  if ((state.lifetimeGbp || 0) > 0)  html += row('Lifetime GBP', fmt(state.lifetimeGbp, 'gbp'));
+  if ((state.lifetimeGold || 0) > 0) html += row('Lifetime Gold 🥇', fmtNum(state.lifetimeGold));
+  html += row('Total IPOs', fmtNum(state.totalIPOs || 0));
+  html += row('Time Warps Used', fmtNum(state.timeWarpsUsed || 0));
+  html += row('Rivals Beaten', fmtNum(Object.keys(state.rivalsBeaten || {}).length) + ' / 5');
+
+  const totalPositions = ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0);
+  html += `<div style="${secStyle}">📈 Positions</div>`;
+  html += row('Total Positions', fmtNum(totalPositions));
   ASSETS.forEach(a => {
     const s = state.assets[a.id];
-    if (s.owned > 0) {
-      html += `<div class="row"><span>${a.ticker} positions</span><span class="v">${fmtNum(s.owned)}</span></div>`;
+    if (s && s.owned > 0) {
+      html += row(a.ticker, fmtNum(s.owned) + (s.hired ? ' ✓' : ''));
     }
   });
+
   body.innerHTML = html;
 }
 
@@ -6254,6 +6412,121 @@ function buildTicker() {
   t.innerHTML = html;
 }
 
+// ============ GOLD INFO MODAL ============
+function showGoldInfo() {
+  var el = document.getElementById('goldInfoAmount');
+  if (el) el.textContent = fmtNum(state.gold || 0);
+  document.getElementById('goldInfoModal').classList.add('show');
+}
+
+// ============ SKILL DETAIL MODAL ============
+var _skillDetailId = null;
+function showSkillDetail(id) {
+  var node = null, branch = null, nodeIdx = -1;
+  for (var i = 0; i < SKILL_TREE.length; i++) {
+    var br = SKILL_TREE[i];
+    var idx = br.nodes.findIndex(function(n) { return n.id === id; });
+    if (idx !== -1) { node = br.nodes[idx]; branch = br; nodeIdx = idx; break; }
+  }
+  if (!node) return;
+  _skillDetailId = id;
+  var owned = !!(state.skillsOwned && state.skillsOwned[id]);
+  var prevOwned = nodeIdx === 0 || !!(state.skillsOwned && state.skillsOwned[branch.nodes[nodeIdx-1].id]);
+  var available = !owned && prevOwned;
+  var canAfford = false, costLabel = '', costNote = '';
+  if (node.goldCost) {
+    canAfford = (state.gold || 0) >= node.goldCost;
+    costLabel = node.goldCost + ' Gold';
+    if (!canAfford) costNote = 'You have ' + fmtNum(state.gold || 0) + ' gold';
+  } else if (node.cashCost) {
+    canAfford = (state.cash || 0) >= node.cashCost;
+    costLabel = fmt(node.cashCost, 'cash');
+    if (!canAfford) costNote = 'You have ' + fmt(state.cash || 0, 'cash');
+  } else {
+    canAfford = (state.influence || 0) >= (node.cost || 0);
+    costLabel = fmtNum(node.cost || 0) + ' Influence';
+    if (!canAfford) costNote = 'You have ' + fmtNum(state.influence || 0);
+  }
+  document.getElementById('skillDetailIcon').innerHTML = node.icon;
+  document.getElementById('skillDetailName').textContent = node.name;
+  document.getElementById('skillDetailBranch').innerHTML = branch.icon + ' ' + branch.name + ' Branch';
+  document.getElementById('skillDetailDesc').textContent = node.desc;
+  var buyBtn = document.getElementById('skillDetailBuyBtn');
+  var statusEl = document.getElementById('skillDetailStatus');
+  var costEl = document.getElementById('skillDetailCost');
+  if (owned) {
+    costEl.textContent = 'OWNED'; costEl.style.color = 'var(--green)';
+    statusEl.textContent = 'Already unlocked and active.';
+    buyBtn.style.display = 'none';
+  } else if (!available) {
+    costEl.textContent = 'LOCKED - ' + costLabel; costEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Unlock the previous skill in this branch first.';
+    buyBtn.style.display = 'none';
+  } else if (!canAfford) {
+    costEl.textContent = costLabel; costEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = 'Not enough funds. ' + costNote;
+    buyBtn.style.display = 'none';
+  } else {
+    costEl.textContent = costLabel; costEl.style.color = 'var(--gold)';
+    statusEl.textContent = 'Ready to unlock!';
+    buyBtn.style.display = '';
+  }
+  document.getElementById('skillDetailModal').classList.add('show');
+}
+function confirmSkillBuy() {
+  closeModal('skillDetailModal');
+  if (_skillDetailId) buySkill(_skillDetailId);
+}
+
+// ============ WELCOME TUTORIAL SLIDES ============
+var WELCOME_SLIDES = [
+  { icon: '&#128176;', title: 'Welcome to Wall Street.', body: 'You start with <b>$4 and a dream</b>. Buy positions in assets, execute trades, and grow your firm into a global financial empire.<br><br>This quick intro covers the basics. After this, a guided tutorial walks you through your first trade.' },
+  { icon: '&#128200;', title: 'Buy Positions &amp; Trade', body: 'Tap <b>BUY</b> on any asset to take a position. A green bar fills up &mdash; when full, <b>tap it</b> to collect cash.<br><br>More positions = bigger payout per trade. Stack them up.' },
+  { icon: '&#129309;', title: 'Hire Traders to Automate', body: 'Go to the <b>Staff tab</b> and hire a trader. They auto-execute trades &mdash; no tapping needed.<br><br>Goal: automate everything, then unlock new assets and markets.' },
+  { icon: '&#128240;', title: 'Watch the Market', body: 'Market events fire randomly. A <b>Rate Cut</b> or <b>Bull Run</b> multiplies income &mdash; trade hard. A <b>Crash</b> cuts payouts.<br><br>The banner at the top tells you what&#39;s happening.' },
+  { icon: '&#11088;', title: 'Goals Earn You Gold', body: 'The <b>Goals tab</b> gives you 3 fresh quests daily. Complete them to earn <b>Gold</b> &mdash; a rare currency that <b>survives every IPO</b>.<br><br>Gold unlocks the most powerful skills. Tap the Gold chip in the header to learn more.' },
+  { icon: '&#127963;', title: 'IPO Your Firm', body: 'When ready, take your firm public. You lose cash and assets &mdash; but gain permanent <b>Influence multipliers</b> that make every future run faster.<br><br>The more you IPO, the stronger you get.' }
+];
+var _welcomeStep = 0;
+function renderWelcomeSlide() {
+  var step = WELCOME_SLIDES[_welcomeStep];
+  var total = WELCOME_SLIDES.length;
+  var dots = document.getElementById('tutorialDots');
+  if (dots) {
+    var html = '';
+    for (var i = 0; i < total; i++) {
+      html += '<div style="width:8px;height:8px;border-radius:50%;background:' + (i===_welcomeStep?'var(--blue)':'rgba(255,255,255,0.2)') + ';transition:background 0.2s;display:inline-block;"></div>';
+    }
+    dots.innerHTML = html;
+  }
+  var slides = document.getElementById('tutorialSlides');
+  if (slides) {
+    slides.innerHTML = '<div style="font-size:48px;margin-bottom:10px;">' + step.icon + '</div>'
+      + '<h2 style="margin:0 0 12px;font-size:18px;">' + step.title + '</h2>'
+      + '<p style="font-size:13px;line-height:1.75;text-align:left;color:var(--text);margin-bottom:10px;">' + step.body + '</p>'
+      + '<div style="font-size:11px;color:var(--text-dim);">Step ' + (_welcomeStep+1) + ' of ' + total + '</div>';
+  }
+  var back = document.getElementById('tutorialBackBtn');
+  var next = document.getElementById('tutorialNextBtn');
+  if (back) back.style.display = _welcomeStep === 0 ? 'none' : '';
+  if (next) next.textContent = _welcomeStep === total - 1 ? "Let's Trade!" : 'Next';
+}
+function tutorialNav(dir) {
+  _welcomeStep += dir;
+  if (_welcomeStep >= WELCOME_SLIDES.length) {
+    closeModal('welcomeModal');
+    if (state.tutorialStep !== 'done') setTimeout(startTutorial, 400);
+    return;
+  }
+  if (_welcomeStep < 0) _welcomeStep = 0;
+  renderWelcomeSlide();
+}
+function openWelcomeModal() {
+  _welcomeStep = 0;
+  renderWelcomeSlide();
+  document.getElementById('welcomeModal').classList.add('show');
+}
+
 // ============ MODAL HELPERS ============
 function openModal(id) {
   if (id === 'statsModal') renderStats();
@@ -6320,9 +6593,9 @@ function showWhisperToast(sector, delaySec) {
 }
 
 // ============ TUTORIAL / ONBOARDING ============
-// 3-step spotlight tutorial shown only on first ever run.
-// State: state.tutorialStep — undefined/null = not started, 0/1/2 = active step, 'done' = complete.
-// Steps auto-advance on in-game triggers (buy, first trade) then finish with a manual tap.
+// 4-step spotlight tutorial shown only on first ever run.
+// State: state.tutorialStep — undefined/null = not started, 0..3 = active step, 'done' = complete.
+// Steps 0+1 auto-advance on in-game triggers; steps 2-3 require manual tap.
 
 const TUTORIAL_STEPS = [
   {
@@ -6334,13 +6607,19 @@ const TUTORIAL_STEPS = [
   {
     targetId: 'cash',
     title: 'Watch the money roll in 💵',
-    body: 'Your position is trading! When the bar fills, <strong>cash lands in your account</strong>. Hire a manager and it trades automatically — forever.',
+    body: 'Your position is trading! When the bar fills, <strong>tap it</strong> to collect cash. More positions = bigger payouts each time.',
     arrowBelow: true,
   },
   {
     targetId: 'tab-managers-btn',
     title: 'Hire your first manager 🧑‍💼',
-    body: 'When you\'re ready, tap <strong>STAFF</strong> to hire a manager who auto-trades for you — even when you\'re away. That\'s the whole game.',
+    body: 'Tap <strong>STAFF</strong> to hire a manager who auto-trades for you — no tapping needed. That frees you up to build the rest of your empire.',
+    arrowBelow: false,
+  },
+  {
+    targetId: 'tab-unlocks-btn',
+    title: 'Complete Goals for Gold ⭐',
+    body: 'The <strong>Goals tab</strong> gives you 3 daily quests. Completing them earns <strong>Gold 🏅</strong> — a rare currency that survives every IPO and unlocks the best skills.',
     arrowBelow: false,
   },
 ];
@@ -6573,6 +6852,7 @@ function save() {
       rivalWealth: state.rivalWealth || {},
       rivalsBeaten: state.rivalsBeaten || {},
       rivalChampion: !!state.rivalChampion,
+      _nextSurgeCheck: state._nextSurgeCheck || 0,
       lastSavedAt: Date.now(),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(out));
@@ -6657,6 +6937,7 @@ function load() {
     state.rivalRaidSuppressedUntil = data.rivalRaidSuppressedUntil || 0;
     state.rivalsBeaten  = data.rivalsBeaten  || {};
     state.rivalChampion = !!data.rivalChampion;
+    state._nextSurgeCheck = data._nextSurgeCheck || 0;
     // Initialise rival wealth — new field for existing saves
     if (data.rivalWealth && Object.keys(data.rivalWealth).length > 0) {
       state.rivalWealth = data.rivalWealth;
@@ -6735,27 +7016,52 @@ function _b64Decode(str) {
   const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
   return new TextDecoder().decode(bytes);
 }
-function exportSave() {
+function openExportSaveModal() {
   save();
   const raw = localStorage.getItem(SAVE_KEY) || '';
   const code = _b64Encode(raw);
-  navigator.clipboard?.writeText(code);
-  prompt('Save code (copied to clipboard):', code);
+  const ta = document.getElementById('exportSaveCode');
+  if (ta) ta.value = code;
+  const btn = document.getElementById('exportCopyBtn');
+  if (btn) btn.textContent = '📋 Copy to Clipboard';
+  closeModal('settingsModal');
+  openModal('exportSaveModal');
 }
-function importSave() {
-  const code = prompt('Paste save code:');
-  if (!code) return;
+function copyExportCode() {
+  const ta = document.getElementById('exportSaveCode');
+  if (!ta) return;
+  ta.select();
+  navigator.clipboard?.writeText(ta.value).then(() => {
+    const btn = document.getElementById('exportCopyBtn');
+    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy to Clipboard'; }, 2000); }
+  }).catch(() => {
+    // Fallback for older WebViews
+    document.execCommand('copy');
+    const btn = document.getElementById('exportCopyBtn');
+    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy to Clipboard'; }, 2000); }
+  });
+}
+function openImportSaveModal() {
+  const ta = document.getElementById('importSaveCode');
+  if (ta) ta.value = '';
+  closeModal('settingsModal');
+  openModal('importSaveModal');
+}
+function confirmImportSave() {
+  const ta = document.getElementById('importSaveCode');
+  const code = ta ? ta.value.trim() : '';
+  if (!code) { toast('Paste a save code first.'); return; }
   try {
     const raw = _b64Decode(code);
     localStorage.setItem(SAVE_KEY, raw);
     location.reload();
-  } catch (e) { toast('Invalid save code.'); }
+  } catch (e) { toast('Invalid save code — check for typos.'); }
 }
 function hardReset() {
-  if (!confirm('REALLY liquidate everything? All progress and Influence will be lost.')) return;
+  openModal('hardResetModal');
+}
+function confirmHardReset() {
   // Block any further saves (setInterval, beforeunload) so nothing rewrites state during teardown.
-  // We set a flag instead of reassigning save(), because the beforeunload listener holds a
-  // direct reference to the original function — reassigning the variable doesn't stop it.
   window._liquidating = true;
   localStorage.removeItem(SAVE_KEY);
   location.reload();
@@ -6766,9 +7072,8 @@ function boot() {
   buildTicker();
   setInterval(buildTicker, 3000);  // fast enough to catch squeeze/options bonuses
   const had = load();
-  // Only show the static welcome modal if the tutorial is already done (e.g. was skipped).
-  // For first-time players the tutorial is the welcome experience — showing both is cluttered.
-  if (!had && state.tutorialStep === 'done') openModal('welcomeModal');
+  // Show multi-step welcome intro for brand-new players. Spotlight fires after they dismiss it.
+  if (!had) openWelcomeModal();
   resetDailyQuestsIfNeeded();
   renderAll();
   // Initial unlock pass + restore the tab the player was on
@@ -6803,8 +7108,8 @@ function boot() {
   updateDoublerUI();
   // Keep the doubler chip / ad button live — check every second
   if (!window._doublerInterval) window._doublerInterval = setInterval(updateDoublerUI, 1000);
-  // Start tutorial for first-time players (delay slightly so renderAll() has built the DOM)
-  if (state.tutorialStep !== 'done') {
+  // Resume spotlight for returning players mid-tutorial (new players get it via welcome modal dismiss).
+  if (state.tutorialStep !== 'done' && had) {
     setTimeout(startTutorial, 900);
   }
   // Prompt for firm name if never set — catches both new players (post-tutorial) and existing saves
