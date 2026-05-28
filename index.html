@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>Day Trader Tycoon</title>
@@ -53,7 +53,7 @@
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none; /* Firefox */
-    padding-bottom: 90px;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
     background:
       radial-gradient(ellipse at top, rgba(74,144,226,0.08), transparent 60%),
       linear-gradient(180deg, #0e1326 0%, #0a0e1a 100%);
@@ -75,9 +75,6 @@
 
   /* Main row: tab content + right tab strip */
   .main-row {
-    display: grid;
-    grid-template-columns: 1fr 56px;
-    gap: 0;
     position: relative;
     z-index: 1;
   }
@@ -85,17 +82,7 @@
   .tab-panel { display: none; padding: 4px 0; }
   .tab-panel.active { display: block; }
 
-  /* Right side tab strip */
-  .tab-strip {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 8px 6px 8px 4px;
-    background: linear-gradient(180deg, #0a0e1a 0%, #050810 100%);
-    border-left: 3px solid #000;
-    box-shadow: -2px 0 8px rgba(0,0,0,0.4);
-    align-self: stretch;
-  }
+
   .tab-btn {
     background: linear-gradient(180deg, var(--panel-2), var(--panel-dark));
     border: 2px solid #050810;
@@ -534,18 +521,7 @@
     opacity: 0.45; cursor: default;
     background: rgba(255,255,255,0.06);
   }
-  .market-tab.blackmkt-tab {
-    background: linear-gradient(180deg, #2a0a0a, #1a0505);
-    border-color: #5c1010;
-    color: #c44;
-  }
-  .market-tab.blackmkt-tab.active {
-    background: linear-gradient(180deg, #7a0000, #4a0000);
-    border-color: #300;
-    color: #ffaaaa;
-    text-shadow: 0 0 6px rgba(255,80,80,0.7);
-    box-shadow: 0 2px 0 #300, inset 0 1px 0 rgba(255,80,80,0.2);
-  }
+
 
   /* Chicago Pit */
   .pit-arena {
@@ -561,6 +537,24 @@
   .pit-header-row { display:flex; justify-content:space-between; align-items:center; padding:4px 2px 8px; }
   .pit-combo-badge { background:linear-gradient(90deg,#ff6b00,#ffd700); border-radius:12px; padding:3px 10px; font-size:12px; font-weight:bold; color:#000; letter-spacing:0.05em; animation:comboPulse 0.4s ease infinite alternate; }
   @keyframes comboPulse { from { transform:scale(1); } to { transform:scale(1.08); box-shadow:0 0 10px #ffd700; } }
+  .pit-contract {
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    background:linear-gradient(180deg,#5a4000,#3a2800); border:3px solid #ffd700;
+    border-radius:14px; padding:12px 20px; text-align:center; cursor:pointer;
+    z-index:10; min-width:150px; user-select:none;
+    animation:contractPulse 0.7s ease infinite alternate;
+  }
+  @keyframes contractPulse {
+    from { box-shadow:0 0 10px #ffd700,0 4px 0 rgba(0,0,0,0.5); transform:translate(-50%,-50%) scale(1); }
+    to   { box-shadow:0 0 30px #ffd700,0 0 60px rgba(255,215,0,0.35),0 4px 0 rgba(0,0,0,0.5); transform:translate(-50%,-50%) scale(1.05); }
+  }
+  .pit-rush-banner {
+    background:linear-gradient(90deg,#ff6b00,#ffd700); border-radius:8px;
+    padding:5px 12px; text-align:center; font-size:12px; font-weight:900;
+    color:#000; letter-spacing:0.06em; margin:0 10px 6px;
+    animation:rushPulse 0.5s ease infinite alternate;
+  }
+  @keyframes rushPulse { from { opacity:1; } to { opacity:0.75; } }
   .pit-progress-bar { height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; margin: 8px 0; overflow: hidden; }
   .pit-progress-fill { height: 100%; background: linear-gradient(90deg, #e07c00, #ffd700); border-radius: 6px; transition: width 0.3s; }
   .pit-order {
@@ -754,22 +748,38 @@
 
   /* Event banner */
   .event-banner {
-    margin: 12px 14px 4px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    max-width: 480px;
+    margin: 0 auto;
     padding: 12px 14px;
-    border-radius: 12px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+    border-radius: 0 0 14px 14px;
     background: linear-gradient(180deg, #f3c74b, #d09a18);
     border: 3px solid rgba(0,0,0,0.25);
+    border-top: none;
     font-size: 13px;
-    display: none;
-    animation: pulse 1.2s ease-in-out infinite;
-    box-shadow: var(--shadow);
+    animation: bannerPulse 1.4s ease-in-out infinite;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
     color: #0a0e1a;
+    z-index: 110;
+    /* hidden by default — slides in from top, content never shifts */
+    transform: translateY(-110%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.2s ease;
+    pointer-events: none;
   }
   .event-banner.bad {
     background: linear-gradient(180deg, #e74c3c, #a83025);
     color: #fff;
   }
-  .event-banner.show { display: block; }
+  .event-banner.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
   .event-headline {
     font-family: 'Lilita One', sans-serif;
     font-size: 16px;
@@ -792,6 +802,12 @@
   @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.01); }
+  }
+  /* Event banner pulse — uses box-shadow only so it never conflicts with
+     the translateY transform used to slide the banner in/out */
+  @keyframes bannerPulse {
+    0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+    50%       { box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.15); }
   }
 
   /* Asset cards */
@@ -1170,6 +1186,65 @@
   .upg-btn .upg-cost { display: block; color: var(--gold); font-family: 'Lilita One', sans-serif; font-size: 10px; margin-top: 1px; }
 
   /* Bottom bar */
+  /* ── Nav overlay ── */
+  .nav-overlay-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 200; display: none;
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+  .nav-overlay-bg.open { display: block; }
+  .nav-panel {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: #0d1423;
+    border-top: 1px solid rgba(255,255,255,0.10);
+    border-radius: 20px 20px 0 0;
+    padding: 8px 16px 36px;
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
+  }
+  .nav-overlay-bg.open .nav-panel { transform: translateY(0); }
+  .nav-handle { width:40px;height:4px;background:rgba(255,255,255,0.18);border-radius:2px;margin:0 auto 14px; }
+  .nav-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px; }
+  .nav-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px; padding: 12px 4px 10px;
+    color: #fff; font-size: 10px; font-weight: 800;
+    letter-spacing: .4px; cursor: pointer;
+    text-align: center; display: flex;
+    flex-direction: column; align-items: center; gap: 5px;
+    position: relative; font-family: inherit;
+  }
+  .nav-btn:active { transform: scale(0.94); opacity: 0.85; }
+  .nav-btn .nav-icon { font-size: 22px; line-height: 1; }
+  .nav-dot {
+    display: none; position: absolute; top: 6px; right: 8px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #e74c3c; border: 1.5px solid #0d1423;
+  }
+  .nav-btn.has-dot .nav-dot { display: block; }
+  .nav-ipo-btn {
+    width: 100%; margin-bottom: 10px; padding: 13px;
+    background: linear-gradient(90deg,#f0b429,#e8960a);
+    border: none; border-radius: 13px;
+    color: #1a1a1a; font-weight: 900; font-size: 14px;
+    cursor: pointer; letter-spacing: .3px;
+    font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.15s;
+  }
+  .nav-ipo-btn:active { opacity: 0.85; }
+  .nav-ipo-btn.ipo-ready {
+    animation: ipoPulse 1.8s ease-in-out infinite;
+    box-shadow: 0 0 18px rgba(240,180,41,0.55);
+  }
+  @keyframes ipoPulse {
+    0%,100% { box-shadow: 0 0 10px rgba(240,180,41,0.4); }
+    50%      { box-shadow: 0 0 28px rgba(240,180,41,0.8); }
+  }
+
   .bottom-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -1178,7 +1253,7 @@
     background: linear-gradient(180deg, #0a0e1a 0%, #050810 100%);
     border-top: 3px solid #000;
     display: flex;
-    padding: 10px 10px;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
     gap: 6px;
     z-index: 50;
     box-shadow: 0 -4px 12px rgba(0,0,0,0.5);
@@ -1431,7 +1506,7 @@
 
   /* Floating gain text */
   .float-gain {
-    position: absolute;
+    position: fixed;
     color: var(--green);
     font-weight: 800;
     font-family: "SF Mono", Monaco, monospace;
@@ -1606,6 +1681,10 @@
     z-index: 502;
     animation: tutorialCardIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
+  @keyframes slideUp {
+    from { transform: translateX(-50%) translateY(30px); opacity: 0; }
+    to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+  }
   @keyframes tutorialCardIn {
     from { transform: translateX(-50%) translateY(20px); opacity: 0; }
     to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
@@ -1709,12 +1788,6 @@
     <span class="event-timer" id="eventTimer"></span>
     <div class="event-headline" id="eventHeadline"></div>
     <div class="event-detail" id="eventDetail"></div>
-    <div id="hedgeContainer" style="display:none;margin-top:8px;text-align:right;">
-      <button id="hedgeBtn" onclick="hedgeEvent()" style="background:linear-gradient(180deg,#1a6a2a,#0e3a18);border:2px solid #2ecc71;border-radius:8px;color:#fff;font-size:11px;font-weight:900;padding:5px 10px;cursor:pointer;font-family:'Nunito',sans-serif;letter-spacing:0.3px;">
-        🛡️ HEDGE &nbsp;<span style="color:#ffd700;font-size:10px;">30 🥇</span>
-      </button>
-      <div id="hedgeTimer" style="font-size:10px;opacity:0.7;margin-top:2px;font-weight:700;"></div>
-    </div>
   </div>
 
   <div class="main-row">
@@ -1782,55 +1855,68 @@
 
       <div class="tab-panel" id="tab-pit"></div>
       <div class="tab-panel" id="tab-options"></div>
-      <div class="tab-panel" id="tab-rivals"></div>
+      <div class="tab-panel" id="tab-rivals">
+        <div class="panel-title">Leaderboards</div>
+        <div class="panel-sub">Global rankings coming soon.</div>
+        <div style="margin:40px 24px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:14px;">&#127942;</div>
+          <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:8px;">No players yet</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;">Leaderboards will show global rankings<br>for net worth, IPO count, and more.<br><br>Coming in a future update.</div>
+        </div>
+      </div>
+
     </div>
 
-    <div class="tab-strip" id="tabStrip">
-      <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
-        <span class="tab-icon">&#128200;</span>HOME
+  </div>
+</div>
+
+<!-- Nav overlay -->
+<div class="nav-overlay-bg" id="navOverlay" onclick="if(event.target===this)closeNav()">
+  <div class="nav-panel">
+    <div class="nav-handle"></div>
+    <!-- IPO button -->
+    <button id="navIpoBtn" class="nav-ipo-btn" onclick="closeNav();openModal('prestigeModal')">
+      &#127970; IPO Your Firm &mdash; Ring the Bell
+    </button>
+    <!-- Destination grid -->
+    <div class="nav-grid">
+      <button class="nav-btn" id="nav-staff-btn" onclick="closeNav();switchTab('managers')">
+        <span class="nav-icon">&#128188;</span>STAFF<span class="nav-dot"></span>
       </button>
-      <button class="tab-btn" id="tab-unlocks-btn" data-tab="unlocks" onclick="switchTab('unlocks')">
-        <span class="tab-icon">&#127942;</span>GOALS
-        <span class="tab-dot"></span>
+      <button class="nav-btn" id="nav-skills-btn" onclick="closeNav();switchTab('skills')">
+        <span class="nav-icon">&#127795;</span>SKILLS<span class="nav-dot"></span>
       </button>
-      <button class="tab-btn" id="tab-managers-btn" data-tab="managers" onclick="switchTab('managers')">
-        <span class="tab-icon">&#128188;</span>STAFF
-        <span class="tab-dot"></span>
+      <button class="nav-btn" id="nav-perks-btn" onclick="closeNav();switchTab('perks')">
+        <span class="nav-icon">&#9889;</span>PERKS<span class="nav-dot"></span>
       </button>
-      <button class="tab-btn" data-tab="perks" onclick="switchTab('perks')">
-        <span class="tab-icon">&#9889;</span>PERKS
-        <span class="tab-dot"></span>
+      <button class="nav-btn" id="nav-goals-btn" onclick="closeNav();switchTab('unlocks')">
+        <span class="nav-icon">&#11088;</span>GOALS<span class="nav-dot"></span>
       </button>
-      <button class="tab-btn" data-tab="skills" onclick="switchTab('skills')">
-        <span class="tab-icon">&#127795;</span>SKILLS
-        <span class="tab-dot"></span>
+      <button class="nav-btn" onclick="closeNav();switchTab('options')">
+        <span class="nav-icon">&#128200;</span>OPTIONS
       </button>
-      <button class="tab-btn" data-tab="pit" onclick="switchTab('pit')">
-        <span class="tab-icon">&#127963;</span>PIT
+      <button class="nav-btn" onclick="closeNav();switchTab('pit')">
+        <span class="nav-icon">&#127963;</span>PIT
       </button>
-      <button class="tab-btn" data-tab="options" onclick="switchTab('options')">
-        <span class="tab-icon">&#128202;</span>OPTIONS
+      <button class="nav-btn" onclick="closeNav();switchTab('rivals')">
+        <span class="nav-icon">&#127942;</span>LEADERS
       </button>
-      <button class="tab-btn" data-tab="rivals" onclick="switchTab('rivals')">
-        <span class="tab-icon">&#127942;</span>RIVALS
-      </button>
-      <button class="tab-btn" data-tab="news" onclick="switchTab('news')">
-        <span class="tab-icon">&#128240;</span>NEWS
-        <span class="tab-dot"></span>
+      <button class="nav-btn" id="nav-news-btn" onclick="closeNav();switchTab('news')">
+        <span class="nav-icon">&#128240;</span>NEWS<span class="nav-dot"></span>
       </button>
     </div>
   </div>
 </div>
 
 <div class="bottom-bar">
-  <button class="bb-btn" onclick="openModal('statsModal')">
-    <span class="bb-icon">&#128202;</span>Stats
+  <button class="bb-btn" onclick="switchTab('home')">
+    <span class="bb-icon">&#127968;</span>HOME
   </button>
-  <button class="bb-btn gold" onclick="openModal('prestigeModal')">
-    <span class="bb-icon">&#127970;</span>IPO Firm
+  <button class="bb-btn" onclick="openNav()">
+    <span class="bb-icon">&#9783;</span>NAVIGATE
   </button>
   <button class="bb-btn" onclick="openModal('settingsModal')">
-    <span class="bb-icon">&#9881;</span>Menu
+    <span class="bb-icon">&#9881;</span>MENU
   </button>
 </div>
 
@@ -1861,13 +1947,28 @@
 <div class="modal-bg" id="settingsModal" onclick="if(event.target===this)closeModal('settingsModal')">
   <div class="modal">
     <h2>Menu</h2>
-    <p>Your firm autosaves every few seconds. Be advised: the SEC is always watching.</p>
+    <!-- Quick stats row -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
+      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:var(--gold);" id="menuStatCash">$0</div>
+        <div style="font-size:9px;color:var(--text-dim);letter-spacing:.5px;margin-top:2px;">NET WORTH</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:#a78bfa;" id="menuStatIpos">0</div>
+        <div style="font-size:9px;color:var(--text-dim);letter-spacing:.5px;margin-top:2px;">TOTAL IPOs</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:#2ecc71;" id="menuStatInfluence">0</div>
+        <div style="font-size:9px;color:var(--text-dim);letter-spacing:.5px;margin-top:2px;">INFLUENCE</div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--text-dim);text-align:center;margin:-4px 0 10px;">The SEC is always watching.</p>
     <button class="modal-btn secondary" onclick="manualSave()">Save Now</button>
     <button class="modal-btn secondary" onclick="openExportSaveModal()">Export Save Code</button>
     <button class="modal-btn secondary" onclick="openImportSaveModal()">Import Save Code</button>
     <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
     <div style="font-family:'Lilita One',sans-serif;color:var(--gold);font-size:14px;margin-bottom:6px;">💎 Support the Game</div>
-    <button class="modal-btn" style="background:linear-gradient(180deg,#f8d860,#c89a18);border-color:#6a4f0a;color:#0a0e1a;margin-bottom:6px;" onclick="Monetization.purchaseIAP('starter_pack', onStarterPackPurchased)">
+    <button id="starterPackBtn" class="modal-btn" style="background:linear-gradient(180deg,#f8d860,#c89a18);border-color:#6a4f0a;color:#0a0e1a;margin-bottom:6px;" onclick="Monetization.purchaseIAP('starter_pack', onStarterPackPurchased)">
       Starter Pack — 50 Gold + No Ads &middot; <span style="color:#0a0e1a;">$2.99</span>
     </button>
     <div style="font-family:'Lilita One',sans-serif;color:#d49aff;font-size:13px;margin:8px 0 5px;">💎 Buy Megabucks</div>
@@ -1887,6 +1988,8 @@
     <button class="modal-btn" style="background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#4a235a;margin-bottom:6px;" onclick="Monetization.showRewardedAd('income_boost', onIncomeBoostRewarded)">
       📺 Watch Ad — 2× Income for 2 hours
     </button>
+    <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
+    <button class="modal-btn secondary" style="font-size:11px;color:var(--text-dim);margin-bottom:4px;" onclick="Monetization.restorePurchases()">Restore Purchases</button>
     <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
     <button class="modal-btn secondary" style="color:var(--red);border-color:var(--red);" onclick="closeModal('settingsModal');openModal('hardResetModal')">Liquidate Everything</button>
     <button class="modal-btn" onclick="closeModal('settingsModal')">Back</button>
@@ -1921,8 +2024,8 @@
     <div style="font-size:44px;margin-bottom:6px;">&#129689;</div>
     <h2 style="color:var(--gold);margin:0 0 10px;">Gold</h2>
     <p style="font-size:13px;line-height:1.7;text-align:left;color:var(--text);">Gold is the rare premium currency. Unlike cash, it <b>survives every IPO</b> and is yours forever.</p>
-    <p style="font-size:13px;line-height:1.7;text-align:left;color:var(--text);"><b style="color:var(--gold);">How to earn gold:</b><br>Complete Daily Goals (&#11088; tab) &middot; Trade on the Black Market &middot; Reach IPO milestones</p>
-    <p style="font-size:13px;line-height:1.7;text-align:left;color:var(--text);"><b style="color:var(--gold);">What gold buys:</b><br>Premium Skills &middot; London Managers &middot; Lifestyle items &middot; Mega Tickets &middot; Hedge protection</p>
+    <p style="font-size:13px;line-height:1.7;text-align:left;color:var(--text);"><b style="color:var(--gold);">How to earn gold:</b><br>Complete Daily Goals (&#11088; tab) &middot; Reach IPO milestones &middot; Use the Skill tree</p>
+    <p style="font-size:13px;line-height:1.7;text-align:left;color:var(--text);"><b style="color:var(--gold);">What gold buys:</b><br>Premium Skills &middot; London Managers &middot; Lifestyle items &middot; Mega Tickets</p>
     <div style="background:rgba(243,199,75,0.1);border:1px solid rgba(243,199,75,0.3);border-radius:8px;padding:10px;margin:10px 0;font-size:12px;color:var(--gold);">You currently have <b id="goldInfoAmount">0</b> &#129689; Gold</div>
     <button class="modal-btn secondary" onclick="closeModal('goldInfoModal')">Got It</button>
   </div>
@@ -1991,7 +2094,7 @@
       <div class="wb-earnings-label">Offline Earnings</div>
       <div id="wbBreakdown"></div>
     </div>
-    <div style="font-size:10px;color:var(--text-dim);margin-bottom:10px;">50% of active rate &middot; capped at 4 hours</div>
+    <div style="font-size:10px;color:var(--text-dim);margin-bottom:10px;">Full active rate &middot; no time limit</div>
     <button id="wbAdBtn" class="modal-btn" style="background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#4a235a;margin-bottom:8px;width:100%;" onclick="doubleOfflineEarnings()">
       📺 &nbsp;Watch Ad &mdash; Double It!
     </button>
@@ -2051,6 +2154,22 @@
 <div class="toast" id="toast"></div>
 <div class="whisper-toast" id="whisperToast"></div>
 
+<!-- Launch Ad Offer banner -->
+<div id="launchAdOffer" style="display:none;position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:9999;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #f0b429;border-radius:14px;padding:14px 18px;max-width:320px;width:calc(100% - 40px);box-shadow:0 4px 24px rgba(0,0,0,0.6);display:none;flex-direction:column;gap:10px;animation:slideUp .35s ease;">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:22px;">📺</span>
+    <div>
+      <div style="color:#f0b429;font-weight:700;font-size:14px;letter-spacing:.4px;">LAUNCH OFFER</div>
+      <div style="color:#e0e0e0;font-size:12px;margin-top:2px;">Watch a short ad → <strong style="color:#4caf50;">2× income for 2 hours</strong></div>
+    </div>
+    <button onclick="dismissLaunchAdOffer()" style="margin-left:auto;background:none;border:none;color:#888;font-size:18px;line-height:1;cursor:pointer;padding:0 0 0 8px;">✕</button>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="dismissLaunchAdOffer()" style="flex:1;padding:9px 0;background:#2a2a3e;border:1px solid #444;border-radius:8px;color:#aaa;font-size:13px;cursor:pointer;">No thanks</button>
+    <button onclick="acceptLaunchAdOffer()" style="flex:2;padding:9px 0;background:linear-gradient(90deg,#f0b429,#ff9800);border:none;border-radius:8px;color:#1a1a1a;font-weight:700;font-size:13px;cursor:pointer;">▶ Watch Ad</button>
+  </div>
+</div>
+
 <!-- Tutorial / Onboarding overlay -->
 <div id="tutorialOverlay" style="display:none;">
   <div id="tutorialHighlight"></div>
@@ -2070,16 +2189,17 @@
 // ============ GAME DATA ============
 const ASSETS = [
   // === Wall Street market (USD) ===
-  { id: 'pnny', ticker: '$PNNY', name: 'Penny Stocks',         icon: '&#128181;', baseCost: 4,        basePayout: 1,         baseTime: 1.2,  hireCost: 100,      sector: 'retail',        market: 'wallst' },
-  { id: 'meme', ticker: '$MEME', name: 'Meme Coins',           icon: '&#128640;', baseCost: 60,       basePayout: 18,        baseTime: 3,    hireCost: 1500,     sector: 'meme',          market: 'wallst' },
-  { id: 'dogz', ticker: '$CNDY', name: 'Candy Crypto',         icon: '&#127852;', baseCost: 720,      basePayout: 270,       baseTime: 6,    hireCost: 18000,    sector: 'crypto',        market: 'wallst' },
-  { id: 'aibl', ticker: '$AIBL', name: 'AI Bubble Co.',        icon: '&#129302;', baseCost: 8640,     basePayout: 4050,      baseTime: 12,   hireCost: 216000,   sector: 'tech',          market: 'wallst' },
-  { id: 'hedg', ticker: '$HEDG', name: 'Hedge Fund Position',  icon: '&#128176;', baseCost: 103680,   basePayout: 60750,     baseTime: 24,   hireCost: 2592000,  sector: 'institutional', market: 'wallst' },
-  { id: 'yact', ticker: '$YACT', name: 'Offshore Yacht Fund',  icon: '&#128674;', baseCost: 1244160,    basePayout: 911250,       baseTime: 60,  hireCost: 31104000,    sector: 'institutional', market: 'wallst' },
-  { id: 'prvt', ticker: '$PRVT', name: 'Private Equity Fund',  icon: '&#128188;', baseCost: 14929920,   basePayout: 10935000,     baseTime: 90,  hireCost: 373248000,   sector: 'institutional', market: 'wallst' },
-  { id: 'sovr', ticker: '$SOVR', name: 'Sovereign Wealth Fund',icon: '&#128737;', baseCost: 179159040,  basePayout: 131220000,    baseTime: 120, hireCost: 4478976000,  sector: 'institutional', market: 'wallst' },
-  { id: 'feds', ticker: '$FEDS', name: 'Federal Reserve Position', icon: '&#127970;', baseCost: 2149908480, basePayout: 1574640000, baseTime: 150, hireCost: 53747712000, sector: 'institutional', market: 'wallst' },
-  { id: 'glbl', ticker: '$GLBL', name: 'Global Reserve Currency',  icon: '&#127760;', baseCost: 25798901760,basePayout: 18895680000,baseTime: 180, hireCost: 644972544000,sector: 'institutional', market: 'wallst' },
+  // Wall St payouts reduced ~20% on 2026-05-22 to slow early snowball (leverage/warps now matter more)
+  { id: 'pnny', ticker: '$PNNY', name: 'Penny Stocks',         icon: '&#128181;', baseCost: 4,        basePayout: 0.8,        baseTime: 2.0,  hireCost: 100,      sector: 'retail',        market: 'wallst' },
+  { id: 'meme', ticker: '$MEME', name: 'Meme Coins',           icon: '&#128640;', baseCost: 60,       basePayout: 14,         baseTime: 3,    hireCost: 1500,     sector: 'meme',          market: 'wallst' },
+  { id: 'dogz', ticker: '$CNDY', name: 'Candy Crypto',         icon: '&#127852;', baseCost: 720,      basePayout: 215,        baseTime: 6,    hireCost: 18000,    sector: 'crypto',        market: 'wallst' },
+  { id: 'aibl', ticker: '$AIBL', name: 'AI Bubble Co.',        icon: '&#129302;', baseCost: 8640,     basePayout: 3200,       baseTime: 12,   hireCost: 216000,   sector: 'tech',          market: 'wallst' },
+  { id: 'hedg', ticker: '$HEDG', name: 'Hedge Fund Position',  icon: '&#128176;', baseCost: 103680,   basePayout: 48000,      baseTime: 24,   hireCost: 2592000,  sector: 'institutional', market: 'wallst' },
+  { id: 'yact', ticker: '$YACT', name: 'Offshore Yacht Fund',  icon: '&#128674;', baseCost: 1244160,    basePayout: 720000,      baseTime: 60,  hireCost: 31104000,    sector: 'institutional', market: 'wallst' },
+  { id: 'prvt', ticker: '$PRVT', name: 'Private Equity Fund',  icon: '&#128188;', baseCost: 14929920,   basePayout: 8600000,     baseTime: 90,  hireCost: 373248000,   sector: 'institutional', market: 'wallst' },
+  { id: 'sovr', ticker: '$SOVR', name: 'Sovereign Wealth Fund',icon: '&#128737;', baseCost: 179159040,  basePayout: 103000000,   baseTime: 120, hireCost: 4478976000,  sector: 'institutional', market: 'wallst' },
+  { id: 'feds', ticker: '$FEDS', name: 'Federal Reserve Position', icon: '&#127970;', baseCost: 2149908480, basePayout: 1240000000, baseTime: 150, hireCost: 53747712000, sector: 'institutional', market: 'wallst' },
+  { id: 'glbl', ticker: '$GLBL', name: 'Global Reserve Currency',  icon: '&#127760;', baseCost: 25798901760,basePayout: 14800000000,baseTime: 180, hireCost: 644972544000,sector: 'institutional', market: 'wallst' },
   // === Tokyo Trading Floor (JPY ¥) — unlocked after first IPO ===
   { id: 't_sushi',   ticker: '¥SUSHI', name: 'Sushi Bonds',             icon: '&#127843;', baseCost: 100,      basePayout: 25,         baseTime: 1.5, hireCost: 2500,      sector: 't_food',     market: 'tokyo' },
   { id: 't_anime',   ticker: '¥ANIME', name: 'Anime Studio Stocks',     icon: '&#127884;', baseCost: 1500,     basePayout: 450,        baseTime: 3,   hireCost: 37500,     sector: 't_culture',  market: 'tokyo' },
@@ -2091,32 +2211,25 @@ const ASSETS = [
   // ——— LONDON ———
   { id: 'l_sterling', ticker: '£GBP',   name: 'Sterling Bonds',         icon: '&#127981;', baseCost: 10000,       basePayout: 3000,         baseTime: 1.5, hireCost: 250000,       sector: 'l_forex',     market: 'london' },
   { id: 'l_tea',      ticker: '£TEA',   name: 'Global Tea Trade',       icon: '&#127861;', baseCost: 150000,      basePayout: 55000,        baseTime: 3,   hireCost: 3750000,      sector: 'l_commodity', market: 'london' },
-  { id: 'l_bank',     ticker: '£LLOY',  name: 'Big Five Banking',       icon: '&#127981;', baseCost: 1800000,     basePayout: 810000,       baseTime: 6,   hireCost: 45000000,     sector: 'l_finance',   market: 'london' },
+  { id: 'l_bank',     ticker: '£LLOY',  name: 'Big Five Banking',       icon: '&#128179;', baseCost: 1800000,     basePayout: 810000,       baseTime: 6,   hireCost: 45000000,     sector: 'l_finance',   market: 'london' },
   { id: 'l_crown',    ticker: '£CRWN',  name: 'Sovereign Debt',         icon: '&#128081;', baseCost: 21000000,    basePayout: 11025000,     baseTime: 12,  hireCost: 525000000,    sector: 'l_finance',   market: 'london' },
   { id: 'l_oil',      ticker: '£BRENT', name: 'Brent Crude Futures',    icon: '&#128739;', baseCost: 260000000,   basePayout: 162500000,    baseTime: 24,  hireCost: 6500000000,   sector: 'l_energy',    market: 'london' },
   { id: 'l_palace',   ticker: '£REIT',  name: 'Royal Estate REIT',      icon: '&#127984;', baseCost: 3100000000,  basePayout: 2325000000,   baseTime: 60,  hireCost: 77500000000,  sector: 'l_property',  market: 'london' },
 
   // ── BLACK MARKET — currency: gold. Unlocks after London. Slow, expensive, but passively earns gold. ──
-  // === Black Market (⚫ Gold) — no managers, manual click only, very slow & scarce ===
-  // Black Market: buy positions with CASH, click bar to launder cash → earn gold. No traders allowed.
-  { id: 'bm_smug',   ticker: '&#9899;SMUG',  name: 'Contraband ETF',     icon: '&#129523;', baseCost: 1000,    launderCost: 100,    basePayout: 0.02,  baseTime: 120,   sector: 'bm_hustle', market: 'blackmkt' },
-  { id: 'bm_laund',  ticker: '&#9899;LAUND', name: 'Shell Corp Laundry', icon: '&#127968;', baseCost: 10000,   launderCost: 800,    basePayout: 0.1,   baseTime: 600,   sector: 'bm_hustle', market: 'blackmkt' },
-  { id: 'bm_cartel', ticker: '&#9899;CRTL',  name: 'Algo Cartel',        icon: '&#129302;', baseCost: 100000,  launderCost: 6000,   basePayout: 0.5,   baseTime: 1800,  sector: 'bm_ops',    market: 'blackmkt' },
-  { id: 'bm_ghost',  ticker: '&#9899;GHST',  name: 'Ghost Corporation',  icon: '&#128123;', baseCost: 1e6,     launderCost: 50000,  basePayout: 3,     baseTime: 3600,  sector: 'bm_ops',    market: 'blackmkt' },
-  { id: 'bm_pool',   ticker: '&#9899;POOL',  name: 'Dark Pool',          icon: '&#127756;', baseCost: 1e7,     launderCost: 400000, basePayout: 15,    baseTime: 14400, sector: 'bm_vault',  market: 'blackmkt' },
-  { id: 'bm_vault',  ticker: '&#9899;VALT',  name: 'Offshore Vault',     icon: '&#127963;', baseCost: 1e8,     launderCost: 3e6,    basePayout: 75,    baseTime: 43200, sector: 'bm_vault',  market: 'blackmkt' },
+  // Black Market removed — coming in a future update
 ];
 
-const COST_GROWTH = 1.12;  // each unit costs 12% more (rebalanced 2026-04-27 — extended ladder to 10 tiers does the heavy lifting; AdC uses 1.07)
+const COST_GROWTH = 1.16;  // each unit costs 16% more (raised from 1.14 on 2026-05-24 — further slows snowball, forces meaningful grind)
 const PAYOUT_MULT = 1.0;   // multiplier per unit owned
 
 // Per-asset profit milestones (AdC's "x25 / x50 / x100..." mechanic).
 // When you hit each threshold of owned positions, that asset gets a permanent multiplier on its own payout.
 const MILESTONES = [25, 50, 100, 200, 300, 400, 500, 750, 1000, 1500, 2000];
-const MILESTONE_MULT = 2.0; // each milestone DOUBLES that asset's payout — AdVenture Capitalist curve (was 1.1 on 2026-04-26, reverted 2026-04-29)
+const MILESTONE_MULT = 1.5; // each milestone = 1.5× (was 2.0 — 2.0 caused 2,048× runaway; 1.5 gives 86× at max which still compounds nicely)
 // Subset of milestones that ALSO grant a 2x speed boost (halves the trade cycle time).
 // Replaces the old cash-cost speed upgrade button (removed 2026-04-26 per Owen's directive).
-const SPEED_MILESTONES = [50, 200, 500];
+const SPEED_MILESTONES = [100, 300, 750];  // raised from [50,200,500] on 2026-05-24 — speed boosts now require more grind
 function speedFromMilestones(asset) {
   const owned = state.assets[asset.id]?.owned || 0;
   return SPEED_MILESTONES.filter(m => owned >= m).length;
@@ -2181,7 +2294,7 @@ const SKILL_TREE = [
       { id: 'sk_pre_market',   name: 'Pre-Market Access', icon: '&#128338;', goldCost: 50,  desc: '-10% all asset cycle times.' },
       { id: 'sk_algo_edge',    name: 'Algorithmic Edge',  icon: '&#129302;', goldCost: 100, desc: '-15% all cycle times (stacks).' },
       { id: 'sk_light_speed',  name: 'Light Speed',       icon: '&#128640;', goldCost: 200, desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
-      { id: 'sk_dark_pool',    name: 'Dark Pool Access',  icon: '&#127756;', goldCost: 400, desc: '+30% all payouts permanently. Unlocks the ⚫ Black Market — manual gold farming.' },
+      { id: 'sk_dark_pool',    name: 'Dark Pool Access',  icon: '&#127756;', goldCost: 400, desc: '+30% all payouts permanently. Unlock the shadow networks.' },
     ]
   },
   {
@@ -2232,13 +2345,7 @@ const MANAGER_BIOS = {
   l_crown:    { name: 'Lady Sovereign',         role: 'Debt Sovereign Advisor',  bio: '"Negotiates with world leaders for fun. Refers to the IMF as \'those people.\' Has a horse named \'Yield.\'"' },
   l_oil:      { name: 'Sir Brent Crude',        role: 'Energy Futures Principal', bio: '"Named after the oil field. Claims it is a coincidence. It is not a coincidence."' },
   l_palace:   { name: 'Duke of REIT',           role: 'Royal Estates Manager',   bio: '"Owns property in 14 postcodes he has never visited. The palaces run themselves. So does the Duke."' },
-  // Black Market roster
-  bm_smug:   { name: 'Vinnie Two-Bags',   role: 'Contraband Portfolio Lead', bio: '"Technically a logistics consultant. Has never seen the inside of a warehouse. Excellent handshake."' },
-  bm_laund:  { name: 'Madeleine Rinse',   role: 'Shell Corp Architect',      bio: '"Has seventeen companies named after her dog. Officially retired since 1994. Still billing by the hour."' },
-  bm_cartel: { name: 'El Algo',           role: 'Cartel Systems Engineer',   bio: '"The algorithm has never been audited. The algorithm cannot be audited. The algorithm is fine."' },
-  bm_ghost:  { name: 'Nobody',            role: 'Ghost Corp Director',       bio: '"No LinkedIn. No address. No record of employment. Sends very good quarterly reports. You have never met Nobody."' },
-  bm_pool:   { name: '???',              role: 'Dark Pool Operator',         bio: '"Identity classified. Communications encrypted. Operates in the liquidity void. Has never been wrong about a trade."' },
-  bm_vault:  { name: '[REDACTED]',       role: 'Offshore Vault Director',    bio: '"This profile has been removed at the request of twelve governments. Jurisdiction: unknown. Cleared.'  },
+
 };
 
 // Achievement unlocks — permanent multipliers, persist across IPO.
@@ -2247,7 +2354,7 @@ const UNLOCKS = [
   { id: 'first_hire',    icon: '&#128104;&#8205;&#128188;', name: 'Delegated',  desc: 'Hire your first trader.',                                            mult: 1.01,  check: () => Object.values(state.assets).some(a => a.hired) },
   { id: 'penny_pincher', icon: '&#128181;', name: 'Penny Pincher',       desc: 'Own 50 Penny Stock positions.',                                   mult: 1.05,  check: () => (state.assets.pnny?.owned || 0) >= 50 },
   { id: 'meme_lord',     icon: '&#128640;', name: 'Meme Lord',           desc: 'Own 25 Meme Coin positions.',                                     mult: 1.05,  check: () => (state.assets.meme?.owned || 0) >= 25 },
-  { id: 'diversified',   icon: '&#128202;', name: 'Diversified',         desc: 'Own at least 1 of every unlocked asset.',                         mult: 1.10,  check: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked)).every(a => (state.assets[a.id]?.owned || 0) >= 1) },
+  { id: 'diversified',   icon: '&#128202;', name: 'Diversified',         desc: 'Own at least 1 of every unlocked asset.',                         mult: 1.10,  check: () => ASSETS.filter(a => a.market !== 'blackmkt' && (a.market !== 'london' || state.londonUnlocked)).every(a => (state.assets[a.id]?.owned || 0) >= 1) },
   { id: 'first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1M lifetime (this run or any).',                            mult: 1.05,  check: () => (state.allTimeEarnings || 0) >= 1e6 },
   { id: 'wolf_st',       icon: '&#128054;', name: 'Wolf of Wall St',     desc: 'Earn $1B lifetime.',                                              mult: 1.10,  check: () => (state.allTimeEarnings || 0) >= 1e9 },
   { id: 'diamond_hands', icon: '&#128142;', name: 'Diamond Hands',       desc: 'Survive a meme coin rug pull.',                                   mult: 1.15,  check: () => (state.rugPullsExperienced || 0) >= 1 },
@@ -2265,19 +2372,18 @@ const UNLOCKS = [
   { id: 'quarter_k',     icon: '&#128200;', name: 'Quarter Millennial',   desc: 'Own 500 positions on any single asset.',                           mult: 1.08,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 500) },
   { id: 'triple_digit',  icon: '&#127775;', name: 'Four-Figure Club',     desc: 'Own 1,000 positions on any single asset.',                         mult: 1.10,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 1000) },
   { id: 'titan',         icon: '&#128081;', name: 'Market Titan',         desc: 'Own 2,000 positions on any single asset.',                         mult: 1.15,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 2000) },
-  { id: 'dark_lord',     icon: '&#9899;',   name: 'Dark Market Lord',     desc: 'Earn 1,000 gold on the Black Market.',                             mult: 1.08,  check: () => (state.lifetimeGold || 0) >= 1000 },
   { id: 'london_calling',icon: '&#127980;', name: 'London Calling',       desc: 'Earn £1B lifetime on London Exchange.',                            mult: 1.10,  check: () => (state.lifetimeGbp || 0) >= 1e9 },
   { id: 'ipo_machine',   icon: '&#127974;', name: 'IPO Machine',          desc: 'Take your firm public 10 times.',                                  mult: 1.10,  check: () => (state.totalIPOs || 0) >= 10 },
   { id: 'dynasty',       icon: '&#128081;', name: 'Dynasty',              desc: 'Make 10 Influence Investments.',                                   mult: 1.12,  check: () => (state.influenceInvested || 0) >= 10 },
   { id: 'trillion_club', icon: '&#128176;', name: 'Trillion Club',        desc: 'Earn $1 Trillion USD lifetime on Wall Street.',                    mult: 1.20,  check: () => (state.allTimeEarnings || 0) >= 1e12 },
 ];
-const NEWS_MAX = 30;
+const NEWS_MAX = 15;
 
 // Quests — completable goals that grant gold. One-time per save.
 const QUESTS = [
   { id: 'q_first_steps',   icon: '&#128181;', name: 'First Steps',         desc: 'Execute 10 trades.',                    target: () => 10,  progress: () => state.totalTrades || 0,                                                       reward: 2 },
   { id: 'q_buying_in',     icon: '&#128722;', name: 'Buying In',           desc: 'Own 25 positions across all assets.',   target: () => 25,  progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),             reward: 5 },
-  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every unlocked asset.',      target: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked)).length, progress: () => ASSETS.filter(a => (a.market !== 'london' || state.londonUnlocked) && (a.market !== 'blackmkt' || state.blackmktUnlocked) && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 10 },
+  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every unlocked asset.',      target: () => ASSETS.filter(a => a.market !== 'blackmkt' && (a.market !== 'london' || state.londonUnlocked)).length, progress: () => ASSETS.filter(a => a.market !== 'blackmkt' && (a.market !== 'london' || state.londonUnlocked) && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 10 },
   { id: 'q_crypto_curious',icon: '&#127852;', name: 'Crypto Curious',      desc: 'Own 5 Candy Crypto positions.',         target: () => 5,   progress: () => state.assets.dogz?.owned || 0,                                                reward: 5 },
   { id: 'q_first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1,000,000 lifetime.',             target: () => 1e6, progress: () => state.allTimeEarnings || 0,                                                   reward: 10 },
   { id: 'q_hedge_mgr',     icon: '&#128188;', name: 'Hedge Fund Manager',  desc: 'Hire 4 traders.',                       target: () => 4,   progress: () => Object.values(state.assets).filter(a => a.hired).length,                      reward: 10 },
@@ -2312,8 +2418,6 @@ const QUESTS = [
   { id: 'q_endgame_1k',    icon: '&#127775;', name: 'Four-Digit Holder',   desc: 'Own 1,000+ positions on any single asset.', target: () => 1000, progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),              reward: 100 },
   { id: 'q_total_10k',     icon: '&#128200;', name: 'Portfolio Titan',     desc: 'Own 10,000 total positions across all assets.', target: () => 10000, progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),      reward: 60 },
   { id: 'q_ipo_10',        icon: '&#127974;', name: 'Serial Founder',      desc: 'Take your firm public 10 times.',          target: () => 10,  progress: () => state.totalIPOs || 0,                                                           reward: 75 },
-  { id: 'q_gold_master',   icon: '&#129689;', name: 'Gold Hoarder',        desc: 'Earn 1,000 gold lifetime on the Black Market.',target: () => 1000, progress: () => state.lifetimeGold || 0,                                                  reward: 50 },
-  { id: 'q_gold_vault',    icon: '&#127963;', name: 'Vault Operator',      desc: 'Earn 10,000 gold lifetime on the Black Market.',target: () => 10000, progress: () => state.lifetimeGold || 0,                                               reward: 125 },
   { id: 'q_gbp_billionaire',icon: '&#163;',  name: 'City of London',      desc: 'Earn £1,000,000,000 lifetime on London Exchange.',target: () => 1e9, progress: () => state.lifetimeGbp || 0,                                                 reward: 60 },
   { id: 'q_click_1k',      icon: '&#128075;', name: 'Chronic Clicker',     desc: 'Manually execute 1,000 trades.',            target: () => 1000, progress: () => state.manualTrades || 0,                                                     reward: 25 },
   { id: 'q_all_premium',   icon: '&#127881;', name: 'Full House',          desc: 'Hire all 5 Wall Street premium managers.',  target: () => 5,   progress: () => ['senator','quant','cfo','whistleblower','the_algorithm'].filter(id => state.premiumOwned?.[id]).length, reward: 75 },
@@ -2321,7 +2425,6 @@ const QUESTS = [
   { id: 'q_ipo_25',        icon: '&#128276;', name: 'Dynasty Builder',     desc: 'Take your firm public 25 times.',           target: () => 25,  progress: () => state.totalIPOs || 0,                                                          reward: 200 },
   { id: 'q_yen_trillion',  icon: '&#165;',    name: 'Tokyo Titan',         desc: 'Earn ¥1,000,000,000,000 lifetime.',         target: () => 1e12, progress: () => state.lifetimeYen || 0,                                                       reward: 80 },
   { id: 'q_invest_10',     icon: '&#128081;', name: 'Influence Baron',     desc: 'Make 10 Influence Investments.',            target: () => 10,  progress: () => state.influenceInvested || 0,                                                   reward: 60 },
-  { id: 'q_bm_all',        icon: '&#9899;',   name: 'Dark Operator',       desc: 'Own at least 1 of every Black Market asset.', target: () => 6, progress: () => ASSETS.filter(a => a.market === 'blackmkt' && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 30 },
 ];
 
 // Premium managers — cost Influence (prestige currency).
@@ -2504,6 +2607,7 @@ const SFX = (() => {
     g.gain.setValueAtTime(vol, startAt);
     g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
     o.start(startAt); o.stop(startAt + dur + 0.01);
+    o.onended = () => { o.disconnect(); g.disconnect(); };
   }
 
   // Single soft "bloop" — pitch varies by asset tier (0-15).
@@ -2704,15 +2808,17 @@ let state = {
   gbp: 0,                   // London currency
   lifetimeGbp: 0,
   londonUnlocked: false,
-  // Black Market
-  lifetimeGold: 0,          // total gold earned from black market (never resets)
-  blackmktUnlocked: false,  // unlocks after sk_dark_pool skill (Dark Pool Access)
   influenceInvested: 0,     // repeatable influence sink; each +1 = +0.5% global payout (unlocked by sk_dynasty)
   // Chicago Pit
   pitCredits: 0,            // spendable credits (can be consumed by Squeeze)
   pitLifetimeCredits: 0,    // cumulative lifetime credits — never decreases, used for Megabuck milestones
   pitOrders: [],            // active tappable orders [{id, commodity, value, expiresAt}]
+  pitContract: null,        // active Pit Contract {id, value, expiresAt} or null
+  _lastPitContract: 0,      // ms timestamp of last contract spawn
   _lastPitSpawn: 0,         // ms timestamp of last order spawn
+  rushHourUntil: 0,         // ms timestamp when current rush hour ends (0 = inactive)
+  _rushHourLastAt: 0,       // ms timestamp when last rush hour started
+  _lastRushHourCheck: 0,    // ms timestamp of last rush hour trigger check
   pitMilestonesReached: {}, // credit threshold -> true when crossed
   pitMegabucksReached: {},  // lifetime threshold -> true when Megabuck was awarded
   activeSqueeze: null,      // { assetId, until } — Commodity Squeeze buff
@@ -2756,10 +2862,65 @@ const Haptic = (() => {
   };
 })();
 
+// ============ ADMOB v6 EVENT-BASED STATE MACHINE ============
+// @capacitor-community/admob v6 uses an event-based API — prepareRewardVideoAd() just
+// kicks off a network request; the ad is only ready when 'onRewardedVideoAdLoaded' fires.
+// Calling showRewardVideoAd() before that event = instant throw = the "3-tap" problem.
+// This state machine (idle→loading→ready→showing→idle) ensures we only show when ready.
+let _adState      = 'idle';   // idle | loading | ready | showing
+let _adLoadFor    = null;     // which placement is being loaded
+let _adPendingCb  = null;     // callback queued while ad is loading
+let _rewardEarned = false;    // set by onRewardedVideoAdRewarded before dismiss fires
+
+async function _preloadAd(placement) {
+  if (_adState !== 'idle') return;
+  const AdMob = window.Capacitor?.Plugins?.AdMob;
+  if (!AdMob || !window._adMobReady) return;
+  _adState   = 'loading';
+  _adLoadFor = placement;
+  try {
+    await AdMob.prepareRewardVideoAd({ adId: AD_UNIT_IDS[placement] || AD_UNIT_IDS.offline_double });
+    // onRewardedVideoAdLoaded listener will fire when the ad is actually ready
+  } catch(e) {
+    console.warn('AdMob prepare:', e);
+    _adState = 'idle';
+    if (_adPendingCb) { const cb = _adPendingCb; _adPendingCb = null; cb(false); }
+  }
+}
+
+async function _showLoadedAd() {
+  const AdMob = window.Capacitor?.Plugins?.AdMob;
+  if (!AdMob) return;
+  _adState = 'showing';
+  try { await AdMob.showRewardVideoAd(); }
+  catch(e) {
+    console.warn('AdMob show:', e);
+    _adState = 'idle';
+    if (_adPendingCb) { const cb = _adPendingCb; _adPendingCb = null; cb(false);
+      setTimeout(() => _preloadAd(_adLoadFor || 'income_boost'), 500);
+    }
+  }
+}
+
 // ============ MONETIZATION (Ad & IAP stubs) ============
+// AdMob ad unit IDs.
+// ADMOB_TEST_MODE: set to true while testing to use Google's guaranteed test ads.
+// Set to false before App Store submission to use real ad units.
+const ADMOB_TEST_MODE = false;
+const AD_UNIT_IDS = ADMOB_TEST_MODE ? {
+  // Google's official test rewarded ad unit — always serves a test ad
+  offline_double: 'ca-app-pub-3940256099942544/1712485313',
+  income_boost:   'ca-app-pub-3940256099942544/1712485313',
+  crash_bailout:  'ca-app-pub-3940256099942544/1712485313',
+} : {
+  // Real ad units — use these for App Store build
+  offline_double: 'ca-app-pub-2363991569160794/1980432124',
+  income_boost:   'ca-app-pub-2363991569160794/9725540291',
+  crash_bailout:  'ca-app-pub-2363991569160794/2343394206',
+};
+
 // All calls gracefully no-op on web (simulated).
-// In a Capacitor build: swap _showAdSim with Capacitor.Plugins.AdMob calls,
-// and _handleIAP with Capacitor.Plugins.InAppPurchase2.
+// On Capacitor iOS: uses real AdMob rewarded ads via @capacitor-community/admob.
 const Monetization = (() => {
   let _adCallback = null;
   let _adTimer = null;
@@ -2805,11 +2966,25 @@ const Monetization = (() => {
       // On web always allow. In Capacitor: check AdMob.isInitialized() etc.
       return true;
     },
-    showRewardedAd(placement, callback) {
+    async showRewardedAd(placement, callback) {
       if (!this.canShowAd()) { callback(false); return; }
       if (_adTimer !== null) { callback(false); return; } // already showing an ad
-      // Capacitor native hook (uncomment in App Store build):
-      // if (window.Capacitor?.Plugins?.AdMob) { ... return; }
+
+      // Capacitor native path — uses the event-based state machine above
+      if (window.Capacitor?.isNativePlatform() && window.Capacitor?.Plugins?.AdMob && window._adMobReady) {
+        if (_adState === 'showing') { callback(false); return; } // already on screen
+        _adPendingCb = callback;
+        if (_adState === 'ready') {
+          _adLoadFor = placement;
+          _showLoadedAd(); // ad is pre-loaded — fires instantly
+        } else {
+          // loading or idle — start/queue; onRewardedVideoAdLoaded will call _showLoadedAd
+          if (_adState !== 'loading') _preloadAd(placement);
+        }
+        return;
+      }
+
+      // Web fallback — 5-second simulation
       _showAdSim(callback);
     },
     skipAd() {
@@ -2821,9 +2996,39 @@ const Monetization = (() => {
       _adCallback = null;
     },
     purchaseIAP(productId, callback) {
-      // Capacitor native hook (uncomment in App Store build):
-      // if (window.Capacitor?.Plugins?.InAppPurchase2) { ... return; }
-      // Web fallback: simulate purchase (itch.io / demo — gives full item)
+      // Native path — cordova-plugin-purchase v13 (CdvPurchase namespace)
+      if (window.Capacitor?.isNativePlatform() && window.CdvPurchase?.store && window._iapReady) {
+        const store    = window.CdvPurchase.store;
+        const Platform = window.CdvPurchase.Platform;
+        const product  = store.get(productId, Platform.APPLE_APP_STORE);
+        if (!product) {
+          toast('Product not found. Try again shortly.');
+          callback(false);
+          return;
+        }
+        const offer = product.getOffer();
+        if (!offer) {
+          toast('No offer available. Try again shortly.');
+          callback(false);
+          return;
+        }
+        // Guard against double-tap: if a callback is already pending for this product, bail out
+        if (window._iapPendingCallbacks?.[productId]) {
+          toast('Purchase already in progress…');
+          return;
+        }
+        // Register one-shot callback so delivery fires after verified+finished
+        window._iapPendingCallbacks = window._iapPendingCallbacks || {};
+        window._iapPendingCallbacks[productId] = callback;
+        offer.order().catch(err => {
+          console.warn('IAP order error:', err);
+          if (window._iapPendingCallbacks) delete window._iapPendingCallbacks[productId];
+          callback(false);
+        });
+        return;
+      }
+
+      // Web fallback — auto-confirms for demo/itch.io builds (no native dialog available)
       const label = {
         starter_pack: 'Starter Pack — 50 Gold',
         mb_5:  '5 Megabucks',
@@ -2831,12 +3036,121 @@ const Monetization = (() => {
         mb_50: '50 Megabucks',
         mb_150:'150 Megabucks',
       }[productId] || productId;
-      // Web demo: auto-confirm without native dialog (prompt/confirm not available in Capacitor WKWebView)
       toast('💳 Demo purchase: ' + label + ' (free in web build)');
       setTimeout(() => callback(true), 200);
     },
+
+    restorePurchases() {
+      // Required by Apple — lets players recover non-consumables (starter_pack) on a new device.
+      if (window.Capacitor?.isNativePlatform() && window.CdvPurchase?.store) {
+        toast('Restoring purchases…');
+        window.CdvPurchase.store.restorePurchases().then(() => {
+          toast('Restore complete.');
+        }).catch(() => {
+          toast('Restore failed. Check your connection and try again.');
+        });
+      } else {
+        toast('Nothing to restore in web build.');
+      }
+    },
   };
 })();
+
+// ============ IAP (cordova-plugin-purchase v13) ============
+// initIAP() is called from boot(). Safe no-op on web where CdvPurchase is absent.
+// Products must be created in App Store Connect before submissions:
+//   starter_pack — Non-Consumable,  $2.99  (50 Gold — one-time)
+//   mb_5         — Consumable,      $0.99  (5 Megabucks)
+//   mb_15        — Consumable,      $2.99  (15 Megabucks)
+//   mb_50        — Consumable,      $7.99  (50 Megabucks)
+//   mb_150       — Consumable,      $19.99 (150 Megabucks)
+function initIAP() {
+  if (!window.Capacitor?.isNativePlatform()) return;
+
+  // cordova-plugin-purchase loads via the Cordova bridge which fires 'deviceready'
+  // asynchronously — CdvPurchase isn't available until that event. Wait for it.
+  function _setup() {
+    if (!window.CdvPurchase?.store) {
+      console.warn('cordova-plugin-purchase not found — IAP disabled.');
+      return;
+    }
+    _initIAPStore();
+  }
+
+  if (document.readyState === 'complete' && window.CdvPurchase?.store) {
+    _setup(); // already ready (shouldn't happen but handle it)
+  } else {
+    document.addEventListener('deviceready', _setup, { once: true });
+  }
+}
+
+function _initIAPStore() {
+  const { store, ProductType, Platform } = window.CdvPurchase;
+
+  // Register all products before calling initialize()
+  store.register([
+    { id: 'starter_pack', type: ProductType.NON_CONSUMABLE, platform: Platform.APPLE_APP_STORE },
+    { id: 'mb_5',         type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APP_STORE },
+    { id: 'mb_15',        type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APP_STORE },
+    { id: 'mb_50',        type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APP_STORE },
+    { id: 'mb_150',       type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APP_STORE },
+  ]);
+
+  // Purchase lifecycle: approved → verify → finish → deliver
+  store.when()
+    .approved(transaction => {
+      // Client-side verification is sufficient for a game of this scale.
+      // For server-side receipt validation, swap verify() with a fetch() to your backend.
+      transaction.verify();
+    })
+    .verified(receipt => {
+      receipt.finish();
+    })
+    .finished(transaction => {
+      // Deliver each product in the transaction
+      transaction.products.forEach(p => _deliverIAPProduct(p.id));
+    });
+
+  // Initialize the App Store platform
+  store.initialize([Platform.APPLE_APP_STORE]).then(() => {
+    window._iapReady = true;
+    console.log('IAP store ready.');
+  }).catch(err => {
+    console.warn('IAP init failed:', err);
+  });
+}
+
+// Called by the store when a purchase is verified+finished.
+// Also called during restorePurchases() for non-consumables.
+function _deliverIAPProduct(productId) {
+  const cb = (window._iapPendingCallbacks || {})[productId];
+  if (window._iapPendingCallbacks) delete window._iapPendingCallbacks[productId];
+
+  if (productId === 'starter_pack') {
+    if (!state.starterPackOwned) {
+      onStarterPackPurchased(true);
+    } else {
+      // Already owned — restore silently (non-consumable re-deliver on restore flow)
+      toast('🎁 Starter Pack already applied to your account.');
+    }
+    if (cb) cb(true);
+  } else {
+    // Megabucks consumable
+    if (cb) {
+      cb(true); // onMegabucksPurchased handles state update and UI
+    } else {
+      // Delivery without a pending callback = restore flow for a consumable (shouldn't happen,
+      // but handle gracefully so the player doesn't lose MB on edge cases)
+      const pkg = MB_PACKAGES.find(p => p.id === productId);
+      if (pkg) {
+        state.megabucks = (state.megabucks || 0) + pkg.amount;
+        toast('💎 Restored ' + pkg.amount + ' Megabucks.');
+        renderCash();
+        save();
+      }
+    }
+  }
+}
 
 // ============ INCOME DOUBLER ============
 // Active when state.incomeDoublerUntil > Date.now()
@@ -2899,6 +3213,38 @@ function updateDoublerUI() {
   if (adBtn) adBtn.style.display = active ? 'none' : '';
 }
 
+// ============ LAUNCH AD OFFER ============
+function maybeShowLaunchAdOffer() {
+  // Only show on native iOS/Android
+  if (!window.Capacitor?.isNativePlatform()) return;
+  // Only after tutorial is complete
+  if (state.tutorialStep !== 'done') return;
+  // Don't show if income doubler is already running
+  if (state.incomeDoublerUntil && Date.now() < state.incomeDoublerUntil) return;
+  // Need at least one hired trader before bothering the player
+  const hasTrader = Object.values(state.staff || {}).some(s => s > 0);
+  if (!hasTrader) return;
+  // Show at most once per 4-hour session window
+  const lastShown = state._launchOfferShown || 0;
+  if (Date.now() - lastShown < 4 * 60 * 60 * 1000) return;
+
+  const el = document.getElementById('launchAdOffer');
+  if (!el) return;
+  el.style.display = 'flex';
+  state._launchOfferShown = Date.now();
+  save();
+}
+
+function dismissLaunchAdOffer() {
+  const el = document.getElementById('launchAdOffer');
+  if (el) el.style.display = 'none';
+}
+
+function acceptLaunchAdOffer() {
+  dismissLaunchAdOffer();
+  showRewardedAd('income_boost', onIncomeBoostRewarded);
+}
+
 // ============ DAILY QUESTS ============
 const DAILY_QUEST_POOL = [
   { id: 'dq_trades_100',  name: 'Day Trader',       icon: '&#128200;', desc: 'Execute 100 trades today.',          type: 'trades',    target: 100,  reward: 3 },
@@ -2952,7 +3298,6 @@ function resetDailyQuestsIfNeeded() {
   // Snapshot current counters so we track only *today's* delta
   state.dailySnapTrades  = state.totalTrades || 0;
   state.dailySnapManual  = state.manualTrades || 0;
-  state.dailySnapBuys    = 0; // tracked fresh each day
   state.dailySnapEvents  = 0;
   state.dailySnapPit     = 0;
   state.dailyEarnCashStart = state.allTimeEarnings || 0;
@@ -3054,31 +3399,13 @@ let _pendingOfflineModal = null;
 
 function showWelcomeBackModal(earningsData) {
   _pendingOfflineModal = earningsData;
-  const { cashGain, yenGain, gbpGain, goldGain, offlineSec } = earningsData;
+  const { cashGain, yenGain, gbpGain, offlineSec } = earningsData;
 
-  // Build main total (use highest single value as the hero number)
-  const wbTotal = document.getElementById('wbTotal');
+  // Build parts list
   const parts = [];
-  if (cashGain > 0) parts.push({ val: cashGain, str: fmt(cashGain), label: 'Wall St.' });
-  if (yenGain  > 0) parts.push({ val: yenGain,  str: fmt(yenGain, 'yen'), label: 'Tokyo' });
-  if (gbpGain  > 0) parts.push({ val: gbpGain,  str: fmt(gbpGain, 'gbp'), label: 'London' });
-  if (goldGain > 0) parts.push({ val: goldGain, str: fmt(goldGain, 'gold'), label: 'Black Market' });
-
-  if (wbTotal && parts.length > 0) {
-    // Show the biggest one as hero
-    const hero = parts.reduce((a, b) => a.val > b.val ? a : b);
-    wbTotal.textContent = hero.str;
-  }
-
-  // Build per-market breakdown
-  const breakdown = document.getElementById('wbBreakdown');
-  if (breakdown && parts.length > 1) {
-    breakdown.innerHTML = parts.map(p =>
-      `<div class="wb-market-row"><span>${p.label}</span><span class="val">${p.str}</span></div>`
-    ).join('');
-  } else if (breakdown) {
-    breakdown.innerHTML = '';
-  }
+  if (cashGain > 0) parts.push({ val: cashGain, currency: 'cash', label: 'Wall St.' });
+  if (yenGain  > 0) parts.push({ val: yenGain,  currency: 'yen',  label: 'Tokyo' });
+  if (gbpGain  > 0) parts.push({ val: gbpGain,  currency: 'gbp',  label: 'London' });
 
   // Time away label
   const hrs = Math.floor(offlineSec / 3600);
@@ -3087,10 +3414,48 @@ function showWelcomeBackModal(earningsData) {
   const label = document.querySelector('#wbEarningsBox .wb-earnings-label');
   if (label) label.textContent = `Away for ${timeAway}`;
 
-  // The ad button should only show if there's a meaningful amount to double
-  const totalValue = cashGain + yenGain + gbpGain + goldGain;
+  // Hide breakdown and ad button until count-up finishes
+  const breakdown = document.getElementById('wbBreakdown');
+  if (breakdown) breakdown.innerHTML = '';
   const adBtn = document.getElementById('wbAdBtn');
-  if (adBtn) adBtn.style.display = totalValue > 1 ? '' : 'none';
+  if (adBtn) adBtn.style.display = 'none';
+
+  // Animate hero number from 0 → final value
+  const wbTotal = document.getElementById('wbTotal');
+  if (wbTotal && parts.length > 0) {
+    const hero = parts.reduce((a, b) => a.val > b.val ? a : b);
+    wbTotal.textContent = fmt(0, hero.currency);
+    const duration = Math.min(1400, 600 + parts.length * 150);
+    const startTime = performance.now();
+    function countUp(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      wbTotal.textContent = fmt(hero.val * eased, hero.currency);
+      if (t < 1) {
+        requestAnimationFrame(countUp);
+      } else {
+        wbTotal.textContent = fmt(hero.val, hero.currency);
+        // Reveal breakdown + ad button after count finishes
+        if (breakdown && parts.length > 1) {
+          breakdown.innerHTML = parts.map(p =>
+            `<div class="wb-market-row"><span>${p.label}</span><span class="val">${fmt(p.val, p.currency)}</span></div>`
+          ).join('');
+          breakdown.style.opacity = '0';
+          breakdown.style.transition = 'opacity 0.4s ease';
+          requestAnimationFrame(() => { breakdown.style.opacity = '1'; });
+        }
+        const totalValue = cashGain + yenGain + gbpGain;
+        if (adBtn && totalValue > 1) {
+          adBtn.style.display = '';
+          adBtn.style.opacity = '0';
+          adBtn.style.transition = 'opacity 0.4s ease';
+          requestAnimationFrame(() => { adBtn.style.opacity = '1'; });
+        }
+        Haptic.success();
+      }
+    }
+    requestAnimationFrame(countUp);
+  }
 
   openModal('welcomeBackModal');
 }
@@ -3099,12 +3464,42 @@ function doubleOfflineEarnings() {
   Monetization.showRewardedAd('offline_double', (rewarded) => {
     if (!rewarded) { toast('Ad skipped — reward not earned.'); return; }
     if (!_pendingOfflineModal) return;
-    const { cashGain, yenGain, gbpGain, goldGain } = _pendingOfflineModal;
+    const { cashGain, yenGain, gbpGain } = _pendingOfflineModal;
     if (cashGain > 0) { state.cash += cashGain; state.lifetimeEarnings += cashGain; state.allTimeEarnings += cashGain; }
     if (yenGain  > 0) { state.yen = (state.yen || 0) + yenGain; state.lifetimeYen = (state.lifetimeYen || 0) + yenGain; }
     if (gbpGain  > 0) { state.gbp = (state.gbp || 0) + gbpGain; state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpGain; }
-    if (goldGain > 0) { state.gold = (state.gold || 0) + goldGain; state.lifetimeGold = (state.lifetimeGold || 0) + goldGain; }
     _pendingOfflineModal = null;
+
+    // Update modal display to show doubled totals
+    const doubled = [
+      { val: cashGain * 2, currency: 'cash', label: 'Wall St.' },
+      { val: yenGain  * 2, currency: 'yen',  label: 'Tokyo' },
+      { val: gbpGain  * 2, currency: 'gbp',  label: 'London' },
+    ].filter(p => p.val > 0);
+    if (doubled.length > 0) {
+      const hero = doubled.reduce((a, b) => a.val > b.val ? a : b);
+      const wbTotal = document.getElementById('wbTotal');
+      const breakdown = document.getElementById('wbBreakdown');
+      if (wbTotal) {
+        const prev = hero.val / 2;
+        const startTime = performance.now();
+        const duration = 600;
+        function animateDouble(now) {
+          const t = Math.min((now - startTime) / duration, 1);
+          const eased = 1 - Math.pow(1 - t, 3);
+          wbTotal.textContent = fmt(prev + (hero.val - prev) * eased, hero.currency);
+          if (t < 1) requestAnimationFrame(animateDouble);
+          else wbTotal.textContent = fmt(hero.val, hero.currency);
+        }
+        requestAnimationFrame(animateDouble);
+      }
+      if (breakdown && doubled.length > 1) {
+        breakdown.innerHTML = doubled.map(p =>
+          `<div class="wb-market-row"><span>${p.label}</span><span class="val">${fmt(p.val, p.currency)}</span></div>`
+        ).join('');
+      }
+    }
+
     Haptic.success();
     celebrate('🎉 DOUBLED!', 'Your offline earnings were doubled!');
     document.getElementById('wbAdBtn').style.display = 'none';
@@ -3113,35 +3508,8 @@ function doubleOfflineEarnings() {
   });
 }
 
-// ============ COIN FLY PARTICLES ============
-// Spawns small coin particles that fly from the asset bar to the cash display
-function spawnCoinParticles(fromEl, count) {
-  if (!fromEl) return;
-  const cashEl = document.getElementById('cash');
-  if (!cashEl) return;
-  const fromRect = fromEl.getBoundingClientRect();
-  const toRect   = cashEl.getBoundingClientRect();
-  // Bail if target element is off-screen or not rendered
-  if (toRect.width === 0 && toRect.height === 0) return;
-  const toX = (toRect.left + toRect.right) / 2;
-  const toY = (toRect.top + toRect.bottom) / 2;
-  const symbols = ['💰', '💵', '$', '💲'];
-  for (let i = 0; i < count; i++) {
-    const el = document.createElement('div');
-    el.className = 'coin-particle';
-    const startX = fromRect.left + Math.random() * fromRect.width;
-    const startY = fromRect.top  + Math.random() * fromRect.height;
-    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
-    el.style.left = startX + 'px';
-    el.style.top  = startY + 'px';
-    const dx = toX - startX;
-    const dy = toY - startY;
-    el.style.setProperty('--coin-end-xy', `translate(${dx}px, ${dy}px)`);
-    el.style.animationDelay = (i * 60) + 'ms';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 900 + i * 60);
-  }
-}
+// Coin fly particles disabled
+function spawnCoinParticles() {}
 
 // ============ HELPERS ============
 function fmt(n, currency) {
@@ -3158,7 +3526,7 @@ function fmt(n, currency) {
   while (n >= 1000 && i < units.length - 1) { n /= 1000; i++; }
   return sym + n.toFixed(2) + units[i];
 }
-// Per-asset currency helpers — Tokyo uses yen, London uses gbp, Black Market uses gold.
+// Per-asset currency helpers — Tokyo uses yen, London uses gbp.
 function currencyOf(asset) {
   if (asset.market === 'tokyo')    return 'yen';
   if (asset.market === 'london')   return 'gbp';
@@ -3172,18 +3540,16 @@ function getMoney(asset) {
   return state.cash;
 }
 function spendMoney(asset, amt) {
-  if (asset.market === 'tokyo')    state.yen -= amt;
-  else if (asset.market === 'london')   state.gbp -= amt;
-  else state.cash -= amt;  // both wallst and BM spend cash
+  if (asset.market === 'tokyo')  { state.yen  = Math.max(0, (state.yen  || 0) - amt); }
+  else if (asset.market === 'london') { state.gbp = Math.max(0, (state.gbp || 0) - amt); }
+  else { state.cash = Math.max(0, state.cash - amt); }
 }
 // Format a buy cost using the correct currency for the asset's market
 function buyFmt(asset, cost) {
-  if (asset.market === 'blackmkt') return fmt(cost, 'cash'); // BM buys in cash
   return fmtAsset(cost, asset);
 }
-// Returns the currency key used to PURCHASE a position (distinct from payout currency for BM)
+// Returns the currency key used to PURCHASE a position
 function buyCurrencyOf(asset) {
-  if (asset.market === 'blackmkt') return 'cash';
   return currencyOf(asset);
 }
 function earnMoney(asset, amt) {
@@ -3193,9 +3559,6 @@ function earnMoney(asset, amt) {
   } else if (asset.market === 'london') {
     state.gbp = (state.gbp || 0) + amt;
     state.lifetimeGbp = (state.lifetimeGbp || 0) + amt;
-  } else if (asset.market === 'blackmkt') {
-    state.gold = (state.gold || 0) + amt;
-    state.lifetimeGold = (state.lifetimeGold || 0) + amt;
   } else {
     state.cash += amt;
     state.lifetimeEarnings += amt;
@@ -3447,7 +3810,7 @@ function addNews(headline, detail, kind) {
   if (state.newsLog.length > NEWS_MAX) state.newsLog.length = NEWS_MAX;
   if (state.activeTab !== 'news' && !state.hasUnseenNews) {
     state.hasUnseenNews = true;
-    document.querySelector('.tab-btn[data-tab="news"]').classList.add('has-news');
+    const _nb = document.getElementById('nav-news-btn'); if (_nb) _nb.classList.add('has-dot');
   }
 }
 
@@ -3468,16 +3831,16 @@ function checkUnlocks() {
       any = true;
       if (state.activeTab !== 'unlocks') {
         state.hasUnseenUnlock = true;
-        const btn = document.querySelector('.tab-btn[data-tab="unlocks"]');
-        if (btn) btn.classList.add('has-news');
+        const btn = document.getElementById('nav-goals-btn');
+        if (btn) btn.classList.add('has-dot');
       }
     }
   });
   // Quest completion notification — light up GOALS tab when a quest becomes claimable
   const anyQuestReady = QUESTS.some(q => !state.questsClaimed[q.id] && q.progress() >= q.target());
-  const goalsBtn = document.querySelector('.tab-btn[data-tab="unlocks"]');
+  const goalsBtn = document.getElementById('nav-goals-btn');
   if (goalsBtn && anyQuestReady && state.activeTab !== 'unlocks') {
-    goalsBtn.classList.add('has-news');
+    goalsBtn.classList.add('has-dot');
   }
   if (any) { renderCash(); save(); }
 }
@@ -3491,8 +3854,8 @@ function updateTabBadges() {
     if (p.goldCost)      return (state.gold || 0) >= p.goldCost;
     return false;
   });
-  const staffBtn = document.querySelector('.tab-btn[data-tab="managers"]');
-  if (staffBtn && state.activeTab !== 'managers') staffBtn.classList.toggle('has-news', canAffordManager);
+  const staffBtn = document.getElementById('nav-staff-btn');
+  if (staffBtn && state.activeTab !== 'managers') staffBtn.classList.toggle('has-dot', canAffordManager);
 
   // PERKS tab: any un-bought boost, HFT perk, mega ticket, or lifestyle item the player can afford
   const canAffordPerk =
@@ -3503,15 +3866,15 @@ function updateTabBadges() {
     LIFESTYLE.some(l => !state.lifestyleOwned?.[l.id] &&
       (state.cash || 0) >= (l.cashCost || 0) &&
       (l.megabucksCost ? (state.megabucks || 0) >= l.megabucksCost : (state.gold || 0) >= (l.goldCost || 0)));
-  const perksBtn = document.querySelector('.tab-btn[data-tab="perks"]');
-  if (perksBtn && state.activeTab !== 'perks') perksBtn.classList.toggle('has-news', canAffordPerk);
+  const perksBtn = document.getElementById('nav-perks-btn');
+  if (perksBtn && state.activeTab !== 'perks') perksBtn.classList.toggle('has-dot', canAffordPerk);
 
   // SKILLS tab: any un-bought skill the player can afford (all skills cost gold)
   const canAffordSkill = SKILL_TREE.some(row =>
     row.nodes.some(n => !state.skillsOwned?.[n.id] && (state.gold || 0) >= n.goldCost)
   );
-  const skillsBtn = document.querySelector('.tab-btn[data-tab="skills"]');
-  if (skillsBtn && state.activeTab !== 'skills') skillsBtn.classList.toggle('has-news', canAffordSkill);
+  const skillsBtn = document.getElementById('nav-skills-btn');
+  if (skillsBtn && state.activeTab !== 'skills') skillsBtn.classList.toggle('has-dot', canAffordSkill);
 
 }
 
@@ -3535,10 +3898,10 @@ function totalIncomePerSec() {
   return total;
 }
 function prestigeGain() {
-  // AdVenture Capitalist angel style — no cap. Go deeper, earn more.
-  // Formula: 8 * sqrt(Earnings / 1M). $1M → 8, $100M → 80, $1B → 253, $10B → 800, $1T → 8,000.
+  // Formula: 5 * sqrt(Earnings / 1M). $1M → 5, $100M → 50, $1B → 158, $10B → 500, $1T → 5,000.
+  // Raised bar from coeff 8 → 5 on 2026-05-22 so each IPO requires more progress. Leverage matters more.
   if (state.lifetimeEarnings < 1e6) return 0;
-  let totalPossible = Math.floor(8 * Math.sqrt(state.lifetimeEarnings / 1e6));
+  let totalPossible = Math.floor(5 * Math.sqrt(state.lifetimeEarnings / 1e6));
   let pending = totalPossible - (state.influence + (state.influenceSpent || 0));
   return Math.max(0, pending);
 }
@@ -3546,7 +3909,7 @@ function prestigeGain() {
 function nextPrestigeAt() {
   // Calculates the cash needed for the next +1 token
   const nextTarget = (state.influence + (state.influenceSpent || 0)) + prestigeGain() + 1;
-  return Math.pow(nextTarget / 150, 2) * 1e6;
+  return Math.pow(nextTarget / 5, 2) * 1e6;
 }
 
 // ============ EVENTS ============
@@ -3555,8 +3918,8 @@ function nextPrestigeAt() {
 const EVENTS = [
   // Common positive events
   { sector: 'all',           mult: 1.5,  dur: 25, headline: 'FED CUTS RATES',        detail: 'All payouts +50% briefly.',      bad: false, weight: 10 },
-  { sector: 'crypto',        mult: 4,    dur: 18, headline: '$CNDY ON A SUGAR HIGH', detail: 'Candy Crypto x4 payouts!',       bad: false, weight: 10 },
-  { sector: 'meme',          mult: 5,    dur: 15, headline: 'WSB PUMPS $MEME',       detail: 'Meme coins x5 payouts!',         bad: false, weight: 10 },
+  { sector: 'crypto',        mult: 3,    dur: 18, headline: '$CNDY ON A SUGAR HIGH', detail: 'Candy Crypto x3 payouts!',       bad: false, weight: 10 },
+  { sector: 'meme',          mult: 4,    dur: 15, headline: 'WSB PUMPS $MEME',       detail: 'Meme coins x4 payouts!',         bad: false, weight: 10 },
   { sector: 'tech',          mult: 3,    dur: 20, headline: 'AI HYPE CYCLE',         detail: 'Tech sector x3 payouts!',        bad: false, weight: 10 },
   { sector: 'retail',        mult: 3,    dur: 18, headline: 'RETAIL FOMO',           detail: 'Penny Stocks x3 payouts!',       bad: false, weight: 10 },
   { sector: 'institutional', mult: 3.5,  dur: 22, headline: 'WHALE BUYS',            detail: 'Institutional x3.5 payouts!',    bad: false, weight: 10 },
@@ -3569,16 +3932,16 @@ const EVENTS = [
   { sector: 'meme',          mult: 12,   dur: 12, headline: '$MEME GOES PARABOLIC',  detail: 'Meme coins x12! Diamond hands.', bad: false, weight: 3 },
   { sector: 'meme',          mult: 0.05, dur: 10, headline: 'MEME COIN RUG PULL',    detail: 'Devs vanished. -95% crash.',     bad: true,  weight: 0.3, rugPull: true },
 
-  // Tokyo Trading Floor events
-  { sector: 't_culture',     mult: 2.5,  dur: 20, headline: 'CHERRY BLOSSOM FEVER',  detail: 'Tourism peaks as the trees bloom across the city.',     bad: false, weight: 10 },
-  { sector: 't_food',        mult: 4,    dur: 15, headline: 'TSUKIJI MARKET RAID',   detail: 'Record-breaking Bluefin tuna sale pumps the market.',   bad: false, weight: 5 },
-  { sector: 't_industry',    mult: 3,    dur: 25, headline: 'NEW CONSOLE LAUNCH',    detail: 'Gamers lining up around the block in Akihabara.',       bad: false, weight: 5 },
-  { sector: 'all',           mult: 0.2,  dur: 25, headline: 'GODZILLA WARNING',      detail: "It's just a movie promo, but the city panicked anyway.",bad: true,  weight: 2 },
-  { sector: 't_industry',    mult: 5,    dur: 30, headline: 'MAGLEV BREAKTHROUGH',   detail: 'Tokyo to Osaka in record time sends stocks soaring.',   bad: false, weight: 2 },
+  // Tokyo Trading Floor events — only fire after Tokyo is unlocked
+  { sector: 't_culture',     mult: 2.5,  dur: 20, headline: 'CHERRY BLOSSOM FEVER',  detail: 'Tourism peaks as the trees bloom across the city.',     bad: false, weight: 10, tokyoOnly: true },
+  { sector: 't_food',        mult: 3,    dur: 15, headline: 'TSUKIJI MARKET RAID',   detail: 'Record-breaking Bluefin tuna sale pumps the market.',   bad: false, weight: 5,  tokyoOnly: true },
+  { sector: 't_industry',    mult: 3,    dur: 25, headline: 'NEW CONSOLE LAUNCH',    detail: 'Gamers lining up around the block in Akihabara.',       bad: false, weight: 5,  tokyoOnly: true },
+  { sector: 'all',           mult: 0.2,  dur: 25, headline: 'GODZILLA WARNING',      detail: "It's just a movie promo, but the city panicked anyway.",bad: true,  weight: 2,  tokyoOnly: true },
+  { sector: 't_industry',    mult: 4,    dur: 30, headline: 'MAGLEV BREAKTHROUGH',   detail: 'Tokyo to Osaka in record time sends stocks soaring.',   bad: false, weight: 2,  tokyoOnly: true },
 
   // London Stock Exchange events — only fire after London is unlocked
   { sector: 'l_finance',   mult: 3,    dur: 20, headline: 'BANKER BONUS SEASON',     detail: 'City bonuses reinstated. Porsche sales up 400%.',            bad: false, weight: 8,  londonOnly: true },
-  { sector: 'l_energy',   mult: 4,    dur: 18, headline: 'OIL PRICE SPIKE',          detail: 'Brent Crude hits a 12-year high. Your desk is printing.',    bad: false, weight: 5,  londonOnly: true },
+  { sector: 'l_energy',   mult: 3,    dur: 18, headline: 'OIL PRICE SPIKE',          detail: 'Brent Crude hits a 12-year high. Your desk is printing.',    bad: false, weight: 5,  londonOnly: true },
   { sector: 'l_forex',    mult: 3.5,  dur: 22, headline: 'STERLING SURGE',           detail: 'GBP hits a 12-month high. The pound is back, baby.',          bad: false, weight: 6,  londonOnly: true },
   { sector: 'l_property', mult: 2.5,  dur: 25, headline: 'ROYAL ESTATE FRENZY',      detail: 'Posh postcodes up 40%. Estate agents weeping tears of joy.',  bad: false, weight: 6,  londonOnly: true },
   { sector: 'l_commodity',mult: 3.5,  dur: 15, headline: 'TEA FUTURES SQUEEZE',      detail: 'Drought in Darjeeling. Tea futures through the roof.',         bad: false, weight: 5,  londonOnly: true },
@@ -3595,12 +3958,13 @@ const MAX_RUG_PULLS = 2;
 function pickWeightedEvent() {
   // Skill: Event Bias — 20% chance to force a positive event
   if (state.skillsOwned?.sk_bias && Math.random() < 0.20) {
-    const positives = EVENTS.filter(e => !e.bad && !e.rugPull && (!e.londonOnly || state.londonUnlocked));
+    const positives = EVENTS.filter(e => !e.bad && !e.rugPull && (!e.londonOnly || state.londonUnlocked) && (!e.tokyoOnly || state.tokyoUnlocked));
     if (positives.length) return positives[Math.floor(Math.random() * positives.length)];
   }
   const eligible = EVENTS.filter(e => {
     if (e.rugPull && (state.rugPullsExperienced || 0) >= MAX_RUG_PULLS) return false;
     if (e.londonOnly && !state.londonUnlocked) return false;
+    if (e.tokyoOnly && !state.tokyoUnlocked) return false;
     return true;
   });
   const total = eligible.reduce((s, e) => s + (e.weight || 10), 0);
@@ -3623,8 +3987,8 @@ function maybeFireEvent() {
   const kaiju = !!state.premiumOwned?.kaiju;
   // Sentiment Engine skill: events fire 50% more often
   const sentiment = !!state.skillsOwned?.sk_sentiment;
-  let cooldown = senate ? 33 : 45;
-  let rollChance = senate ? 0.0312 : 0.025;
+  let cooldown = senate ? 73 : 100;   // raised from 45 → 100s on 2026-05-24; senate keeps proportional edge (~27% faster)
+  let rollChance = senate ? 0.019 : 0.015;  // lowered from 0.025 → 0.015 on 2026-05-24; same senate ratio
   if (kaiju)     { cooldown = Math.round(cooldown * 0.67); rollChance *= 1.5; }
   if (sentiment) { cooldown = Math.round(cooldown * 0.67); rollChance *= 1.5; }
   if (sinceLast < cooldown) return;
@@ -3710,7 +4074,6 @@ function activateEvent(ev) {
     headline: ev.headline, detail: ev.detail, bad: ev.bad, rugPull: !!ev.rugPull,
   };
   // Bad non-rug events get a 12-second hedge window (rug pulls and black swans are not hedgeable)
-  state._hedgeWindowUntil = (ev.bad && !ev.rugPull) ? Date.now() + 12000 : 0;
   if (ev.rugPull) state.rugPullsExperienced = (state.rugPullsExperienced || 0) + 1;
   // Daily quest: event tracking
   if (!state.dailyProgress) state.dailyProgress = {};
@@ -3727,54 +4090,14 @@ function showEvent() {
   document.getElementById('eventDetail').textContent = state.activeEvent.detail;
   banner.classList.add('show');
   banner.classList.toggle('bad', state.activeEvent.bad);
-  updateHedgeUI();
 }
 function hideEvent() {
   document.getElementById('eventBanner').classList.remove('show');
-  const hc = document.getElementById('hedgeContainer');
-  if (hc) hc.style.display = 'none';
 }
 
 // Hedge Fund — costs 30 gold, reduces an active bad event's damage toward neutral.
 // Mechanic: new_mult = clamp(old_mult * 2.5, 0, 0.72) — e.g. 0.20 → 0.50, 0.30 → 0.72.
 // Only available for 12s after a bad event fires; one use per event.
-const HEDGE_COST = 30;
-function hedgeEvent() {
-  if (!state.activeEvent || !state.activeEvent.bad || state.activeEvent.hedged) return;
-  if ((state.gold || 0) < HEDGE_COST) { toast('Not enough gold to hedge.'); return; }
-  if (!state._hedgeWindowUntil || Date.now() > state._hedgeWindowUntil) { toast('Hedge window expired.'); return; }
-  state.gold -= HEDGE_COST;
-  // Soften the blow — at minimum brings mult to 0.50 regardless of original severity
-  state.activeEvent.mult = Math.min(Math.max(state.activeEvent.mult * 2.5, 0.50), 0.72);
-  state.activeEvent.hedged = true;
-  state._hedgeWindowUntil = 0; // one-time use
-  Haptic.success();
-  SFX.buy();
-  toast('🛡️ Hedged! Crash softened to ' + (state.activeEvent.mult * 100).toFixed(0) + '%.');
-  addNews('🛡️ HEDGE ACTIVATED', 'Market crash softened. Cost: 30 gold.', 'good');
-  updateHedgeUI();
-  renderCash();
-  renderAssets();
-  save();
-}
-
-function updateHedgeUI() {
-  const hc = document.getElementById('hedgeContainer');
-  const hb = document.getElementById('hedgeBtn');
-  const ht = document.getElementById('hedgeTimer');
-  if (!hc || !hb || !ht) return;
-  const now = Date.now();
-  const windowOpen = state._hedgeWindowUntil && now < state._hedgeWindowUntil
-    && state.activeEvent?.bad && !state.activeEvent?.hedged && !state.activeEvent?.rugPull;
-  hc.style.display = windowOpen ? '' : 'none';
-  if (windowOpen) {
-    const secsLeft = Math.ceil((state._hedgeWindowUntil - now) / 1000);
-    const canAfford = (state.gold || 0) >= HEDGE_COST;
-    hb.disabled = !canAfford;
-    hb.style.opacity = canAfford ? '1' : '0.5';
-    ht.textContent = secsLeft + 's remaining · ' + (canAfford ? 'halves the damage' : 'need ' + HEDGE_COST + 'g');
-  }
-}
 
 // ============ ACTIONS ============
 const _CURRENCY_NAME = { yen: 'Yen', gbp: 'GBP', gold: 'Gold', cash: 'cash' };
@@ -3899,9 +4222,9 @@ function useWhistleblower() {
   if (state.whistleblowerUsedThisRun) { toast('Already used this IPO cycle.'); return; }
   if (state.activeEvent) { toast('Wait for the current event to end.'); return; }
   state.whistleblowerUsedThisRun = true;
-  const ev = { sector: 'all', mult: 5, dur: 30, headline: 'WHISTLEBLOWER LEAK', detail: 'Receipts dropped. Markets surge x5 for 30s.', bad: false };
+  const ev = { sector: 'all', mult: 4, dur: 30, headline: 'WHISTLEBLOWER LEAK', detail: 'Receipts dropped. Markets surge x4 for 30s.', bad: false };
   activateEvent(ev);
-  celebrate('LEAKED!', '5x all payouts for 30 seconds');
+  celebrate('LEAKED!', '4x all payouts for 30 seconds');
   renderManagersTab();
   save();
 }
@@ -3920,6 +4243,7 @@ function spawnFloat(evt, gain, currency) {
 // Throttle tracker — max 1 auto-float per second per asset so the screen isn't a blizzard of numbers
 const _autoFloatLast = {};
 function spawnFloatForAsset(id, gain, currency) {
+  if (!gain || gain <= 0) return;
   const now = Date.now();
   if ((now - (_autoFloatLast[id] || 0)) < 1000) return;
   _autoFloatLast[id] = now;
@@ -3934,9 +4258,6 @@ function spawnFloatForAsset(id, gain, currency) {
   el.style.top = (rect.top - 5) + 'px';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1000);
-  // Bar-complete flash
-  prog.classList.add('bar-complete-flash');
-  setTimeout(() => prog.classList.remove('bar-complete-flash'), 420);
   // Coin fly — only for non-gold markets (gold has its own symbol and the header position differs)
   if (currency !== 'gold') spawnCoinParticles(prog, 3);
 }
@@ -4212,25 +4533,17 @@ function buySkill(id) {
     if (!state.skillsOwned?.[prev.id]) { toast('Unlock the previous skill first.'); return; }
   }
   // All skills cost gold
-  if ((state.gold || 0) < node.goldCost) { toast('Not enough Gold 🥇 — earn gold via IPOs, daily quests, and the Black Market.'); return; }
+  if ((state.gold || 0) < node.goldCost) { toast('Not enough Gold 🥇 — earn gold via IPOs and daily quests.'); return; }
   state.gold -= node.goldCost;
   if (!state.skillsOwned) state.skillsOwned = {};
   state.skillsOwned[id] = true;
-  // Dark Pool Access unlocks the Black Market
-  if (id === 'sk_dark_pool' && !state.blackmktUnlocked) {
-    state.blackmktUnlocked = true;
-    state.gold = (state.gold || 0) + 5; // small welcome bonus
-    state.lifetimeGold = (state.lifetimeGold || 0) + 5;
-    addNews('⚫ BLACK MARKET OPEN', 'Dark Pool Access granted. Switch to ⚫ Black Market in the HOME tab. Click bars to launder cash into Gold. +5 🥇 bonus.', 'milestone');
-    setTimeout(() => celebrate('BLACK MARKET UNLOCKED ⚫', 'Switch to ⚫ Black Market in HOME to farm Gold'), 400);
-  }
   SFX.skill();
   toast(node.name + ' unlocked!');
   addNews('SKILL: ' + node.name, node.desc, 'milestone');
-  if (id !== 'sk_dark_pool') celebrate('SKILL UNLOCKED', node.name); // avoid double celebrate
+  celebrate('SKILL UNLOCKED', node.name);
   renderCash();
   renderSkillTree();
-  renderAssets(); // refresh market switcher if Black Market just unlocked
+  renderAssets();
   save();
 }
 
@@ -4352,6 +4665,13 @@ const PIT_COMMODITIES = [
   { id: 'wheat',label: '🌾 WHEAT', value: 12, bg: 'linear-gradient(180deg,#6a4a00,#3a2800)', border: '#d4a030' },
 ];
 const PIT_UNLOCK_THRESHOLD = 1000;
+const PIT_CONTRACT_COOLDOWN  = 5 * 60 * 1000;  // 5 min between Pit Contracts
+const PIT_CONTRACT_DURATION  = 8000;             // 8s tap window
+const PIT_CONTRACT_MIN       = 100;
+const PIT_CONTRACT_MAX       = 500;
+const RUSH_HOUR_DURATION     = 30 * 1000;        // 30s
+const RUSH_HOUR_INTERVAL_MIN = 10 * 60 * 1000;  // fire no sooner than 10 min apart
+const RUSH_HOUR_INTERVAL_MAX = 20 * 60 * 1000;  // avg ~15 min between rush hours
 let _pitOrderCounter = 0;
 // combo tracking (ephemeral, not saved)
 let _pitComboCount = 0;
@@ -4366,17 +4686,53 @@ function pitTick() {
   }
   // Expire old orders
   state.pitOrders = (state.pitOrders || []).filter(o => o.expiresAt > now);
-  // Spawn new orders (target 3-5 active at once, spawn one every 1.5-3s)
-  const spawnInterval = 1500 + Math.random() * 1500;
-  if ((now - (state._lastPitSpawn || 0)) > spawnInterval && (state.pitOrders.length || 0) < 5) {
+
+  // Expire Pit Contract
+  if (state.pitContract && state.pitContract.expiresAt <= now) {
+    state.pitContract = null;
+    syncPitArena();
+  }
+
+  // Maybe spawn Pit Contract
+  if (!state.pitContract && (now - (state._lastPitContract || 0)) > PIT_CONTRACT_COOLDOWN) {
+    state.pitContract = {
+      id: ++_pitOrderCounter,
+      value: PIT_CONTRACT_MIN + Math.floor(Math.random() * (PIT_CONTRACT_MAX - PIT_CONTRACT_MIN + 1)),
+      expiresAt: now + PIT_CONTRACT_DURATION,
+    };
+    state._lastPitContract = now;
+    toast('\ud83d\udccb PIT CONTRACT! Tap fast — 8 seconds!');
+    syncPitArena();
+  }
+
+  // Rush Hour trigger check (every 30s)
+  if ((now - (state._lastRushHourCheck || 0)) > 30000) {
+    state._lastRushHourCheck = now;
+    if (!(state.rushHourUntil && now < state.rushHourUntil)) {
+      const elapsed = now - (state._rushHourLastAt || 0);
+      const threshold = RUSH_HOUR_INTERVAL_MIN + Math.random() * (RUSH_HOUR_INTERVAL_MAX - RUSH_HOUR_INTERVAL_MIN);
+      if (elapsed > threshold) {
+        state.rushHourUntil  = now + RUSH_HOUR_DURATION;
+        state._rushHourLastAt = now;
+        celebrate('\u26a1 RUSH HOUR!', '2\u00d7 order values \u00b7 30 seconds!');
+      }
+    }
+  }
+
+  // Spawn orders (faster during Rush Hour)
+  const isRush = !!(state.rushHourUntil && now < state.rushHourUntil);
+  const spawnInterval = isRush ? 600 : (1500 + Math.random() * 1500);
+  const maxOrders = isRush ? 7 : 5;
+  if ((now - (state._lastPitSpawn || 0)) > spawnInterval && (state.pitOrders.length || 0) < maxOrders) {
     const c = PIT_COMMODITIES[Math.floor(Math.random() * PIT_COMMODITIES.length)];
     const bonusMult = state.londonUnlocked ? 1.5 : 1;
-    const isHot = Math.random() < 0.12; // 12% chance flash order
+    const rushMult  = isRush ? 2 : 1;
+    const isHot     = Math.random() < 0.12;
     state.pitOrders.push({
       id: ++_pitOrderCounter,
       commodity: c.id,
       label: c.label,
-      value: Math.round(c.value * bonusMult * (isHot ? 3 : 1) * (0.85 + Math.random() * 0.3)),
+      value: Math.round(c.value * bonusMult * rushMult * (isHot ? 3 : 1) * (0.85 + Math.random() * 0.3)),
       bg: c.bg,
       border: c.border,
       hot: isHot,
@@ -4386,6 +4742,7 @@ function pitTick() {
     syncPitArena();
   }
 }
+
 
 function fillPitOrder(orderId) {
   const order = (state.pitOrders || []).find(o => o.id === orderId);
@@ -4419,6 +4776,31 @@ function fillPitOrder(orderId) {
     state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpBonus;
   }
   syncPitArena();
+  renderCash();
+}
+
+function fillPitContract() {
+  if (!state.pitContract) return;
+  const contract = state.pitContract;
+  state.pitContract = null;
+  const earned = contract.value;
+  state.pitCredits = (state.pitCredits || 0) + earned;
+  state.pitLifetimeCredits = (state.pitLifetimeCredits || 0) + earned;
+  state.manualTrades = (state.manualTrades || 0) + 1;
+  if (!state.dailyProgress) state.dailyProgress = {};
+  state.dailyProgress.dq_pit = (state.dailyProgress.dq_pit || 0) + 3; // counts as 3 fills
+  checkPitMilestones();
+  checkPitMegabuckMilestones();
+  Haptic.medium();
+  SFX.milestone();
+  celebrate('\ud83d\udccb CONTRACT FILLED!', '+' + fmtNum(earned) + ' Pit Credits!');
+  if (state.londonUnlocked) {
+    const gbpBonus = earned * 500;
+    state.gbp = (state.gbp || 0) + gbpBonus;
+    state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpBonus;
+  }
+  syncPitArena();
+  updatePitShell();
   renderCash();
 }
 
@@ -4569,9 +4951,26 @@ function syncPitArena() {
   const comboActive = _pitComboCount >= 3 && (now - _pitLastFillAt) < 4000;
   const orders = state.pitOrders || [];
 
+  // Pit Contract center-stage element
+  const now2 = Date.now();
+  let contractEl = document.getElementById('pit-contract-el');
+  if (state.pitContract && state.pitContract.expiresAt > now2) {
+    const secsLeft = Math.max(0, Math.ceil((state.pitContract.expiresAt - now2) / 1000));
+    if (!contractEl) {
+      contractEl = document.createElement('div');
+      contractEl.id        = 'pit-contract-el';
+      contractEl.className = 'pit-contract';
+      contractEl.onclick   = () => fillPitContract();
+      arena.appendChild(contractEl);
+    }
+    contractEl.innerHTML = '<div style="font-size:11px;color:#ffd700;font-weight:900;letter-spacing:.5px;">\ud83d\udccb PIT CONTRACT</div><div style="font-size:22px;font-weight:900;color:#fff;margin:4px 0;">+' + fmtNum(state.pitContract.value) + '</div><div style="font-size:11px;color:rgba(255,255,255,0.6);">TAP! ' + secsLeft + 's left</div>';
+  } else if (contractEl) {
+    contractEl.remove();
+  }
+
   // Empty state label
   let emptyEl = arena.querySelector('.pit-empty');
-  if (orders.length === 0) {
+  if (orders.length === 0 && !state.pitContract) {
     if (!emptyEl) {
       arena.innerHTML = '';
       const d = document.createElement('div');
@@ -4624,6 +5023,26 @@ function updatePitShell() {
     const s = Math.ceil((state.activeSqueeze.until - Date.now()) / 1000);
     squeezeEl.textContent = s + 's remaining';
   }
+
+  // Rush Hour banner
+  const rushEl = document.getElementById('pit-rush-banner');
+  if (rushEl) {
+    const now = Date.now();
+    const rushActive = !!(state.rushHourUntil && now < state.rushHourUntil);
+    rushEl.style.display = rushActive ? '' : 'none';
+    if (rushActive) {
+      const s = Math.ceil((state.rushHourUntil - now) / 1000);
+      rushEl.textContent = '\u26a1 RUSH HOUR! 2\u00d7 values \u00b7 ' + s + 's';
+    }
+  }
+
+  // Contract timer in arena
+  const contractEl = document.getElementById('pit-contract-el');
+  if (contractEl && state.pitContract) {
+    const s = Math.max(0, Math.ceil((state.pitContract.expiresAt - Date.now()) / 1000));
+    const timerDiv = contractEl.querySelector('div:last-child');
+    if (timerDiv) timerDiv.textContent = 'TAP! ' + s + 's left';
+  }
 }
 
 function renderPitTab() {
@@ -4668,8 +5087,9 @@ function renderPitTab() {
         return `<div style="font-size:11px;color:rgba(255,200,80,0.8);text-align:center;margin-top:4px;">💎 Next Megabuck: ${fmtNum(lifetime)}/${fmtNum(nextThreshold)} lifetime credits (${pctMB}%)</div>`;
       })()}
     </div>
+    <div id="pit-rush-banner" class="pit-rush-banner" style="display:none;">⚡ RUSH HOUR!</div>
     <div class="pit-arena" id="pitOrderZone" style="height:220px;"></div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;padding:6px;">Tap before expiry • ⚡FLASH = 3× value, 2.5s • 🔥 3-in-a-row = +50% combo</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;padding:6px;">Tap before expiry • ⚡FLASH = 3× • 🔥 3-in-a-row = +50% • 📋 CONTRACT = 100–500 pts</div>
   `;
 
   // Pit Milestones
@@ -4735,7 +5155,7 @@ function optionsLevel() {
   return Math.floor((state.totalTrades || 0) / 500);
 }
 function optionsUnlocked() {
-  return optionsLevel() >= 3;
+  return optionsLevel() >= 1;
 }
 function optionsCooldownRemaining() {
   return Math.max(0, Math.ceil((state.optionsCooldownUntil - Date.now()) / 1000));
@@ -4748,7 +5168,8 @@ function openOptionsAsset(assetId) {
   if (!optionsUnlocked()) return;
   if (optionsCooldownRemaining() > 0) { toast('Options on cooldown — ' + optionsCooldownRemaining() + 's remaining.'); return; }
   stopCrashInterval();
-  state.optionsCrash = { assetId, direction: null, crashAt: 0, startedAt: 0, result: null, cashedMult: 0, clickBonus: 0 };
+  const contractValue = Math.max(500, state.cash * 0.05);
+  state.optionsCrash = { assetId, direction: null, crashAt: 0, startedAt: 0, result: null, cashedMult: 0, clickBonus: 0, contractValue, marketDir: null, itm: false, cashPayout: 0 };
   renderOptionsTab();
 }
 
@@ -4768,9 +5189,21 @@ function pickCrashDirection(dir) {
   } else {
     crashAt = 1.60 + Math.pow(Math.random(), 1.4) * 13.4;
   }
-  state.optionsCrash.direction = dir;
-  state.optionsCrash.crashAt   = crashAt;
-  state.optionsCrash.startedAt = Date.now();
+  // Determine true market direction (biased by active event)
+  const ev = state.activeEvent;
+  let upBias = 0.50;
+  if (ev && !ev.bad) upBias = 0.65;  // bull event → CALL more likely right
+  if (ev && ev.bad)  upBias = 0.35;  // bear event → PUT more likely right
+  const marketDir = Math.random() < upBias ? 'call' : 'put';
+  const itm = (dir === marketDir);
+  // Wrong direction = crash arrives ~25% sooner (harder to get out in time)
+  if (!itm) crashAt *= 0.75;
+
+  state.optionsCrash.direction  = dir;
+  state.optionsCrash.crashAt    = crashAt;
+  state.optionsCrash.startedAt  = Date.now();
+  state.optionsCrash.marketDir  = marketDir;
+  state.optionsCrash.itm        = itm;
   renderOptionsTab();
   startCrashInterval();
 }
@@ -4796,16 +5229,35 @@ function boostCrash() {
 function cashOutCrash() {
   if (!state.optionsCrash || state.optionsCrash.result || !state.optionsCrash.direction) return;
   const mult = getCurrentCrashMult();
-  state.optionsCrash.result      = 'cashout';
-  state.optionsCrash.cashedMult  = mult;
-  state.optionsCrash.cashedOutAt = Date.now();
+  const c = state.optionsCrash;
+  c.result      = 'cashout';
+  c.cashedMult  = mult;
+  c.cashedOutAt = Date.now();
   stopCrashInterval();
-  state.optionsLeverage = { assetId: state.optionsCrash.assetId, mult: parseFloat(mult.toFixed(2)), until: Date.now() + 3 * 60 * 1000 };
-  state.optionsCooldownUntil = Date.now() + 5 * 60 * 1000;
-  const asset = ASSETS.find(a => a.id === state.optionsCrash.assetId);
+
+  // ITM (correct direction) = cash payout + leverage
+  // OTM (wrong direction)   = no cash, no leverage
+  let cashPayout = 0;
+  if (c.itm) {
+    cashPayout = (c.contractValue || 0) * (mult - 1);
+    state.cash = (state.cash || 0) + cashPayout;
+    state.lifetimeEarnings = (state.lifetimeEarnings || 0) + cashPayout;
+    state.allTimeEarnings  = (state.allTimeEarnings  || 0) + cashPayout;
+    state.optionsLeverage  = { assetId: c.assetId, mult: parseFloat(mult.toFixed(2)), until: Date.now() + 3 * 60 * 1000 };
+  }
+  c.cashPayout = cashPayout;
+  state.optionsCooldownUntil = Date.now() + 90 * 1000; // 90s cooldown
+
+  const asset = ASSETS.find(a => a.id === c.assetId);
   SFX.milestone();
-  celebrate('\ud83d\ude80 CASHED OUT!', (asset?.ticker || state.optionsCrash.assetId) + ' · ' + mult.toFixed(2) + 'x leverage for 3 min');
-  addNews('OPTIONS CASHOUT', (asset?.ticker || '') + ' cashed at ' + mult.toFixed(2) + 'x · ' + (state.optionsCrash.direction?.toUpperCase() || '') + ' · leverage active 3 min', 'milestone');
+  if (c.itm) {
+    celebrate('\ud83d\ude80 IN THE MONEY!', (asset?.ticker || c.assetId) + ' \u00b7 ' + mult.toFixed(2) + 'x \u00b7 +' + fmt(cashPayout));
+    addNews('OPTIONS ITM', (asset?.ticker || '') + ' direction nailed \u00b7 ' + mult.toFixed(2) + 'x \u00b7 +' + fmt(cashPayout), 'milestone');
+  } else {
+    toast('\ud83d\udcc9 Out of the money. Market went ' + (c.marketDir?.toUpperCase() || '') + '. No cash payout.');
+    addNews('OPTIONS OTM', (asset?.ticker || '') + ' wrong direction \u00b7 ' + mult.toFixed(2) + 'x but 0 payout', 'event');
+  }
+  renderCash();
   buildTicker();
   renderOptionsTab();
   save();
@@ -4870,7 +5322,7 @@ function renderOptionsTab() {
   `;
 
   if (!unlocked) {
-    html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">\ud83d\udd12 Options unlock at Level 3<br><span style="font-size:11px;">${Math.max(0,1500-(state.totalTrades||0))} more trades</span></div>`;
+    html += `<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.4);font-size:13px;">\ud83d\udd12 Options unlock at Level 1<br><span style="font-size:11px;">${Math.max(0,500-(state.totalTrades||0))} more trades</span></div>`;
 
   } else if (crash && crash.result === 'crashed') {
     const asset = ASSETS.find(a => a.id === crash.assetId);
@@ -4890,14 +5342,20 @@ function renderOptionsTab() {
       // fall through — will render asset picker below
     } else {
       const asset = ASSETS.find(a => a.id === crash.assetId);
+      const itmColor = crash.itm ? '#2ecc71' : '#e74c3c';
+      const itmLabel = crash.itm ? 'IN THE MONEY!' : 'OUT OF THE MONEY';
+      const itmIcon  = crash.itm ? '\ud83d\ude80' : '\ud83d\udcc9';
       html += `
-        <div class="crash-result-win">
-          <div style="font-size:44px;line-height:1.1;">\ud83d\ude80</div>
-          <div style="font-size:22px;font-weight:bold;color:#2ecc71;margin:6px 0;letter-spacing:0.05em;">CASHED OUT!</div>
-          <div class="options-lever-display itm">${crash.cashedMult.toFixed(2)}x</div>
-          <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:6px;">${asset?.ticker||crash.assetId} · ${crash.direction?.toUpperCase()}</div>
-          ${activeLev ? `<div style="font-size:12px;color:#2ecc71;margin-top:6px;">\u26a1 Leverage active · ${Math.max(0,Math.ceil((activeLev.until - Date.now())/1000))}s remaining</div>` : ''}
-          <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">Returning to menu in <b style="color:#fff;">${cashReturnIn}s</b>…</div>
+        <div class="${crash.itm ? 'crash-result-win' : 'crash-result-lose'}">
+          <div style="font-size:44px;line-height:1.1;">${itmIcon}</div>
+          <div style="font-size:22px;font-weight:bold;color:${itmColor};margin:6px 0;letter-spacing:0.05em;">${itmLabel}</div>
+          <div class="options-lever-display ${crash.itm ? 'itm' : 'otm'}">${crash.cashedMult.toFixed(2)}x</div>
+          ${crash.itm && crash.cashPayout > 0
+            ? `<div style="font-size:18px;font-weight:900;color:#f0b429;margin-top:6px;">+${fmt(crash.cashPayout)}</div>`
+            : `<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;">Wrong direction — no cash payout</div>`}
+          <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:4px;">${asset?.ticker||crash.assetId} · You: ${crash.direction?.toUpperCase()} · Market: ${crash.marketDir?.toUpperCase()}</div>
+          ${activeLev ? `<div style="font-size:12px;color:#2ecc71;margin-top:6px;">\u26a1 Leverage active \u00b7 ${Math.max(0,Math.ceil((activeLev.until - Date.now())/1000))}s remaining</div>` : ''}
+          <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">Returning to menu in <b style="color:#fff;">${cashReturnIn}s</b>\u2026</div>
         </div>`;
     }
     if (state.optionsCrash) { html += '</div>'; root.innerHTML = html; if (crash && crash.direction && !crash.result) startCrashInterval(); return; }
@@ -4910,7 +5368,7 @@ function renderOptionsTab() {
           <span style="color:#ffd700;font-size:13px;">\ud83d\ude80 LAUNCH PAD: ${asset?.ticker||crash.assetId}</span>
           <button onclick="cancelCrash()" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;padding:2px 6px;">✕ abort</button>
         </div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px;">Which direction is the market moving?<br><span style="font-size:11px;">Boost the multiplier, cash out before crash — 5-min cooldown after launch.</span></div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px;">Which direction is the market moving?<br><span style="font-size:11px;">Contract: <b style="color:#f0b429;">${fmt(crash.contractValue||0)}</b> · Correct direction = cash + leverage · Wrong = 0 payout.</span>${state.activeEvent ? `<br><span style="font-size:11px;color:${state.activeEvent.bad?'#e74c3c':'#2ecc71'};font-weight:bold;">${state.activeEvent.bad?'\u26a0\ufe0f Bear event — PUT has edge':'\ud83d\udcc8 Bull event — CALL has edge'}</span>` : ''}</div>
         <div class="options-direction-row">
           <button class="options-call-btn" onclick="pickCrashDirection('call')">\ud83d\udcc8 CALL<br><span style="font-size:11px;font-weight:normal;">market goes UP</span></button>
           <button class="options-put-btn"  onclick="pickCrashDirection('put')">\ud83d\udcc9 PUT<br><span style="font-size:11px;font-weight:normal;">market goes DOWN</span></button>
@@ -4942,7 +5400,7 @@ function renderOptionsTab() {
         </div>
         <button class="crash-cashout-btn" onclick="cashOutCrash()">\ud83d\udcb0 CASH OUT</button>
         <button id="crash-boost-btn" class="crash-boost-btn" onclick="boostCrash()">\u26a1 BOOST  (+0.12x per click)</button>
-        <div style="font-size:10px;color:rgba(255,255,255,0.22);text-align:center;margin-top:5px;">Boost pushes the multiplier · crash = 0x · cash out to lock in leverage</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.22);text-align:center;margin-top:5px;">Boost pushes multiplier · correct direction = cash + leverage · wrong direction = 0 payout${state.activeEvent ? ` · <span style="color:${state.activeEvent.bad?'rgba(231,76,60,0.7)':'rgba(46,204,113,0.7)'}">${state.activeEvent.bad?'bear event':'bull event'} active</span>` : ''}</div>
       </div>`;
 
   } else if (activeLev) {
@@ -5122,6 +5580,8 @@ function fileSecComplaint(rivalId) {
 }
 
 function renderRivalsTab() {
+  // Leaderboards tab is a placeholder until Phase G backend — do not overwrite the HTML.
+  return;
   const root = document.getElementById('tab-rivals');
   if (!root) return;
   const playerVal = state.allTimeEarnings || 0;
@@ -5291,18 +5751,11 @@ function tick() {
     const remaining = Math.max(0, Math.ceil((state.activeEvent.until - now) / 1000));
     const t = document.getElementById('eventTimer');
     if (t) t.textContent = remaining + 's';
-    // Keep hedge button countdown live
-    if (state._hedgeWindowUntil && now < state._hedgeWindowUntil) updateHedgeUI();
-    else if (state._hedgeWindowUntil && now >= state._hedgeWindowUntil) {
-      state._hedgeWindowUntil = 0;
-      const hc = document.getElementById('hedgeContainer');
-      if (hc) hc.style.display = 'none';
-    }
   }
 
   maybeFireEvent();
   maybeFirePump();
-  maybeStartRivalRaid();
+  // maybeStartRivalRaid() — disabled: Leaderboards tab is placeholder, no UI to counter raids
   tickRivals(dt);
   maybeTutorialAutoAdvance();
 
@@ -5333,10 +5786,7 @@ function tick() {
     const t = timeOf(a);
     s.progress += dt / t;
     if (s.progress >= 1) {
-      // Black Market assets never auto-fire — manual click only, always wait at full bar
-      if (a.market === 'blackmkt') {
-        s.progress = 1;
-      } else if (s.hired) {
+      if (s.hired) {
         // auto-execute, possibly multiple cycles per frame in extreme cases
         const cycles = Math.floor(s.progress);
         const gain = payoutOf(a) * cycles;
@@ -5426,7 +5876,7 @@ function renderCash() {
   // Header shows the currency of the currently-viewed market
   const isLondon  = state.activeMarket === 'london';
   const isTokyo   = state.activeMarket === 'tokyo';
-  const isBlack   = state.activeMarket === 'blackmkt';
+  const isBlack   = false; // Black Market removed
   const cur = isLondon ? 'gbp' : isTokyo ? 'yen' : isBlack ? 'gold' : 'cash';
   const displayMoney = isLondon ? (state.gbp || 0) : isTokyo ? state.yen : isBlack ? (state.gold || 0) : state.cash;
   const lifetime = isLondon ? (state.lifetimeGbp || 0) : isTokyo ? (state.lifetimeYen || 0) : isBlack ? (state.lifetimeGold || 0) : state.lifetimeEarnings;
@@ -5450,7 +5900,7 @@ function renderCash() {
       let r = 0; ASSETS.forEach(a => { if (a.market==='london' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
       if (r > 0) parts.push(fmt(r, 'gbp') + '/s');
     }
-    if (state.blackmktUnlocked && state.activeMarket !== 'blackmkt') {
+    if (false) { // BM removed
       // BM has no passive income (manual only) — show current gold balance as a reminder
       const goldBal = state.gold || 0;
       if (goldBal > 0.01) parts.push(fmt(goldBal, 'gold') + ' ⚫');
@@ -5460,7 +5910,7 @@ function renderCash() {
   document.getElementById('influence').textContent = fmtNum(state.influence);
   document.getElementById('multiplier').textContent = fmtMult(marketMult(state.activeMarket)) + 'x';
   // Pulse the IPO button when the player can currently earn influence from an IPO
-  const ipoBtn = document.querySelector('.bb-btn.gold');
+  const ipoBtn = document.getElementById('navIpoBtn');
   if (ipoBtn) ipoBtn.classList.toggle('ipo-ready', prestigeGain() > 0);
   document.getElementById('lifetime').textContent = fmt(lifetime, cur);
   const g = document.getElementById('goldAmount'); if (g) g.textContent = fmtNum(state.gold || 0);
@@ -5473,10 +5923,9 @@ function renderCash() {
 
 // Switch the active market (Wall Street or Tokyo). Re-renders and saves.
 function switchMarket(market) {
-  if (!['wallst','tokyo','london','blackmkt'].includes(market)) return;
+  if (!['wallst','tokyo','london'].includes(market)) return;
   if (market === 'tokyo'    && !state.tokyoUnlocked)   { toast('Tokyo unlocks after your first IPO.'); return; }
   if (market === 'london'   && !state.londonUnlocked)   { toast('London unlocks after the Chicago Pit challenge.'); return; }
-  if (market === 'blackmkt' && !state.blackmktUnlocked) { toast('Unlock Dark Pool Access in the Skills tree.'); return; }
   state.activeMarket = market;
   renderAll();
   save();
@@ -5491,6 +5940,7 @@ function renderAssets() {
     state.tokyoUnlocked = true;
     state.yen = (state.yen || 0) + 100;
     addNews('TOKYO UNLOCKED', 'Welcome to the Tokyo Trading Floor. +100 ¥ starter bonus.', 'milestone');
+    save();
   }
   // London unlock trigger — 1000 Pit Credits
   if (!state.londonUnlocked && (state.pitCredits || 0) >= 1000) {
@@ -5499,6 +5949,7 @@ function renderAssets() {
     addNews('LONDON UNLOCKED', 'The City awaits. +£10,000 starter bonus. Welcome to the Square Mile.', 'milestone');
     celebrate('LONDON OPEN', 'The Square Mile is yours. +£10,000 to get started.');
     SFX.ipo();
+    save();
   }
   if (tokyoUnlockedNow) {
     const sw = document.createElement('div');
@@ -5507,7 +5958,6 @@ function renderAssets() {
       <button class="market-tab ${state.activeMarket === 'wallst' ? 'active' : ''}" onclick="switchMarket('wallst')">$ WALL ST</button>
       <button class="market-tab ${state.activeMarket === 'tokyo' ? 'active' : ''}" onclick="switchMarket('tokyo')">¥ TOKYO</button>
       ${state.londonUnlocked ? `<button class="market-tab ${state.activeMarket === 'london' ? 'active' : ''}" onclick="switchMarket('london')">£ LONDON</button>` : `<button class="market-tab locked-tab" title="Complete the Chicago Pit to unlock">🔒 LONDON</button>`}
-      ${state.blackmktUnlocked ? `<button class="market-tab blackmkt-tab ${state.activeMarket === 'blackmkt' ? 'active' : ''}" onclick="switchMarket('blackmkt')">⚫ BLACK</button>` : ''}
     `;
     list.appendChild(sw);
   }
@@ -5640,7 +6090,7 @@ function renderAssets() {
           ${asset.market === 'blackmkt'
             ? `<div style="font-size:9px;color:rgba(180,60,60,0.7);font-weight:800;letter-spacing:0.5px;padding:2px 4px;">&#9888; NO TRADERS — MANUAL ONLY</div>`
             : (!s.hired ? `
-            <button class="upg-btn" ${canHire?'':'disabled'} onclick="hireTrader('${asset.id}')">
+            <button class="upg-btn" ${canHire?'':'disabled'} onclick="switchTab('managers')">
               <span class="upg-icon">&#128104;&#8205;&#128188;</span>
               <span>HIRE</span>
               <span class="upg-cost">${fmtAsset(hireCost, asset)}</span>
@@ -5656,15 +6106,35 @@ function renderAssets() {
   document.querySelectorAll('.income-bar').forEach(el => {
     el.onclick = (e) => executeTrade(el.dataset.id, e);
   });
+
+  // Immediately stamp current progress widths so newly-created bars don't
+  // flash 0% while waiting for the next rAF frame to catch up.
+  // This is the fix for "bars flash on crash events / renderAll calls".
+  ASSETS.forEach(a => {
+    const fill = document.getElementById('prog-' + a.id);
+    if (!fill) return;
+    const s = state.assets[a.id];
+    if (!s || s.owned === 0) return;
+    const ct = timeOf(a);
+    if (s.hired && ct < FAST_STREAM_THRESHOLD) {
+      fill.classList.add('fast-stream');
+    } else {
+      fill.style.width = (Math.min(1, s.progress) * 100) + '%';
+    }
+  });
 }
 
 // Threshold below which auto-hired bars switch to fast-stream CSS animation
 // instead of animating actual progress (avoids backward-jump flicker at high speeds)
 const FAST_STREAM_THRESHOLD = 0.35; // seconds
 
+// Tracks raw s.progress from the previous rAF frame per asset — used to detect
+// cycle resets so we can skip interpolation on the reset frame and avoid twitching.
+const _prevRawProgress = {};
+
 function renderProgressBars() {
   const now = Date.now();
-  // Predict progress forward from the last game-logic tick so bars move at 60fps
+  // Predict progress forward from the last game-logic tick so bars move smoothly
   const dtSinceTick = Math.min((now - (state.lastTick || now)) / 1000, 0.5);
   ASSETS.forEach(a => {
     const s = state.assets[a.id];
@@ -5678,10 +6148,18 @@ function renderProgressBars() {
     let displayProg = s.progress;
     if (!isFastStream) {
       if (s.owned > 0 && s.progress < 1) {
-        displayProg = Math.min(1, s.progress + dtSinceTick / cycleTime);
+        const prev = _prevRawProgress[a.id] ?? s.progress;
+        const cycleJustReset = s.progress < prev - 0.1;
+        // Only forward-interpolate if no cycle reset occurred this frame.
+        // On reset frames, show the clean new position directly to avoid the
+        // bar snapping from 100% back to near-0% (the main cause of twitching).
+        if (!cycleJustReset) {
+          displayProg = Math.min(1, s.progress + dtSinceTick / cycleTime);
+        }
       }
       fill.style.width = (displayProg * 100) + '%';
     }
+    _prevRawProgress[a.id] = s.progress;
     // Note: fast-stream bars use CSS width:100%!important — no JS width needed
     fill.classList.toggle('boosted', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && !state.activeEvent.bad));
     fill.classList.toggle('crashed', !!(state.activeEvent && (state.activeEvent.sector === a.sector || state.activeEvent.sector === 'all') && state.activeEvent.bad));
@@ -5762,17 +6240,25 @@ function renderProgressBars() {
 }
 
 // ============ TABS ============
+function openNav() {
+  document.getElementById('navOverlay').classList.add('open');
+}
+function closeNav() {
+  const el = document.getElementById('navOverlay');
+  if (el) el.classList.remove('open');
+}
+
 function switchTab(name) {
   state.activeTab = name;
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  closeNav();
   const panel = document.getElementById('tab-' + name);
-  const btn = document.querySelector('.tab-btn[data-tab="' + name + '"]');
   if (panel) panel.classList.add('active');
-  if (btn) {
-    btn.classList.add('active');
-    btn.classList.remove('has-news'); // clear notification dot
-  }
+  // Clear nav dot for this destination
+  const dotMap = { managers:'nav-staff-btn', skills:'nav-skills-btn', perks:'nav-perks-btn', unlocks:'nav-goals-btn', news:'nav-news-btn' };
+  const dotBtn = document.getElementById(dotMap[name]);
+  if (dotBtn) dotBtn.classList.remove('has-dot');
   if (name === 'unlocks') { state.hasUnseenUnlock = false; renderGoalsTab(); }
   if (name === 'managers') renderManagersTab();
   if (name === 'perks') renderPerksTab();
@@ -5865,7 +6351,7 @@ function renderQuestsTab() {
       q_first_million:   'cash', q_day_trader:     'cash', q_wall_st_tycoon:  'cash',
       q_yen_millionaire: 'yen',  q_yen_trillion:   'yen',
       q_gbp_billionaire: 'gbp',
-      q_goldsmith:       'gold', q_gold_master:    'gold', q_gold_vault:      'gold',
+      q_goldsmith:       'gold',
     };
     const qCurrency = QUEST_CURRENCY_MAP[q.id];
     const progStr = qCurrency ? fmt(prog, qCurrency === 'cash' ? undefined : qCurrency) + ' / ' + fmt(tgt, qCurrency === 'cash' ? undefined : qCurrency)
@@ -5908,15 +6394,14 @@ function renderManagersTab() {
     const bio = MANAGER_BIOS[a.id];
     if (!bio) return;
     if (a.market === 'london'   && !state.londonUnlocked)   return; // hide London until unlocked
-    if (a.market === 'blackmkt' && !state.blackmktUnlocked) return; // hide Black Market until unlocked
-    if (a.market === 'blackmkt') return; // no managers in the Black Market
+    if (a.market === 'blackmkt') return; // Black Market removed
     const hired = !!s.hired;
     const owned = s.owned > 0;
     const isLondon = a.market === 'london';
     const moneyAvail = isLondon ? (state.gbp || 0) : a.market === 'tokyo' ? state.yen : state.cash;
     const canHire = moneyAvail >= a.hireCost && !hired && owned;
     html += `
-      <div class="manager-card${hired ? '' : ' unhired'}">
+      <div class="manager-card${hired ? '' : (canHire ? '' : ' unhired')}">
         <div class="manager-portrait">${a.icon}</div>
         <div>
           <div class="manager-name">${bio.name}</div>
@@ -6234,7 +6719,7 @@ function renderStats() {
   html += `<div style="${secStyle}">📊 This Run</div>`;
   html += row('Lifetime Earnings', fmt(state.lifetimeEarnings));
   html += row('Passive Income', fmt(totalIncomePerSec()) + '/s');
-  html += row('Global Multiplier', fmtMult(globalMult()) + 'x');
+  html += row('Global Multiplier', fmtMult(marketMult(state.activeMarket)) + 'x');
   html += row('Next IPO At', fmt(nextPrestigeAt()));
   html += row('Trades Executed', fmtNum(state.totalTrades || 0));
   html += row('Manual Trades', fmtNum(state.manualTrades || 0));
@@ -6451,6 +6936,29 @@ function openWelcomeModal() {
 
 // ============ MODAL HELPERS ============
 function openModal(id) {
+  if (id === 'settingsModal') {
+    const mc = document.getElementById('menuStatCash');
+    const mi = document.getElementById('menuStatIpos');
+    const mf = document.getElementById('menuStatInfluence');
+    if (mc) mc.textContent = fmt(state.allTimeEarnings || state.lifetimeEarnings || 0);
+    if (mi) mi.textContent = fmtNum(state.totalIPOs || 0);
+    if (mf) mf.textContent = fmtNum(state.influence || 0);
+    // Update Starter Pack button to reflect ownership (Apple requires purchased state to be visible)
+    const spBtn = document.getElementById('starterPackBtn');
+    if (spBtn) {
+      if (state.starterPackOwned) {
+        spBtn.disabled = true;
+        spBtn.style.opacity = '0.55';
+        spBtn.style.cursor = 'default';
+        spBtn.innerHTML = '✅ Starter Pack — Already Owned';
+      } else {
+        spBtn.disabled = false;
+        spBtn.style.opacity = '1';
+        spBtn.style.cursor = '';
+        spBtn.innerHTML = 'Starter Pack — 50 Gold + No Ads &middot; <span style="color:#0a0e1a;">$2.99</span>';
+      }
+    }
+  }
   if (id === 'statsModal') renderStats();
   if (id === 'prestigeModal') renderPrestige();
   document.getElementById(id).classList.add('show');
@@ -6533,13 +7041,13 @@ const TUTORIAL_STEPS = [
     arrowBelow: true,
   },
   {
-    targetId: 'tab-managers-btn',
+    targetId: 'nav-staff-btn',
     title: 'Hire your first manager 🧑‍💼',
     body: 'Tap <strong>STAFF</strong> to hire a manager who auto-trades for you — no tapping needed. That frees you up to build the rest of your empire.',
     arrowBelow: false,
   },
   {
-    targetId: 'tab-unlocks-btn',
+    targetId: 'nav-goals-btn',
     title: 'Complete Goals for Gold ⭐',
     body: 'The <strong>Goals tab</strong> gives you 3 daily quests. Completing them earns <strong>Gold 🏅</strong> — a rare currency that survives every IPO and unlocks the best skills.',
     arrowBelow: false,
@@ -6725,7 +7233,7 @@ function save() {
       leverageInventory: state.leverageInventory || {},
       leverageStarterGiven: !!state.leverageStarterGiven,
       activeLeverage: state.activeLeverage || null,
-      newsLog: state.newsLog || [],
+      // newsLog intentionally omitted — cosmetic only, not worth the parse overhead
       activeTab: state.activeTab || 'home',
       rugPullsExperienced: state.rugPullsExperienced || 0,
       hftPerksOwned: state.hftPerksOwned || {},
@@ -6737,8 +7245,6 @@ function save() {
       gbp: state.gbp || 0,
       lifetimeGbp: state.lifetimeGbp || 0,
       londonUnlocked: !!state.londonUnlocked,
-      // Black Market
-      blackmktUnlocked: !!state.blackmktUnlocked,
       influenceInvested: state.influenceInvested || 0,
       hideClaimedQuests: !!state.hideClaimedQuests,
       tutorialStep: state.tutorialStep ?? null,
@@ -6748,7 +7254,9 @@ function save() {
       incomeDoublerUntil: state.incomeDoublerUntil || 0,
       starterPackOwned: !!state.starterPackOwned,
       // Daily quests
+      buyQty: state.buyQty ?? 1,
       dailyQuestDate: state.dailyQuestDate || '',
+      _launchOfferShown: state._launchOfferShown || 0,
       dailyProgress:  state.dailyProgress  || {},
       dailyClaimed:   state.dailyClaimed   || {},
       dailySnapTrades: state.dailySnapTrades || 0,
@@ -6766,6 +7274,13 @@ function save() {
       // Options
       optionsCooldownUntil: state.optionsCooldownUntil || 0,
       optionsLeverage: state.optionsLeverage || null,
+      optionsCrash: state.optionsCrash || null,
+      // Chicago Pit timing + active contract
+      pitContract: state.pitContract || null,
+      rushHourUntil: state.rushHourUntil || 0,
+      _lastPitContract: state._lastPitContract || 0,
+      _lastPitSpawn: state._lastPitSpawn || 0,
+      _rushHourLastAt: state._rushHourLastAt || 0,
       // Rivals
       secComplaints: state.secComplaints || {},
       rivalBuff: state.rivalBuff || null,
@@ -6814,7 +7329,7 @@ function load() {
     state.leverageInventory = data.leverageInventory || {};
     state.leverageStarterGiven = !!data.leverageStarterGiven;
     state.activeLeverage = data.activeLeverage || null;
-    state.newsLog = data.newsLog || [];
+    state.newsLog = []; // not persisted — starts fresh each session
     state.activeTab = data.activeTab || 'home';
     state.rugPullsExperienced = data.rugPullsExperienced || 0;
     state.hftPerksOwned = data.hftPerksOwned || {};
@@ -6825,7 +7340,6 @@ function load() {
     state.gbp = data.gbp || 0;
     state.lifetimeGbp = data.lifetimeGbp || 0;
     state.londonUnlocked = !!data.londonUnlocked;
-    state.blackmktUnlocked = !!data.blackmktUnlocked;
     state.influenceInvested = data.influenceInvested || 0;
     state.hideClaimedQuests = !!data.hideClaimedQuests;
     state.tutorialStep = data.tutorialStep ?? null;
@@ -6833,7 +7347,9 @@ function load() {
     state.firmName = data.firmName || '';
     state.incomeDoublerUntil = data.incomeDoublerUntil || 0;
     state.starterPackOwned   = !!data.starterPackOwned;
+    state.buyQty             = data.buyQty ?? 1;
     state.dailyQuestDate     = data.dailyQuestDate  || '';
+    state._launchOfferShown  = data._launchOfferShown || 0;
     state.dailyProgress      = data.dailyProgress   || {};
     state.dailyClaimed       = data.dailyClaimed    || {};
     state.dailySnapTrades    = data.dailySnapTrades  || 0;
@@ -6841,7 +7357,7 @@ function load() {
     state.dailyEarnCashStart = data.dailyEarnCashStart || 0;
     state.dailyEarnYenStart  = data.dailyEarnYenStart  || 0;
     state.dailyEarnGbpStart  = data.dailyEarnGbpStart  || 0;
-    if (state.activeMarket === 'blackmkt' && !state.blackmktUnlocked) state.activeMarket = 'wallst';
+    if (state.activeMarket === 'blackmkt') state.activeMarket = 'wallst';
     if (state.activeMarket === 'london' && !state.londonUnlocked) state.activeMarket = 'wallst';
     if (state.activeMarket === 'tokyo'  && !state.tokyoUnlocked)  state.activeMarket = 'wallst';
     state.pitCredits = data.pitCredits || 0;
@@ -6852,6 +7368,12 @@ function load() {
     state.squeezeCooldownUntil = data.squeezeCooldownUntil || 0;
     state.optionsCooldownUntil = data.optionsCooldownUntil || 0;
     state.optionsLeverage = data.optionsLeverage || null;
+    state.optionsCrash = data.optionsCrash || null;
+    state.pitContract = data.pitContract || null;
+    state.rushHourUntil = data.rushHourUntil || 0;
+    state._lastPitContract = data._lastPitContract || 0;
+    state._lastPitSpawn = data._lastPitSpawn || 0;
+    state._rushHourLastAt = data._rushHourLastAt || 0;
     state.secComplaints = data.secComplaints || {};
     state.rivalBuff = data.rivalBuff || null;
     state.rivalRaid = data.rivalRaid || null;
@@ -6893,31 +7415,30 @@ function load() {
         }
       });
     }
-    // Offline earnings (capped at 4 hours, half rate) — computed per-market so both Wall St and Tokyo earn
+    // Offline earnings (full rate, no time cap) — computed per-market so both Wall St and Tokyo earn
     if (data.lastSavedAt) {
-      const offlineSec = Math.min((Date.now() - data.lastSavedAt) / 1000, 4 * 3600);
+      const MAX_OFFLINE_SEC = 8 * 3600; // 8-hour cap — prevents exploit from leaving app for days
+      const offlineSec = Math.min((Date.now() - data.lastSavedAt) / 1000, MAX_OFFLINE_SEC);
       if (offlineSec > 120) {  // skip the modal for very short sessions (< 2 min away)
-        let wallstRate = 0, tokyoRate = 0, londonRate = 0, blackRate = 0;
+        let wallstRate = 0, tokyoRate = 0, londonRate = 0;
         ASSETS.forEach(a => {
           const s = state.assets[a.id];
           if (!s || !s.hired || s.owned === 0) return;
           const rate = payoutOf(a) / timeOf(a);
           if (a.market === 'tokyo')    tokyoRate  += rate;
           else if (a.market === 'london')   londonRate += rate;
-          else if (a.market === 'blackmkt') { /* BM is manual-only — no offline gold */ }
+
           else wallstRate += rate;
         });
-        const cashGain   = wallstRate * 0.5 * offlineSec;
-        const yenGain    = tokyoRate  * 0.5 * offlineSec;
-        const gbpGain    = londonRate * 0.5 * offlineSec;
-        const goldGain   = blackRate  * 0.5 * offlineSec;
-        if (cashGain > 0) { state.cash += cashGain; state.lifetimeEarnings += cashGain; }
+        const cashGain   = wallstRate * offlineSec;
+        const yenGain    = tokyoRate  * offlineSec;
+        const gbpGain    = londonRate * offlineSec;
+        if (cashGain > 0) { state.cash += cashGain; state.lifetimeEarnings += cashGain; state.allTimeEarnings = (state.allTimeEarnings || 0) + cashGain; }
         if (yenGain  > 0) { state.yen = (state.yen || 0) + yenGain; state.lifetimeYen = (state.lifetimeYen || 0) + yenGain; }
         if (gbpGain  > 0) { state.gbp = (state.gbp || 0) + gbpGain; state.lifetimeGbp = (state.lifetimeGbp || 0) + gbpGain; }
-        if (goldGain > 0) { state.gold = (state.gold || 0) + goldGain; state.lifetimeGold = (state.lifetimeGold || 0) + goldGain; }
-        if (cashGain > 0 || yenGain > 0 || gbpGain > 0 || goldGain > 0) {
+        if (cashGain > 0 || yenGain > 0 || gbpGain > 0) {
           // Store for Welcome Back modal — shown after boot() completes rendering
-          state._pendingOfflineData = { cashGain, yenGain, gbpGain, goldGain, offlineSec };
+          state._pendingOfflineData = { cashGain, yenGain, gbpGain, offlineSec };
         }
       }
     }
@@ -6930,7 +7451,9 @@ function manualSave() { save(); toast('Saved.'); }
 // emoji or non-ASCII characters that end up in the save (e.g. ⚡ in newsLog).
 function _b64Encode(str) {
   const bytes = new TextEncoder().encode(str);
-  return btoa(String.fromCharCode(...bytes));
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
 }
 function _b64Decode(str) {
   const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
@@ -6990,7 +7513,7 @@ function confirmHardReset() {
 // ============ BOOT ============
 function boot() {
   buildTicker();
-  setInterval(buildTicker, 3000);  // fast enough to catch squeeze/options bonuses
+  setInterval(buildTicker, 8000);  // cosmetic ticker — 8s is plenty
   const had = load();
   // Show multi-step welcome intro for brand-new players. Spotlight fires after they dismiss it.
   if (!had) openWelcomeModal();
@@ -7012,10 +7535,10 @@ function boot() {
   // Interval guards — prevent duplicates if boot() is ever called more than once
   if (!window._tickInterval)    window._tickInterval    = setInterval(tick, 100);
   if (!window._saveInterval)    window._saveInterval    = setInterval(save, 5000);
-  // 60fps render loop — pauses automatically when tab is hidden (saves battery on mobile)
-  let _rafPaused = false;
+  // 30fps render loop — capped to save memory/CPU on mobile; pauses when tab is hidden
+  let _rafPaused = false, _lastRaf = 0;
   document.addEventListener('visibilitychange', () => { _rafPaused = document.hidden; });
-  (function rafLoop() { if (!_rafPaused) renderProgressBars(); requestAnimationFrame(rafLoop); })();
+  (function rafLoop(ts) { if (!_rafPaused && ts - _lastRaf >= 33) { _lastRaf = ts; renderProgressBars(); } requestAnimationFrame(rafLoop); })();
   window.addEventListener('beforeunload', save);
   // Show Welcome Back modal after UI is ready (if offline earnings exist)
   if (state._pendingOfflineData) {
@@ -7036,7 +7559,65 @@ function boot() {
   if (state.tutorialStep === 'done' && !state.firmName) {
     setTimeout(renameFirm, 1200);
   }
+  // Pre-load AdMob so the first ad tap is instant (no 3-tap warmup)
+  initAdMob();
+  // Initialize StoreKit IAP (cordova-plugin-purchase v13)
+  initIAP();
+  // Launch offer — prompt returning players to double income on open
+  setTimeout(maybeShowLaunchAdOffer, 4000);
 }
+
+async function initAdMob() {
+  if (!window.Capacitor?.isNativePlatform()) return;
+  const AdMob = window.Capacitor?.Plugins?.AdMob;
+  if (!AdMob) return;
+  try {
+    // ATT is requested natively in AppDelegate.swift before AdMob touches any data.
+    // Pass false here to avoid a double-prompt and timing issues on iPadOS 14+.
+    await AdMob.initialize({ requestTrackingAuthorization: false });
+    window._adMobReady = true;
+
+    // Persistent event listeners — never removed, drive the state machine
+    AdMob.addListener('onRewardedVideoAdLoaded', () => {
+      _adState = 'ready';
+      if (_adPendingCb) _showLoadedAd();
+    });
+
+    AdMob.addListener('onRewardedVideoAdReward', () => {
+      _rewardEarned = true;
+    });
+
+    AdMob.addListener('onRewardedVideoAdDismissed', () => {
+      const earned = _rewardEarned;
+      _rewardEarned = false;
+      _adState = 'idle';
+      if (_adPendingCb) {
+        const cb = _adPendingCb; _adPendingCb = null;
+        cb(earned);
+        setTimeout(() => _preloadAd(_adLoadFor || 'income_boost'), 500);
+      }
+    });
+
+    AdMob.addListener('onRewardedVideoAdFailedToLoad', () => {
+      _adState = 'idle';
+      if (_adPendingCb) { const cb = _adPendingCb; _adPendingCb = null; cb(false); }
+    });
+
+    AdMob.addListener('onRewardedVideoAdFailedToShow', () => {
+      _adState = 'idle';
+      if (_adPendingCb) {
+        const cb = _adPendingCb; _adPendingCb = null; cb(false);
+        setTimeout(() => _preloadAd(_adLoadFor || 'income_boost'), 500);
+      }
+    });
+
+    // Kick off a silent pre-load so the first tap is instant
+    _preloadAd('income_boost');
+  } catch(e) {
+    console.warn('AdMob init:', e);
+  }
+}
+
 boot();
 </script>
 </body>

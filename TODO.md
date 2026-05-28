@@ -1,9 +1,11 @@
 # Day Trader Tycoon — To-Do
 
 ## Bugs to Fix
-- [ ] **Fully Staffed achievement** — says "Hire all 6 traders" but checks all 16 (Wall St + Tokyo). Fix the check or fix the description.
-- [ ] **Influence Spent bug** — buying from the Influence Shop reduces your future IPO token count. `influenceSpent` is never tracked, so spending influence makes future IPOs give fewer tokens.
-- [ ] **Offline earnings don't cover Yen** — closing the game while on Tokyo gives zero offline catch-up for ¥.
+- [x] **Fully Staffed achievement** — fixed: description now says "10 Wall Street traders", check filters wallst only.
+- [x] **Influence Spent bug** — fixed: influenceSpent tracked in all 4 spend paths.
+- [x] **Offline earnings don't cover Yen** — fixed: tokyoRate * 0.5 * offlineSec applied on load.
+- [x] **Offline cash skipped allTimeEarnings** — fixed: allTimeEarnings now incremented alongside lifetimeEarnings on offline load.
+- [x] **Hire button directly hired instead of going to Staff tab** — fixed: now calls switchTab('managers').
 
 ## Features to Build
 - [ ] **Sound effects** — Web Audio API, synthesized (no external files)

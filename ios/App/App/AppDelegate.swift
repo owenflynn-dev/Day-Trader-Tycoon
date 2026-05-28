@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import AppTrackingTransparency
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -26,11 +27,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        // Request App Tracking Transparency permission on first launch.
+        // This fires early (before AdMob initializes in the web layer) so Apple's
+        // reviewer can see the prompt immediately on fresh install.
+        requestTrackingAuthorization()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    }
+
+    // MARK: - App Tracking Transparency
+
+    private func requestTrackingAuthorization() {
+        if #available(iOS 14, *) {
+            guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else { return }
+            // Short delay so the app window is fully visible before the system dialog appears.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                ATTrackingManager.requestTrackingAuthorization { _ in
+                    // AdMob initializes in the JS layer after this resolves.
+                    // No action needed here — AdMob reads the granted status automatically.
+                }
+            }
+        }
     }
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
