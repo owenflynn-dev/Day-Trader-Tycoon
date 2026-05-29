@@ -1855,15 +1855,7 @@
 
       <div class="tab-panel" id="tab-pit"></div>
       <div class="tab-panel" id="tab-options"></div>
-      <div class="tab-panel" id="tab-rivals">
-        <div class="panel-title">Leaderboards</div>
-        <div class="panel-sub">Global rankings coming soon.</div>
-        <div style="margin:40px 24px;text-align:center;">
-          <div style="font-size:48px;margin-bottom:14px;">&#127942;</div>
-          <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:8px;">No players yet</div>
-          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;">Leaderboards will show global rankings<br>for net worth, IPO count, and more.<br><br>Coming in a future update.</div>
-        </div>
-      </div>
+      <div class="tab-panel" id="tab-rivals"></div>
 
     </div>
 
@@ -1985,13 +1977,16 @@
     <button class="modal-btn" style="background:linear-gradient(180deg,#5a0d8a,#2a0040);border-color:#9b3dca;margin-bottom:6px;" onclick="Monetization.purchaseIAP('mb_150', s => onMegabucksPurchased('mb_150', s))">
       💎 150 Megabucks &mdash; Federal Reserve &middot; $19.99
     </button>
-    <button class="modal-btn" style="background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#4a235a;margin-bottom:6px;" onclick="Monetization.showRewardedAd('income_boost', onIncomeBoostRewarded)">
+    <button id="settingsAdBtn" class="modal-btn" style="background:linear-gradient(180deg,#9b3dca,#6a1a8a);border-color:#4a235a;margin-bottom:6px;" onclick="Monetization.showRewardedAd('income_boost', onIncomeBoostRewarded)">
       📺 Watch Ad — 2× Income for 2 hours
     </button>
     <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
     <button class="modal-btn secondary" style="font-size:11px;color:var(--text-dim);margin-bottom:4px;" onclick="Monetization.restorePurchases()">Restore Purchases</button>
     <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
     <button class="modal-btn secondary" style="color:var(--red);border-color:var(--red);" onclick="closeModal('settingsModal');openModal('hardResetModal')">Liquidate Everything</button>
+    <div style="text-align:center;margin:10px 0 4px;">
+      <a href="https://owenflynn-dev.github.io/daytrader-tycoon-support/privacy-policy.html" target="_blank" rel="noopener" style="font-size:11px;color:var(--text-dim);text-decoration:underline;">Privacy Policy</a>
+    </div>
     <button class="modal-btn" onclick="closeModal('settingsModal')">Back</button>
   </div>
 </div>
@@ -2911,12 +2906,10 @@ const AD_UNIT_IDS = ADMOB_TEST_MODE ? {
   // Google's official test rewarded ad unit — always serves a test ad
   offline_double: 'ca-app-pub-3940256099942544/1712485313',
   income_boost:   'ca-app-pub-3940256099942544/1712485313',
-  crash_bailout:  'ca-app-pub-3940256099942544/1712485313',
 } : {
   // Real ad units — use these for App Store build
   offline_double: 'ca-app-pub-2363991569160794/1980432124',
   income_boost:   'ca-app-pub-2363991569160794/9725540291',
-  crash_bailout:  'ca-app-pub-2363991569160794/2343394206',
 };
 
 // All calls gracefully no-op on web (simulated).
@@ -2997,19 +2990,36 @@ const Monetization = (() => {
     },
     purchaseIAP(productId, callback) {
       // Native path — cordova-plugin-purchase v13 (CdvPurchase namespace)
-      if (window.Capacitor?.isNativePlatform() && window.CdvPurchase?.store && window._iapReady) {
+      if (window.Capacitor?.isNativePlatform()) {
+        // If store isn't ready yet, wait up to 8 seconds then auto-fire the purchase
+        if (!window.CdvPurchase?.store || !window._iapReady) {
+          toast('Store is loading… one moment.');
+          let waited = 0;
+          const poll = setInterval(() => {
+            waited += 500;
+            if (window.CdvPurchase?.store && window._iapReady) {
+              clearInterval(poll);
+              Monetization.purchaseIAP(productId, callback); // retry now that it's ready
+            } else if (waited >= 8000) {
+              clearInterval(poll);
+              toast('Store unavailable. Check your connection and try again.');
+              if (callback) callback(false);
+            }
+          }, 500);
+          return;
+        }
         const store    = window.CdvPurchase.store;
         const Platform = window.CdvPurchase.Platform;
         const product  = store.get(productId, Platform.APPLE_APP_STORE);
         if (!product) {
           toast('Product not found. Try again shortly.');
-          callback(false);
+          if (callback) callback(false);
           return;
         }
         const offer = product.getOffer();
         if (!offer) {
           toast('No offer available. Try again shortly.');
-          callback(false);
+          if (callback) callback(false);
           return;
         }
         // Guard against double-tap: if a callback is already pending for this product, bail out
@@ -3020,10 +3030,22 @@ const Monetization = (() => {
         // Register one-shot callback so delivery fires after verified+finished
         window._iapPendingCallbacks = window._iapPendingCallbacks || {};
         window._iapPendingCallbacks[productId] = callback;
-        offer.order().catch(err => {
-          console.warn('IAP order error:', err);
+        // Fallback: if store.error() never fires for a silent cancellation, auto-expire
+        // the guard after 5 minutes so the buy button doesn't stay locked forever.
+        setTimeout(() => {
+          if (window._iapPendingCallbacks?.[productId]) delete window._iapPendingCallbacks[productId];
+        }, 300000);
+        store.order(offer).then(err => {
+          if (!err) return; // success — StoreKit sheet will appear natively
+          console.warn('IAP order error (resolved):', err);
           if (window._iapPendingCallbacks) delete window._iapPendingCallbacks[productId];
-          callback(false);
+          toast('Purchase could not be started. Please try again.');
+          if (callback) callback(false);
+        }).catch(err => {
+          console.warn('IAP order error (rejected):', err);
+          if (window._iapPendingCallbacks) delete window._iapPendingCallbacks[productId];
+          toast('Purchase could not be started. Please try again.');
+          if (callback) callback(false);
         });
         return;
       }
@@ -3067,9 +3089,9 @@ const Monetization = (() => {
 function initIAP() {
   if (!window.Capacitor?.isNativePlatform()) return;
 
-  // cordova-plugin-purchase loads via the Cordova bridge which fires 'deviceready'
-  // asynchronously — CdvPurchase isn't available until that event. Wait for it.
   function _setup() {
+    if (window._iapInitCalled) return;
+    window._iapInitCalled = true;
     if (!window.CdvPurchase?.store) {
       console.warn('cordova-plugin-purchase not found — IAP disabled.');
       return;
@@ -3077,15 +3099,22 @@ function initIAP() {
     _initIAPStore();
   }
 
-  if (document.readyState === 'complete' && window.CdvPurchase?.store) {
-    _setup(); // already ready (shouldn't happen but handle it)
+  // deviceready may have already fired before initIAP() runs — check immediately first.
+  // If CdvPurchase is already present, call setup now. Otherwise wait for the event
+  // AND poll as a belt-and-suspenders fallback for the race condition.
+  if (window.CdvPurchase?.store) {
+    _setup();
   } else {
     document.addEventListener('deviceready', _setup, { once: true });
+    const poll = setInterval(() => {
+      if (window.CdvPurchase?.store) { clearInterval(poll); _setup(); }
+    }, 200);
+    setTimeout(() => clearInterval(poll), 15000);
   }
 }
 
 function _initIAPStore() {
-  const { store, ProductType, Platform } = window.CdvPurchase;
+  const { store, ProductType, Platform, ErrorCode } = window.CdvPurchase;
 
   // Register all products before calling initialize()
   store.register([
@@ -3106,18 +3135,37 @@ function _initIAPStore() {
     .verified(receipt => {
       receipt.finish();
     })
+    .unverified(() => {
+      toast('Purchase could not be verified. Please try again.');
+      _releaseIAPCallbacks();
+    })
     .finished(transaction => {
-      // Deliver each product in the transaction
       transaction.products.forEach(p => _deliverIAPProduct(p.id));
     });
+
+  // Without this handler a cancelled StoreKit sheet leaves _iapPendingCallbacks set,
+  // so the double-tap guard blocks every subsequent tap until the app restarts.
+  store.error(error => {
+    console.warn('IAP error:', error.code, error.message);
+    const cancelled = ErrorCode && error.code === ErrorCode.PAYMENT_CANCELLED;
+    if (!cancelled) toast('Purchase failed. Please try again.');
+    _releaseIAPCallbacks();
+  });
 
   // Initialize the App Store platform
   store.initialize([Platform.APPLE_APP_STORE]).then(() => {
     window._iapReady = true;
-    console.log('IAP store ready.');
   }).catch(err => {
     console.warn('IAP init failed:', err);
   });
+}
+
+// Calls all pending IAP callbacks with false and clears the map.
+// Called by the error and unverified handlers so the double-tap guard always resets.
+function _releaseIAPCallbacks() {
+  const cbs = window._iapPendingCallbacks || {};
+  window._iapPendingCallbacks = {};
+  Object.values(cbs).forEach(cb => { if (cb) cb(false); });
 }
 
 // Called by the store when a purchase is verified+finished.
@@ -3133,7 +3181,8 @@ function _deliverIAPProduct(productId) {
       // Already owned — restore silently (non-consumable re-deliver on restore flow)
       toast('🎁 Starter Pack already applied to your account.');
     }
-    if (cb) cb(true);
+    // Do NOT call cb here — for starter_pack the button wires cb = onStarterPackPurchased,
+    // which was already called directly above. Calling cb(true) again would double-award gold.
   } else {
     // Megabucks consumable
     if (cb) {
@@ -3165,7 +3214,7 @@ function onIncomeBoostRewarded(rewarded) {
 }
 
 function onStarterPackPurchased(success) {
-  if (!success) return;
+  if (!success || state.starterPackOwned) return;
   state.gold = (state.gold || 0) + 50;
   state.lifetimeGold = (state.lifetimeGold || 0) + 50;
   state.starterPackOwned = true;
@@ -3208,21 +3257,23 @@ function updateDoublerUI() {
       chip.textContent = '2× ACTIVE';
     }
   }
-  // Show/hide the 2× Income button in the header based on whether doubler is active
+  // Show/hide the 2× Income button in the header; always hide for Starter Pack owners
   const adBtn = document.getElementById('watchAdBtn');
-  if (adBtn) adBtn.style.display = active ? 'none' : '';
+  if (adBtn) adBtn.style.display = (active || state.starterPackOwned) ? 'none' : '';
 }
 
 // ============ LAUNCH AD OFFER ============
 function maybeShowLaunchAdOffer() {
   // Only show on native iOS/Android
   if (!window.Capacitor?.isNativePlatform()) return;
+  // Starter Pack owners have "No Ads" — never show
+  if (state.starterPackOwned) return;
   // Only after tutorial is complete
   if (state.tutorialStep !== 'done') return;
   // Don't show if income doubler is already running
   if (state.incomeDoublerUntil && Date.now() < state.incomeDoublerUntil) return;
   // Need at least one hired trader before bothering the player
-  const hasTrader = Object.values(state.staff || {}).some(s => s > 0);
+  const hasTrader = ASSETS.some(a => state.assets[a.id]?.hired);
   if (!hasTrader) return;
   // Show at most once per 4-hour session window
   const lastShown = state._launchOfferShown || 0;
@@ -3445,7 +3496,7 @@ function showWelcomeBackModal(earningsData) {
           requestAnimationFrame(() => { breakdown.style.opacity = '1'; });
         }
         const totalValue = cashGain + yenGain + gbpGain;
-        if (adBtn && totalValue > 1) {
+        if (adBtn && totalValue > 1 && !state.starterPackOwned) {
           adBtn.style.display = '';
           adBtn.style.opacity = '0';
           adBtn.style.transition = 'opacity 0.4s ease';
@@ -3897,6 +3948,16 @@ function totalIncomePerSec() {
   });
   return total;
 }
+// Wall St-only passive income — used by Time Warps which always grant cash regardless of active market.
+function wallStIncomePerSec() {
+  let total = 0;
+  ASSETS.forEach(a => {
+    if ((a.market || 'wallst') !== 'wallst') return;
+    const s = state.assets[a.id];
+    if (s && s.hired && s.owned > 0) total += payoutOf(a) / timeOf(a);
+  });
+  return total;
+}
 function prestigeGain() {
   // Formula: 5 * sqrt(Earnings / 1M). $1M → 5, $100M → 50, $1B → 158, $10B → 500, $1T → 5,000.
   // Raised bar from coeff 8 → 5 on 2026-05-22 so each IPO requires more progress. Leverage matters more.
@@ -4045,15 +4106,8 @@ function activateBlackSwan(sw) {
   renderAssets();
   // Massive screen flash on activation
   celebrate('BLACK SWAN: ' + sw.headline, 'You lost ' + fmt(cashLost) + '. Survive for permanent +25%.');
-  // Grant permanent bonus when the event ends — schedule it
-  setTimeout(() => {
-    state.blackSwanBonus = (state.blackSwanBonus || 1) * sw.surviveBonus;
-    state.megabucks = (state.megabucks || 0) + 1; // Black Swan survival earns 1 Megabuck
-    addNews('SURVIVED: ' + sw.headline, '+25% global mult + 1 Megabuck earned forever.', 'milestone');
-    celebrate('YOU SURVIVED', '+25% all payouts forever + 1 Megabuck (' + state.blackSwansExperienced + '/' + MAX_BLACK_SWANS + ' lifetime)');
-    renderCash();
-    save();
-  }, sw.dur * 1000 + 200);
+  // Survival reward is now granted by tick() when the event's until timestamp passes,
+  // so closing the app mid-event can no longer lose the +25% / Megabuck reward.
   save();
 }
 
@@ -4222,9 +4276,9 @@ function useWhistleblower() {
   if (state.whistleblowerUsedThisRun) { toast('Already used this IPO cycle.'); return; }
   if (state.activeEvent) { toast('Wait for the current event to end.'); return; }
   state.whistleblowerUsedThisRun = true;
-  const ev = { sector: 'all', mult: 4, dur: 30, headline: 'WHISTLEBLOWER LEAK', detail: 'Receipts dropped. Markets surge x4 for 30s.', bad: false };
+  const ev = { sector: 'all', mult: 5, dur: 30, headline: 'WHISTLEBLOWER LEAK', detail: 'Receipts dropped. Markets surge x5 for 30s.', bad: false };
   activateEvent(ev);
-  celebrate('LEAKED!', '4x all payouts for 30 seconds');
+  celebrate('LEAKED!', '5x all payouts for 30 seconds');
   renderManagersTab();
   save();
 }
@@ -4436,8 +4490,8 @@ function useTimeWarp(id) {
   const w = TIME_WARPS.find(x => x.id === id);
   if (!w) return;
   if ((state.megabucks || 0) < w.mbCost) { toast('Not enough Megabucks (MB).'); return; }
-  const rate = totalIncomePerSec();
-  if (rate <= 0) { toast('No passive income to warp. Hire a trader first.'); return; }
+  const rate = wallStIncomePerSec();
+  if (rate <= 0) { toast('No Wall St passive income to warp. Hire a Wall St trader first.'); return; }
   const gain = rate * w.hours * 3600;
   state.megabucks -= w.mbCost;
   state.cash += gain;
@@ -5580,8 +5634,6 @@ function fileSecComplaint(rivalId) {
 }
 
 function renderRivalsTab() {
-  // Leaderboards tab is a placeholder until Phase G backend — do not overwrite the HTML.
-  return;
   const root = document.getElementById('tab-rivals');
   if (!root) return;
   const playerVal = state.allTimeEarnings || 0;
@@ -5715,6 +5767,10 @@ function doPrestige() {
   state.activeEvent = null;
   state.lastEventAt = Date.now();
   state.whistleblowerUsedThisRun = false; // refresh ability per run
+  // Clear time-limited bonuses — they were earned in the old run, not carried forward
+  state.activeLeverage = null;
+  state.activePump = null;
+  state.optionsLeverage = null;
   state.totalIPOs = (state.totalIPOs || 0) + 1; // lifetime IPO counter for achievements
   Haptic.success();
   // Milestone IPOs earn Megabucks: 2 at 3rd IPO, 2 more at 10th, 2 more at 25th
@@ -5743,9 +5799,19 @@ function tick() {
 
   // Event timer
   if (state.activeEvent && now > state.activeEvent.until) {
+    const expiredEvent = state.activeEvent;
     state.activeEvent = null;
     hideEvent();
     renderAll();
+    // Black Swan survival reward — granted here so closing the app mid-event can't lose it
+    if (expiredEvent.blackSwan) {
+      state.blackSwanBonus = (state.blackSwanBonus || 1) * 1.25;
+      state.megabucks = (state.megabucks || 0) + 1;
+      addNews('SURVIVED: ' + expiredEvent.headline, '+25% global mult + 1 Megabuck earned forever.', 'milestone');
+      celebrate('YOU SURVIVED', '+25% all payouts forever + 1 Megabuck (' + state.blackSwansExperienced + '/' + MAX_BLACK_SWANS + ' lifetime)');
+      renderCash();
+      save();
+    }
   }
   if (state.activeEvent) {
     const remaining = Math.max(0, Math.ceil((state.activeEvent.until - now) / 1000));
@@ -5755,7 +5821,7 @@ function tick() {
 
   maybeFireEvent();
   maybeFirePump();
-  // maybeStartRivalRaid() — disabled: Leaderboards tab is placeholder, no UI to counter raids
+  maybeStartRivalRaid();
   tickRivals(dt);
   maybeTutorialAutoAdvance();
 
@@ -5890,7 +5956,7 @@ function renderCash() {
     const parts = [];
     if (state.activeMarket !== 'wallst') {
       let r = 0; ASSETS.forEach(a => { if ((a.market||'wallst')==='wallst' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
-      if (r > 0) parts.push('$' + fmt(r) + '/s');
+      if (r > 0) parts.push(fmt(r) + '/s');
     }
     if (state.tokyoUnlocked && state.activeMarket !== 'tokyo') {
       let r = 0; ASSETS.forEach(a => { if (a.market==='tokyo' && state.assets[a.id]?.hired && state.assets[a.id]?.owned > 0) r += payoutOf(a)/timeOf(a); });
@@ -6657,7 +6723,7 @@ function renderPerksTab() {
         <span style="font-size:11px;">Take your firm public to skip ahead in time.</span>
       </div>`;
     } else {
-      const rate = totalIncomePerSec();
+      const rate = wallStIncomePerSec();
       let html = '';
       TIME_WARPS.forEach(w => {
         const can = (state.megabucks || 0) >= w.mbCost && rate > 0;
@@ -6958,6 +7024,9 @@ function openModal(id) {
         spBtn.innerHTML = 'Starter Pack — 50 Gold + No Ads &middot; <span style="color:#0a0e1a;">$2.99</span>';
       }
     }
+    // Hide the Watch Ad button in settings for Starter Pack owners ("No Ads" promise)
+    const sadBtn = document.getElementById('settingsAdBtn');
+    if (sadBtn) sadBtn.style.display = state.starterPackOwned ? 'none' : '';
   }
   if (id === 'statsModal') renderStats();
   if (id === 'prestigeModal') renderPrestige();
@@ -7289,6 +7358,8 @@ function save() {
       rivalWealth: state.rivalWealth || {},
       rivalsBeaten: state.rivalsBeaten || {},
       rivalChampion: !!state.rivalChampion,
+      // Persist activeEvent so a Black Swan reward isn't lost if the app closes mid-event
+      activeEvent: state.activeEvent || null,
       lastSavedAt: Date.now(),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(out));
@@ -7379,6 +7450,21 @@ function load() {
     state.rivalRaid = data.rivalRaid || null;
     state.rivalRaidSuppressedUntil = data.rivalRaidSuppressedUntil || 0;
     state.rivalsBeaten  = data.rivalsBeaten  || {};
+    // Restore active event — needed so a Black Swan event that was live when the app closed
+    // can still grant its survival reward when tick() detects the expiry timestamp has passed.
+    const _savedEvent = data.activeEvent || null;
+    if (_savedEvent && _savedEvent.until > Date.now()) {
+      state.activeEvent = _savedEvent; // still live — tick() will expire and reward it
+    } else {
+      state.activeEvent = null;
+      // Black Swan expired while the app was closed — grant the survival reward here.
+      // tick() won't see the expiry because the event is already gone by the time we boot.
+      if (_savedEvent?.blackSwan) {
+        state.blackSwanBonus = (state.blackSwanBonus || 1) * 1.25;
+        state.megabucks = (state.megabucks || 0) + 1;
+        state._pendingBlackSwanSurvival = true; // boot() will celebrate this
+      }
+    }
     state.rivalChampion = !!data.rivalChampion;
     // Initialise rival wealth — new field for existing saves
     if (data.rivalWealth && Object.keys(data.rivalWealth).length > 0) {
@@ -7540,12 +7626,24 @@ function boot() {
   document.addEventListener('visibilitychange', () => { _rafPaused = document.hidden; });
   (function rafLoop(ts) { if (!_rafPaused && ts - _lastRaf >= 33) { _lastRaf = ts; renderProgressBars(); } requestAnimationFrame(rafLoop); })();
   window.addEventListener('beforeunload', save);
+  // Re-show event banner if an active event was restored from save
+  if (state.activeEvent) showEvent();
   // Show Welcome Back modal after UI is ready (if offline earnings exist)
   if (state._pendingOfflineData) {
     setTimeout(() => {
       showWelcomeBackModal(state._pendingOfflineData);
       delete state._pendingOfflineData;
     }, 800);
+  }
+  // Black Swan survived while app was closed — celebrate after UI settles
+  if (state._pendingBlackSwanSurvival) {
+    state._pendingBlackSwanSurvival = false;
+    setTimeout(() => {
+      addNews('SURVIVED: Black Swan', '+25% global mult + 1 Megabuck earned forever.', 'milestone');
+      celebrate('YOU SURVIVED', '+25% all payouts forever + 1 Megabuck (' + state.blackSwansExperienced + '/' + MAX_BLACK_SWANS + ' lifetime)');
+      renderCash();
+      save();
+    }, 1200);
   }
   // Refresh doubler UI in case a saved doubler timer is still running
   updateDoublerUI();
