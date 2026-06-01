@@ -130,6 +130,24 @@
   }
   .tab-btn.has-news .tab-dot { display: block; }
 
+  /* SVG icon system */
+  .svg-icon {
+    width: 1em; height: 1em;
+    display: inline-block; vertical-align: middle; overflow: visible;
+  }
+  .tab-btn .svg-icon, .nav-btn .svg-icon, .bb-btn .svg-icon {
+    font-size: 22px; display: block; margin-bottom: 1px;
+  }
+  .tab-btn.active .svg-icon { color: #0a0e1a; }
+  .asset-icon .svg-icon  { font-size: 32px; }
+  .perk-icon .svg-icon   { font-size: 20px; }
+  .unlock-icon .svg-icon { font-size: 24px; }
+  .quest-icon .svg-icon  { font-size: 22px; }
+  .dq-icon .svg-icon     { font-size: 22px; }
+  .skill-node-icon .svg-icon { font-size: 24px; }
+  .manager-portrait .svg-icon { font-size: 36px; }
+  .lb-icon .svg-icon     { font-size: 22px; }
+
   /* Generic panel section heading */
   .panel-title {
     font-family: 'Lilita One', sans-serif;
@@ -704,6 +722,28 @@
     margin: 8px 6px; padding: 12px; border-radius: 10px; text-align: center;
     background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(46,204,113,0.10));
     border: 2px solid #ffd700;
+  }
+  /* Global leaderboard */
+  .glb-section-title {
+    font-family: 'Lilita One', sans-serif; color: var(--gold); font-size: 15px;
+    padding: 10px 14px 4px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;
+  }
+  .glb-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; margin: 3px 6px;
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 1px solid var(--panel-2); border-radius: 8px; font-size: 12px;
+  }
+  .glb-row.glb-self { border-color: #4af; background: linear-gradient(180deg, #0a1a2a, #060e18); }
+  .glb-rank { font-family: 'Lilita One', sans-serif; font-size: 14px; min-width: 28px; text-align: center; }
+  .glb-name { flex: 1; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .glb-score { color: var(--gold); font-size: 11px; text-align: right; }
+  .glb-loading { text-align: center; color: var(--text-dim); font-size: 12px; padding: 12px; }
+  .glb-divider { margin: 8px 6px; border: none; border-top: 1px solid var(--panel-2); }
+  .glb-ai-title {
+    font-family: 'Lilita One', sans-serif; color: var(--text-dim); font-size: 13px;
+    padding: 8px 14px 2px; letter-spacing: 0.5px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
   }
 
   .gold-chip {
@@ -1758,6 +1798,82 @@
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" id="svg-sprite">
+  <symbol id="home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L12 3l9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></symbol>
+  <symbol id="menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+  <symbol id="gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></symbol>
+  <symbol id="briefcase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6V4a2 2 0 012-2h8a2 2 0 012 2v2M4 6h16v14a2 2 0 01-2 2H6a2 2 0 01-2-2zM8 11h8"/></symbol>
+  <symbol id="lightning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></symbol>
+  <symbol id="star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></symbol>
+  <symbol id="chart-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l4-4 4 3 5-7 3 3M21 21H3"/></symbol>
+  <symbol id="columns" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20M2 4h20M4 4v16M12 4v16M20 4v16M2 9h20M2 15h20"/></symbol>
+  <symbol id="trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M5 3h14v9a7 7 0 01-14 0zM5 3H2v5a3 3 0 003 3M19 3h3v5a3 3 0 01-3 3"/></symbol>
+  <symbol id="newspaper" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v14H4zM14 4h6v4h-6zM14 12h6M14 16h6M7 8h6M7 12h4M7 16h4"/></symbol>
+  <symbol id="building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16M4 21V4a1 1 0 011-1h14a1 1 0 011 1v17M9 9h2M9 13h2M13 9h2M13 13h2M10 21v-4h4v4"/></symbol>
+  <symbol id="medal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l1.5 4.6h4.8l-3.9 2.8 1.5 4.6L12 11.2l-3.9 2.8 1.5-4.6L5.7 6.6h4.8z"/></symbol>
+  <symbol id="diamond" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L4 10l8 11 8-11zM4 10h16"/></symbol>
+  <symbol id="speaker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></symbol>
+  <symbol id="dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></symbol>
+  <symbol id="rocket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c-3 4-4 8-4 11a4 4 0 008 0c0-3-1-7-4-11zM9 13l-4 3M15 13l4 3M10 17h4"/></symbol>
+  <symbol id="candy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 9.5a4.5 4.5 0 106.36 6.36M9.5 9.5L15.86 15.86M9.5 9.5l-5-5M15.86 15.86l5 5"/></symbol>
+  <symbol id="robot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v2M14 3v2M5 7h14a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1V8a1 1 0 011-1zM8 12h0M16 12h0M10 15h4M12 17v5M9 22h6"/></symbol>
+  <symbol id="coins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 100 10A5 5 0 0012 2zM4 15a4 4 0 018 0M8 15h8M9 21h6M8 18h8"/></symbol>
+  <symbol id="boat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18M5 18V10l7-5 7 5v8M12 5v6M9 11h6"/></symbol>
+  <symbol id="shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5.5-3.5 9.74-8 11C7.5 20.74 4 16.5 4 11V5z"/></symbol>
+  <symbol id="globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></symbol>
+  <symbol id="sushi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12a6 6 0 0012 0H6zM6 12V9a3 3 0 013-3M18 12V9a3 3 0 00-3-3M9 6h6M12 3v3"/></symbol>
+  <symbol id="sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6.34 6.34l1.42 1.42M16.24 16.24l1.42 1.42M6.34 17.66l1.42-1.42M16.24 7.76l1.42-1.42M12 8a4 4 0 100 8 4 4 0 000-8z"/></symbol>
+  <symbol id="mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 00-3 3v6a3 3 0 006 0V5a3 3 0 00-3-3zM5 11a7 7 0 0014 0M12 19v3M9 22h6"/></symbol>
+  <symbol id="train" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V8a2 2 0 012-2h12a2 2 0 012 2v3M4 11v7a2 2 0 002 2h12a2 2 0 002-2v-7M4 11h16M9 20l-2 2M15 20l2 2M9 11h0M15 11h0"/></symbol>
+  <symbol id="paw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM15 5.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM7.5 8a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM17 8.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM12 12c-3 0-6 2-6 5 0 4 2.5 5 6 5s6-1 6-5c0-3-3-5-6-5z"/></symbol>
+  <symbol id="flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15V5M4 5h12l-3 5 3 5H4"/></symbol>
+  <symbol id="tea" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-2 10H7zM17 8V6a1 1 0 00-1-1H8a1 1 0 00-1 1v2M16 18a2 2 0 012 2H6a2 2 0 012-2"/></symbol>
+  <symbol id="card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h20v12H2zM2 11h20M6 15h4"/></symbol>
+  <symbol id="crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 19h20M2 19l3-10 5 5L12 5l2 9 5-5 3 10"/></symbol>
+  <symbol id="oil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l5 10H7zM7 12h10v5a5 5 0 01-10 0zM10 17v5M14 17v5"/></symbol>
+  <symbol id="castle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16M6 21V12l6-9 6 9v9M3 12h18M10 21v-5h4v5"/></symbol>
+  <symbol id="coffee" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 010 8h-1M3 8h14v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM6 2v2M10 2v2M14 2v2"/></symbol>
+  <symbol id="laptop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h16M4 14V6a1 1 0 011-1h14a1 1 0 011 1v8M4 14H2v4h20v-4h-2M9 21h6"/></symbol>
+  <symbol id="plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-5 20-4-9-9-4z"/></symbol>
+  <symbol id="computer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1zM8 20h8M12 16v4"/></symbol>
+  <symbol id="signal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-1 0a1 1 0 102 0 1 1 0 10-2 0M9.17 9.17a4 4 0 000 5.66M14.83 14.83a4 4 0 000-5.66M6.34 6.34a8 8 0 000 11.32M17.66 17.66a8 8 0 000-11.32"/></symbol>
+  <symbol id="server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zM4 13h16a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4a1 1 0 011-1zM7 8h0M7 16h0M10 8h4M10 16h4"/></symbol>
+  <symbol id="hand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10V6a2 2 0 014 0v4M12 10V4a2 2 0 014 0v6M16 10a2 2 0 014 0v4l-4 6H8l-4-4a2 2 0 010-4l4 2V10a2 2 0 014 0z"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2"/></symbol>
+  <symbol id="chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18V9l4 4 4-8 4 5 4-5M4 22h16"/></symbol>
+  <symbol id="brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a7 7 0 00-7 7c0 2.5 1.4 4.7 3.5 5.9M12 5a7 7 0 017 7c0 2.5-1.4 4.7-3.5 5.9M12 5v14M8.5 17.9L12 19l3.5-1.1M9 12h6M10 9v6M14 9v6"/></symbol>
+  <symbol id="clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h4"/></symbol>
+  <symbol id="circle-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 100-20 10 10 0 000 20zM12 8v8M8 12l4-4 4 4"/></symbol>
+  <symbol id="circle-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 16V8M8 12l4 4 4-4"/></symbol>
+  <symbol id="star-glow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.3L12 17l-6.2 4.2 2.4-7.3L2 9.4h7.6z"/></symbol>
+  <symbol id="city" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21h20M4 21V9h6V4h8v17M7 13h2M7 17h2M15 8h2M15 12h2M15 16h2M4 9h2M4 13h2M4 17h2"/></symbol>
+  <symbol id="palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13.5A10 10 0 1012 22c1.7 0 2-1 2-2 0-.5-.1-.9-.2-1.2.4-.6.2-1.5-.5-2.5-1-1.5-.2-3.3 1.7-3.3 3 0 5 2.5 5 5.5C20 22 16 24 12 24A12 12 0 012 13.5z"/></symbol>
+  <symbol id="island" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10V2M9 5l3-3 3 3M8 21c0-3.5 4-8 4-8s4 4.5 4 8M2 21h20M7 21c1-2 2-4 5-4s4 2 5 4"/></symbol>
+  <symbol id="medal-sport" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15l-7 7M12 15l7 7M5 3h14M5 3a7 7 0 007 12 7 7 0 007-12"/></symbol>
+  <symbol id="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></symbol>
+  <symbol id="bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></symbol>
+  <symbol id="link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></symbol>
+  <symbol id="cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></symbol>
+  <symbol id="hourglass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14M5 21h14M8 3v5l4 5-4 5v3M16 3v5l-4 5 4 5v3"/></symbol>
+  <symbol id="wolf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3L4 8l-1 6 3 4 6 2 6-2 3-4-1-6-4-5M12 3l2 5M12 3l-2 5M9 14c0 2 0 4-2 5M15 14c0 2 0 4 2 5M9 10h6"/></symbol>
+  <symbol id="person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11a4 4 0 100-8 4 4 0 000 8zM3 21a9 9 0 0118 0"/></symbol>
+  <symbol id="muscle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5A3.5 3.5 0 003 10c0 2.5 3 4.5 3.5 5L12 22l5.5-7S21 13 21 10a3.5 3.5 0 00-6.5-1.5 3.5 3.5 0 00-8 0"/></symbol>
+  <symbol id="cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/></symbol>
+  <symbol id="bill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h20v12H2zM6 10h12M6 14h8"/></symbol>
+  <symbol id="guitar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zM12 12l5 9M12 12l-7 9"/></symbol>
+  <symbol id="yen-sign" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L6 10h12zM6 10l6 4 6-4M12 14v8M9 18h6"/></symbol>
+  <symbol id="heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></symbol>
+  <symbol id="sword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19l14-14M9 5h10v10M15 5l4 4"/></symbol>
+  <symbol id="building-old" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20M4 20V9h16v11M10 9V5h4v4M7 14h10M7 17h10"/></symbol>
+  <symbol id="hat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14c0-4 3.6-7 8-7s8 3 8 7M3 14h18M6 14v5h12v-5"/></symbol>
+  <symbol id="bear-face" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8a3 3 0 000 6M19 8a3 3 0 010 6M7 7h10v9a5 5 0 01-10 0zM10 12h0M14 12h0M10 16a2.5 2.5 0 005 0"/></symbol>
+  <symbol id="moon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 01-7.07-17.07A8 8 0 1019.07 14.93 10 10 0 0112 22z"/></symbol>
+</svg>
+<script>
+function svgIcon(name, cls) {
+  return '<svg class="svg-icon' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#' + name + '"/></svg>';
+}
+</script>
 <div id="app">
   <div class="ticker-wrap">
     <div class="ticker" id="ticker"></div>
@@ -1772,10 +1888,10 @@
     <div class="income-rate" id="incomeRate">$0/sec passive income</div>
     <div id="otherMarketRates" style="font-size:10px;color:rgba(255,255,255,0.35);text-align:center;margin-top:1px;min-height:14px;letter-spacing:0.02em;"></div>
     <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
-      <div class="gold-chip" id="goldChip" onclick="showGoldInfo()" style="cursor:pointer;"><span class="gold-icon">&#129689;</span><span id="goldAmount">0</span> GOLD</div>
-      <div class="gold-chip" id="megabucksChip" style="background:linear-gradient(180deg,#6a2a9a,#3d0a6a);border-color:#9b3dca;display:none;"><span class="gold-icon">&#128142;</span><span id="megabucksAmount">0</span> MB</div>
+      <div class="gold-chip" id="goldChip" onclick="showGoldInfo()" style="cursor:pointer;"><span class="gold-icon"><svg class="svg-icon" aria-hidden="true" style="font-size:16px;"><use href="#medal"/></svg></span><span id="goldAmount">0</span> GOLD</div>
+      <div class="gold-chip" id="megabucksChip" style="background:linear-gradient(180deg,#6a2a9a,#3d0a6a);border-color:#9b3dca;display:none;"><span class="gold-icon"><svg class="svg-icon" aria-hidden="true" style="font-size:16px;"><use href="#diamond"/></svg></span><span id="megabucksAmount">0</span> MB</div>
       <button id="watchAdBtn" onclick="Monetization.showRewardedAd('income_boost', onIncomeBoostRewarded)" title="Watch ad for 2× income" style="display:none;background:linear-gradient(180deg,#9b3dca,#6a1a8a);border:2px solid #4a235a;border-radius:8px;color:#fff;font-size:10px;font-weight:900;padding:4px 7px;cursor:pointer;line-height:1;letter-spacing:0.3px;text-transform:uppercase;">📺 2× Income</button>
-      <button id="muteBtn" onclick="toggleSFX()" title="Toggle sound" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;font-size:15px;padding:4px 8px;cursor:pointer;line-height:1;">&#128266;</button>
+      <button id="muteBtn" onclick="toggleSFX()" title="Toggle sound" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;font-size:15px;padding:4px 8px;cursor:pointer;line-height:1;"><svg class="svg-icon" aria-hidden="true" style="font-size:16px;vertical-align:-2px;"><use href="#speaker"/></svg></button>
     </div>
     <div class="stats-row">
       <div>Influence<span class="stat-val" id="influence">0</span></div>
@@ -1868,33 +1984,33 @@
     <div class="nav-handle"></div>
     <!-- IPO button -->
     <button id="navIpoBtn" class="nav-ipo-btn" onclick="closeNav();openModal('prestigeModal')">
-      &#127970; IPO Your Firm &mdash; Ring the Bell
+      <svg class="svg-icon" aria-hidden="true" style="font-size:20px;vertical-align:-3px;"><use href="#building"/></svg> IPO Your Firm &mdash; Ring the Bell
     </button>
     <!-- Destination grid -->
     <div class="nav-grid">
       <button class="nav-btn" id="nav-staff-btn" onclick="closeNav();switchTab('managers')">
-        <span class="nav-icon">&#128188;</span>STAFF<span class="nav-dot"></span>
+        <svg class="svg-icon" aria-hidden="true"><use href="#briefcase"/></svg>STAFF<span class="nav-dot"></span>
       </button>
       <button class="nav-btn" id="nav-skills-btn" onclick="closeNav();switchTab('skills')">
-        <span class="nav-icon">&#127795;</span>SKILLS<span class="nav-dot"></span>
+        <svg class="svg-icon" aria-hidden="true"><use href="#lightning"/></svg>SKILLS<span class="nav-dot"></span>
       </button>
       <button class="nav-btn" id="nav-perks-btn" onclick="closeNav();switchTab('perks')">
-        <span class="nav-icon">&#9889;</span>PERKS<span class="nav-dot"></span>
+        <svg class="svg-icon" aria-hidden="true"><use href="#lightning"/></svg>PERKS<span class="nav-dot"></span>
       </button>
       <button class="nav-btn" id="nav-goals-btn" onclick="closeNav();switchTab('unlocks')">
-        <span class="nav-icon">&#11088;</span>GOALS<span class="nav-dot"></span>
+        <svg class="svg-icon" aria-hidden="true"><use href="#star"/></svg>GOALS<span class="nav-dot"></span>
       </button>
       <button class="nav-btn" onclick="closeNav();switchTab('options')">
-        <span class="nav-icon">&#128200;</span>OPTIONS
+        <svg class="svg-icon" aria-hidden="true"><use href="#chart-up"/></svg>OPTIONS
       </button>
       <button class="nav-btn" onclick="closeNav();switchTab('pit')">
-        <span class="nav-icon">&#127963;</span>PIT
+        <svg class="svg-icon" aria-hidden="true"><use href="#columns"/></svg>PIT
       </button>
       <button class="nav-btn" onclick="closeNav();switchTab('rivals')">
-        <span class="nav-icon">&#127942;</span>LEADERS
+        <svg class="svg-icon" aria-hidden="true"><use href="#trophy"/></svg>LEADERS
       </button>
       <button class="nav-btn" id="nav-news-btn" onclick="closeNav();switchTab('news')">
-        <span class="nav-icon">&#128240;</span>NEWS<span class="nav-dot"></span>
+        <svg class="svg-icon" aria-hidden="true"><use href="#newspaper"/></svg>NEWS<span class="nav-dot"></span>
       </button>
     </div>
   </div>
@@ -1902,13 +2018,13 @@
 
 <div class="bottom-bar">
   <button class="bb-btn" onclick="switchTab('home')">
-    <span class="bb-icon">&#127968;</span>HOME
+    <svg class="svg-icon" aria-hidden="true"><use href="#home"/></svg>HOME
   </button>
   <button class="bb-btn" onclick="openNav()">
-    <span class="bb-icon">&#9783;</span>NAVIGATE
+    <svg class="svg-icon" aria-hidden="true"><use href="#menu"/></svg>NAVIGATE
   </button>
   <button class="bb-btn" onclick="openModal('settingsModal')">
-    <span class="bb-icon">&#9881;</span>MENU
+    <svg class="svg-icon" aria-hidden="true"><use href="#gear"/></svg>MENU
   </button>
 </div>
 
@@ -2181,35 +2297,94 @@
 </div>
 
 <script>
+// ── Supabase Global Leaderboard ──────────────────────────────────────────────
+// Fill in SUPABASE_URL and SUPABASE_ANON_KEY after creating your Supabase project.
+// See docs/superpowers/plans/2026-06-01-svg-icons-and-leaderboard.md for setup steps.
+const SUPABASE_URL      = 'https://YOUR_PROJECT_REF.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+const LB_SUBMIT_DEBOUNCE_MS = 30000;
+let   _lbLastSubmit = 0;
+
+function _lbPlayerId() {
+  let id = localStorage.getItem('dtt_player_id');
+  if (!id) {
+    id = 'p_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('dtt_player_id', id);
+  }
+  return id;
+}
+
+async function submitLeaderboardScore() {
+  if (!SUPABASE_URL.startsWith('https://') || SUPABASE_URL.includes('YOUR_PROJECT')) return;
+  const now = Date.now();
+  if (now - _lbLastSubmit < LB_SUBMIT_DEBOUNCE_MS) return;
+  _lbLastSubmit = now;
+  const playerId  = _lbPlayerId();
+  const firmName  = (state.firmName || 'Anonymous Firm').slice(0, 64);
+  const score     = Math.floor(state.allTimeEarnings || 0);
+  const prestige  = state.totalIPOs || 0;
+  try {
+    await fetch(SUPABASE_URL + '/rest/v1/leaderboard', {
+      method: 'POST',
+      headers: {
+        'apikey':        SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Content-Type':  'application/json',
+        'Prefer':        'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({
+        player_id:      playerId,
+        firm_name:      firmName,
+        score:          score,
+        prestige_count: prestige,
+        updated_at:     new Date().toISOString(),
+      }),
+    });
+  } catch(_) { /* silent fail — leaderboard is non-critical */ }
+}
+
+async function fetchGlobalLeaderboard() {
+  if (!SUPABASE_URL.startsWith('https://') || SUPABASE_URL.includes('YOUR_PROJECT')) return null;
+  try {
+    const res = await fetch(
+      SUPABASE_URL + '/rest/v1/leaderboard?select=firm_name,score,prestige_count,player_id&order=score.desc&limit=50',
+      { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY } }
+    );
+    if (!res.ok) return null;
+    return await res.json();
+  } catch(_) { return null; }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ============ GAME DATA ============
 const ASSETS = [
   // === Wall Street market (USD) ===
   // Wall St payouts reduced ~20% on 2026-05-22 to slow early snowball (leverage/warps now matter more)
-  { id: 'pnny', ticker: '$PNNY', name: 'Penny Stocks',         icon: '&#128181;', baseCost: 4,        basePayout: 0.8,        baseTime: 2.0,  hireCost: 100,      sector: 'retail',        market: 'wallst' },
-  { id: 'meme', ticker: '$MEME', name: 'Meme Coins',           icon: '&#128640;', baseCost: 60,       basePayout: 14,         baseTime: 3,    hireCost: 1500,     sector: 'meme',          market: 'wallst' },
-  { id: 'dogz', ticker: '$CNDY', name: 'Candy Crypto',         icon: '&#127852;', baseCost: 720,      basePayout: 215,        baseTime: 6,    hireCost: 18000,    sector: 'crypto',        market: 'wallst' },
-  { id: 'aibl', ticker: '$AIBL', name: 'AI Bubble Co.',        icon: '&#129302;', baseCost: 8640,     basePayout: 3200,       baseTime: 12,   hireCost: 216000,   sector: 'tech',          market: 'wallst' },
-  { id: 'hedg', ticker: '$HEDG', name: 'Hedge Fund Position',  icon: '&#128176;', baseCost: 103680,   basePayout: 48000,      baseTime: 24,   hireCost: 2592000,  sector: 'institutional', market: 'wallst' },
-  { id: 'yact', ticker: '$YACT', name: 'Offshore Yacht Fund',  icon: '&#128674;', baseCost: 1244160,    basePayout: 720000,      baseTime: 60,  hireCost: 31104000,    sector: 'institutional', market: 'wallst' },
-  { id: 'prvt', ticker: '$PRVT', name: 'Private Equity Fund',  icon: '&#128188;', baseCost: 14929920,   basePayout: 8600000,     baseTime: 90,  hireCost: 373248000,   sector: 'institutional', market: 'wallst' },
-  { id: 'sovr', ticker: '$SOVR', name: 'Sovereign Wealth Fund',icon: '&#128737;', baseCost: 179159040,  basePayout: 103000000,   baseTime: 120, hireCost: 4478976000,  sector: 'institutional', market: 'wallst' },
-  { id: 'feds', ticker: '$FEDS', name: 'Federal Reserve Position', icon: '&#127970;', baseCost: 2149908480, basePayout: 1240000000, baseTime: 150, hireCost: 53747712000, sector: 'institutional', market: 'wallst' },
-  { id: 'glbl', ticker: '$GLBL', name: 'Global Reserve Currency',  icon: '&#127760;', baseCost: 25798901760,basePayout: 14800000000,baseTime: 180, hireCost: 644972544000,sector: 'institutional', market: 'wallst' },
+  { id: 'pnny', ticker: '$PNNY', name: 'Penny Stocks',         icon: 'dollar', baseCost: 4,        basePayout: 0.8,        baseTime: 2.0,  hireCost: 100,      sector: 'retail',        market: 'wallst' },
+  { id: 'meme', ticker: '$MEME', name: 'Meme Coins',           icon: 'rocket', baseCost: 60,       basePayout: 14,         baseTime: 3,    hireCost: 1500,     sector: 'meme',          market: 'wallst' },
+  { id: 'dogz', ticker: '$CNDY', name: 'Candy Crypto',         icon: 'candy', baseCost: 720,      basePayout: 215,        baseTime: 6,    hireCost: 18000,    sector: 'crypto',        market: 'wallst' },
+  { id: 'aibl', ticker: '$AIBL', name: 'AI Bubble Co.',        icon: 'robot', baseCost: 8640,     basePayout: 3200,       baseTime: 12,   hireCost: 216000,   sector: 'tech',          market: 'wallst' },
+  { id: 'hedg', ticker: '$HEDG', name: 'Hedge Fund Position',  icon: 'coins', baseCost: 103680,   basePayout: 48000,      baseTime: 24,   hireCost: 2592000,  sector: 'institutional', market: 'wallst' },
+  { id: 'yact', ticker: '$YACT', name: 'Offshore Yacht Fund',  icon: 'boat', baseCost: 1244160,    basePayout: 720000,      baseTime: 60,  hireCost: 31104000,    sector: 'institutional', market: 'wallst' },
+  { id: 'prvt', ticker: '$PRVT', name: 'Private Equity Fund',  icon: 'briefcase', baseCost: 14929920,   basePayout: 8600000,     baseTime: 90,  hireCost: 373248000,   sector: 'institutional', market: 'wallst' },
+  { id: 'sovr', ticker: '$SOVR', name: 'Sovereign Wealth Fund',icon: 'shield', baseCost: 179159040,  basePayout: 103000000,   baseTime: 120, hireCost: 4478976000,  sector: 'institutional', market: 'wallst' },
+  { id: 'feds', ticker: '$FEDS', name: 'Federal Reserve Position', icon: 'building', baseCost: 2149908480, basePayout: 1240000000, baseTime: 150, hireCost: 53747712000, sector: 'institutional', market: 'wallst' },
+  { id: 'glbl', ticker: '$GLBL', name: 'Global Reserve Currency',  icon: 'globe', baseCost: 25798901760,basePayout: 14800000000,baseTime: 180, hireCost: 644972544000,sector: 'institutional', market: 'wallst' },
   // === Tokyo Trading Floor (JPY ¥) — unlocked after first IPO ===
-  { id: 't_sushi',   ticker: '¥SUSHI', name: 'Sushi Bonds',             icon: '&#127843;', baseCost: 100,      basePayout: 25,         baseTime: 1.5, hireCost: 2500,      sector: 't_food',     market: 'tokyo' },
-  { id: 't_anime',   ticker: '¥ANIME', name: 'Anime Studio Stocks',     icon: '&#127884;', baseCost: 1500,     basePayout: 450,        baseTime: 3,   hireCost: 37500,     sector: 't_culture',  market: 'tokyo' },
-  { id: 't_karaoke', ticker: '¥KARA',  name: 'Karaoke ETF',             icon: '&#127908;', baseCost: 18000,    basePayout: 6750,       baseTime: 6,   hireCost: 450000,    sector: 't_culture',  market: 'tokyo' },
-  { id: 't_neko',    ticker: '¥RAIL',  name: 'Bullet Train Network',    icon: '&#128646;', baseCost: 216000,   basePayout: 101250,     baseTime: 12,  hireCost: 5400000,   sector: 't_industry', market: 'tokyo' },
-  { id: 't_sumo',    ticker: '¥MECHA', name: 'Mecha Patents Inc.',      icon: '&#129302;', baseCost: 2592000,  basePayout: 1518750,    baseTime: 24,  hireCost: 64800000,  sector: 't_industry', market: 'tokyo' },
-  { id: 't_toyota',  ticker: '¥KAIJU', name: 'Kaiju IP Holdings',       icon: '&#128050;', baseCost: 31104000, basePayout: 22781250,   baseTime: 60,  hireCost: 777600000, sector: 't_industry', market: 'tokyo' },
+  { id: 't_sushi',   ticker: '¥SUSHI', name: 'Sushi Bonds',             icon: 'sushi', baseCost: 100,      basePayout: 25,         baseTime: 1.5, hireCost: 2500,      sector: 't_food',     market: 'tokyo' },
+  { id: 't_anime',   ticker: '¥ANIME', name: 'Anime Studio Stocks',     icon: 'sparkle', baseCost: 1500,     basePayout: 450,        baseTime: 3,   hireCost: 37500,     sector: 't_culture',  market: 'tokyo' },
+  { id: 't_karaoke', ticker: '¥KARA',  name: 'Karaoke ETF',             icon: 'mic', baseCost: 18000,    basePayout: 6750,       baseTime: 6,   hireCost: 450000,    sector: 't_culture',  market: 'tokyo' },
+  { id: 't_neko',    ticker: '¥RAIL',  name: 'Bullet Train Network',    icon: 'train', baseCost: 216000,   basePayout: 101250,     baseTime: 12,  hireCost: 5400000,   sector: 't_industry', market: 'tokyo' },
+  { id: 't_sumo',    ticker: '¥MECHA', name: 'Mecha Patents Inc.',      icon: 'robot', baseCost: 2592000,  basePayout: 1518750,    baseTime: 24,  hireCost: 64800000,  sector: 't_industry', market: 'tokyo' },
+  { id: 't_toyota',  ticker: '¥KAIJU', name: 'Kaiju IP Holdings',       icon: 'paw', baseCost: 31104000, basePayout: 22781250,   baseTime: 60,  hireCost: 777600000, sector: 't_industry', market: 'tokyo' },
 
   // ——— LONDON ———
-  { id: 'l_sterling', ticker: '£GBP',   name: 'Sterling Bonds',         icon: '&#127981;', baseCost: 10000,       basePayout: 3000,         baseTime: 1.5, hireCost: 250000,       sector: 'l_forex',     market: 'london' },
-  { id: 'l_tea',      ticker: '£TEA',   name: 'Global Tea Trade',       icon: '&#127861;', baseCost: 150000,      basePayout: 55000,        baseTime: 3,   hireCost: 3750000,      sector: 'l_commodity', market: 'london' },
-  { id: 'l_bank',     ticker: '£LLOY',  name: 'Big Five Banking',       icon: '&#128179;', baseCost: 1800000,     basePayout: 810000,       baseTime: 6,   hireCost: 45000000,     sector: 'l_finance',   market: 'london' },
-  { id: 'l_crown',    ticker: '£CRWN',  name: 'Sovereign Debt',         icon: '&#128081;', baseCost: 21000000,    basePayout: 11025000,     baseTime: 12,  hireCost: 525000000,    sector: 'l_finance',   market: 'london' },
-  { id: 'l_oil',      ticker: '£BRENT', name: 'Brent Crude Futures',    icon: '&#128739;', baseCost: 260000000,   basePayout: 162500000,    baseTime: 24,  hireCost: 6500000000,   sector: 'l_energy',    market: 'london' },
-  { id: 'l_palace',   ticker: '£REIT',  name: 'Royal Estate REIT',      icon: '&#127984;', baseCost: 3100000000,  basePayout: 2325000000,   baseTime: 60,  hireCost: 77500000000,  sector: 'l_property',  market: 'london' },
+  { id: 'l_sterling', ticker: '£GBP',   name: 'Sterling Bonds',         icon: 'flag', baseCost: 10000,       basePayout: 3000,         baseTime: 1.5, hireCost: 250000,       sector: 'l_forex',     market: 'london' },
+  { id: 'l_tea',      ticker: '£TEA',   name: 'Global Tea Trade',       icon: 'tea', baseCost: 150000,      basePayout: 55000,        baseTime: 3,   hireCost: 3750000,      sector: 'l_commodity', market: 'london' },
+  { id: 'l_bank',     ticker: '£LLOY',  name: 'Big Five Banking',       icon: 'card', baseCost: 1800000,     basePayout: 810000,       baseTime: 6,   hireCost: 45000000,     sector: 'l_finance',   market: 'london' },
+  { id: 'l_crown',    ticker: '£CRWN',  name: 'Sovereign Debt',         icon: 'crown', baseCost: 21000000,    basePayout: 11025000,     baseTime: 12,  hireCost: 525000000,    sector: 'l_finance',   market: 'london' },
+  { id: 'l_oil',      ticker: '£BRENT', name: 'Brent Crude Futures',    icon: 'oil', baseCost: 260000000,   basePayout: 162500000,    baseTime: 24,  hireCost: 6500000000,   sector: 'l_energy',    market: 'london' },
+  { id: 'l_palace',   ticker: '£REIT',  name: 'Royal Estate REIT',      icon: 'castle', baseCost: 3100000000,  basePayout: 2325000000,   baseTime: 60,  hireCost: 77500000000,  sector: 'l_property',  market: 'london' },
 
   // ── BLACK MARKET — currency: gold. Unlocks after London. Slow, expensive, but passively earns gold. ──
   // Black Market removed — coming in a future update
@@ -2243,20 +2418,20 @@ function nextMilestone(asset) {
 }
 
 const BOOSTS = [
-  { id: 'morningCoffee',  name: 'Morning Coffee',        desc: 'All payouts +2%',           mult: 1.02, cost: 5e5,         icon: '&#9749;' },
-  { id: 'bloomberg',      name: 'Bloomberg Terminal',    desc: 'All payouts +5%',           mult: 1.05,  cost: 2e6,       icon: '&#128187;' },
-  { id: 'cornerOffice',   name: 'Corner Office',         desc: 'All payouts +8%',          mult: 1.08,  cost: 1e8,     icon: '&#127970;' },
-  { id: 'privateJet',     name: 'NetJets Membership',    desc: 'All payouts +12%',          mult: 1.12,  cost: 5e10,    icon: '&#128747;' },
-  { id: 'congressBuddy',  name: 'Congressional Buddy',   desc: 'All payouts +20%',          mult: 1.20,  cost: 2e13,  icon: '&#127963;' },
+  { id: 'morningCoffee',  name: 'Morning Coffee',        desc: 'All payouts +2%',           mult: 1.02, cost: 5e5,         icon: 'coffee' },
+  { id: 'bloomberg',      name: 'Bloomberg Terminal',    desc: 'All payouts +5%',           mult: 1.05,  cost: 2e6,       icon: 'laptop' },
+  { id: 'cornerOffice',   name: 'Corner Office',         desc: 'All payouts +8%',          mult: 1.08,  cost: 1e8,     icon: 'building' },
+  { id: 'privateJet',     name: 'NetJets Membership',    desc: 'All payouts +12%',          mult: 1.12,  cost: 5e10,    icon: 'plane' },
+  { id: 'congressBuddy',  name: 'Congressional Buddy',   desc: 'All payouts +20%',          mult: 1.20,  cost: 2e13,  icon: 'columns' },
 ];
 
 // HFT Speed Perks — cash-cost, permanent cycle time reductions. Stack multiplicatively.
 // Each reduces ALL asset cycle times. Stacks with milestone speed, Quant manager, lifestyle speed, etc.
 const HFT_PERKS = [
-  { id: 'fiber_link',  name: 'Fiber Optic Uplink', icon: '&#128421;', cashCost: 10e6,   speedMult: 0.97, desc: '-3% all cycle times. You are faster than the retail crowd.' },
-  { id: 'microwave',   name: 'Microwave Relay',    icon: '&#128225;', cashCost: 500e6,  speedMult: 0.93, desc: '-7% all cycle times. Signal bounced off the building across the street.' },
-  { id: 'colocation',  name: 'Server Co-location', icon: '&#128442;', cashCost: 50e9,   speedMult: 0.85, desc: '-15% all cycle times. Your racks live inside the exchange itself.' },
-  { id: 'quantum',     name: 'Quantum Execution',  icon: '&#9889;',   cashCost: 10e12,  speedMult: 0.80, desc: '-20% all cycle times. Progress bars pulse electric blue. Unreal.' },
+  { id: 'fiber_link',  name: 'Fiber Optic Uplink', icon: 'computer', cashCost: 10e6,   speedMult: 0.97, desc: '-3% all cycle times. You are faster than the retail crowd.' },
+  { id: 'microwave',   name: 'Microwave Relay',    icon: 'signal', cashCost: 500e6,  speedMult: 0.93, desc: '-7% all cycle times. Signal bounced off the building across the street.' },
+  { id: 'colocation',  name: 'Server Co-location', icon: 'server', cashCost: 50e9,   speedMult: 0.85, desc: '-15% all cycle times. Your racks live inside the exchange itself.' },
+  { id: 'quantum',     name: 'Quantum Execution',  icon: 'lightning', cashCost: 10e12,  speedMult: 0.80, desc: '-20% all cycle times. Progress bars pulse electric blue. Unreal.' },
 ];
 
 // Gold run milestones — gold awarded on IPO based on lifetime earnings reached that run.
@@ -2283,33 +2458,33 @@ function goldEarnedFromRun(lifetimeEarnings) {
 // Effects wired directly into timeOf(), globalMult(), executeTrade(), and events.
 const SKILL_TREE = [
   {
-    id: 'speed', name: 'Trading Floor', icon: '&#9889;', color: '#4a90e2',
+    id: 'speed', name: 'Trading Floor', icon: 'lightning', color: '#4a90e2',
     nodes: [
-      { id: 'sk_fast_hands',   name: 'Fast Hands',        icon: '&#128075;', goldCost: 25,  desc: '+10% payout on every manual trade you click.' },
-      { id: 'sk_pre_market',   name: 'Pre-Market Access', icon: '&#128338;', goldCost: 50,  desc: '-10% all asset cycle times.' },
-      { id: 'sk_algo_edge',    name: 'Algorithmic Edge',  icon: '&#129302;', goldCost: 100, desc: '-15% all cycle times (stacks).' },
-      { id: 'sk_light_speed',  name: 'Light Speed',       icon: '&#128640;', goldCost: 200, desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
-      { id: 'sk_dark_pool',    name: 'Dark Pool Access',  icon: '&#127756;', goldCost: 400, desc: '+30% all payouts permanently. Unlock the shadow networks.' },
+      { id: 'sk_fast_hands',   name: 'Fast Hands',        icon: 'hand', goldCost: 25,  desc: '+10% payout on every manual trade you click.' },
+      { id: 'sk_pre_market',   name: 'Pre-Market Access', icon: 'clock', goldCost: 50,  desc: '-10% all asset cycle times.' },
+      { id: 'sk_algo_edge',    name: 'Algorithmic Edge',  icon: 'robot', goldCost: 100, desc: '-15% all cycle times (stacks).' },
+      { id: 'sk_light_speed',  name: 'Light Speed',       icon: 'rocket', goldCost: 200, desc: '-20% all cycle times (stacks). Hired assets never idle between cycles.' },
+      { id: 'sk_dark_pool',    name: 'Dark Pool Access',  icon: 'moon-dark', goldCost: 400, desc: '+30% all payouts permanently. Unlock the shadow networks.' },
     ]
   },
   {
-    id: 'intel', name: 'Market Intel', icon: '&#128225;', color: '#f3c74b',
+    id: 'intel', name: 'Market Intel', icon: 'signal', color: '#f3c74b',
     nodes: [
-      { id: 'sk_scanner',    name: 'Market Scanner',    icon: '&#128202;', goldCost: 30,  desc: 'Positive events last 20% longer.' },
-      { id: 'sk_bull_ext',   name: 'Bull Extension',    icon: '&#128994;', goldCost: 75,  desc: 'Positive events last 40% longer total.' },
-      { id: 'sk_bear_buf',   name: 'Bear Buffer',       icon: '&#128308;', goldCost: 150, desc: 'Negative events end 25% sooner.' },
-      { id: 'sk_bias',       name: 'Event Bias',        icon: '&#127775;', goldCost: 300, desc: 'Each event roll has a 20% chance of being forced positive.' },
-      { id: 'sk_sentiment',  name: 'Sentiment Engine',  icon: '&#129504;', goldCost: 500, desc: '+40% all payouts permanently. Events fire 50% more often. You feel the market.' },
+      { id: 'sk_scanner',    name: 'Market Scanner',    icon: 'chart', goldCost: 30,  desc: 'Positive events last 20% longer.' },
+      { id: 'sk_bull_ext',   name: 'Bull Extension',    icon: 'circle-up', goldCost: 75,  desc: 'Positive events last 40% longer total.' },
+      { id: 'sk_bear_buf',   name: 'Bear Buffer',       icon: 'circle-down', goldCost: 150, desc: 'Negative events end 25% sooner.' },
+      { id: 'sk_bias',       name: 'Event Bias',        icon: 'star-glow', goldCost: 300, desc: 'Each event roll has a 20% chance of being forced positive.' },
+      { id: 'sk_sentiment',  name: 'Sentiment Engine',  icon: 'brain', goldCost: 500, desc: '+40% all payouts permanently. Events fire 50% more often. You feel the market.' },
     ]
   },
   {
-    id: 'capital', name: 'Capital', icon: '&#128176;', color: '#2ecc71',
+    id: 'capital', name: 'Capital', icon: 'coins', color: '#2ecc71',
     nodes: [
-      { id: 'sk_compound',   name: 'Compounding',       icon: '&#128200;', goldCost: 25,  desc: '+5% all payouts per completed IPO (max bonus at 5 IPOs = +25%).' },
-      { id: 'sk_portfolio',  name: 'Portfolio Spread',  icon: '&#128203;', goldCost: 60,  desc: '+10% payouts when 5+ assets each have 10+ positions.' },
-      { id: 'sk_ms_amp',     name: 'Milestone Amp',     icon: '&#127942;', goldCost: 125, desc: 'Each milestone multiplier is 20% stronger.' },
-      { id: 'sk_legend',     name: 'Wall St. Legend',   icon: '&#127775;', goldCost: 250, desc: '+30% all payouts permanently. You made it.' },
-      { id: 'sk_dynasty',    name: 'Dynasty Protocol',  icon: '&#128081;', goldCost: 450, desc: '+60% all payouts permanently. Unlock Influence Investing in the IPO menu.' },
+      { id: 'sk_compound',   name: 'Compounding',       icon: 'chart-up', goldCost: 25,  desc: '+5% all payouts per completed IPO (max bonus at 5 IPOs = +25%).' },
+      { id: 'sk_portfolio',  name: 'Portfolio Spread',  icon: 'clipboard', goldCost: 60,  desc: '+10% payouts when 5+ assets each have 10+ positions.' },
+      { id: 'sk_ms_amp',     name: 'Milestone Amp',     icon: 'trophy', goldCost: 125, desc: 'Each milestone multiplier is 20% stronger.' },
+      { id: 'sk_legend',     name: 'Wall St. Legend',   icon: 'star-glow', goldCost: 250, desc: '+30% all payouts permanently. You made it.' },
+      { id: 'sk_dynasty',    name: 'Dynasty Protocol',  icon: 'crown', goldCost: 450, desc: '+60% all payouts permanently. Unlock Influence Investing in the IPO menu.' },
     ]
   },
 ];
@@ -2345,81 +2520,81 @@ const MANAGER_BIOS = {
 
 // Achievement unlocks — permanent multipliers, persist across IPO.
 const UNLOCKS = [
-  { id: 'first_trade',   icon: '&#128176;', name: 'First Trade',         desc: 'Execute your very first trade.',                                  mult: 1.005, check: () => state.totalTrades >= 1 },
-  { id: 'first_hire',    icon: '&#128104;&#8205;&#128188;', name: 'Delegated',  desc: 'Hire your first trader.',                                            mult: 1.01,  check: () => Object.values(state.assets).some(a => a.hired) },
-  { id: 'penny_pincher', icon: '&#128181;', name: 'Penny Pincher',       desc: 'Own 50 Penny Stock positions.',                                   mult: 1.05,  check: () => (state.assets.pnny?.owned || 0) >= 50 },
-  { id: 'meme_lord',     icon: '&#128640;', name: 'Meme Lord',           desc: 'Own 25 Meme Coin positions.',                                     mult: 1.05,  check: () => (state.assets.meme?.owned || 0) >= 25 },
-  { id: 'diversified',   icon: '&#128202;', name: 'Diversified',         desc: 'Own at least 1 of every unlocked asset.',                         mult: 1.10,  check: () => ASSETS.filter(a => a.market !== 'blackmkt' && (a.market !== 'london' || state.londonUnlocked)).every(a => (state.assets[a.id]?.owned || 0) >= 1) },
-  { id: 'first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1M lifetime (this run or any).',                            mult: 1.05,  check: () => (state.allTimeEarnings || 0) >= 1e6 },
-  { id: 'wolf_st',       icon: '&#128054;', name: 'Wolf of Wall St',     desc: 'Earn $1B lifetime.',                                              mult: 1.10,  check: () => (state.allTimeEarnings || 0) >= 1e9 },
-  { id: 'diamond_hands', icon: '&#128142;', name: 'Diamond Hands',       desc: 'Survive a meme coin rug pull.',                                   mult: 1.15,  check: () => (state.rugPullsExperienced || 0) >= 1 },
-  { id: 'yacht_club',    icon: '&#128674;', name: 'Yacht Club Member',   desc: 'Buy your first Offshore Yacht Fund position.',                    mult: 1.10,  check: () => (state.assets.yact?.owned || 0) >= 1 },
-  { id: 'ipo_day',       icon: '&#128276;', name: 'IPO Day',             desc: 'Take your firm public for the first time.',                       mult: 1.10,  check: () => (state.influence || 0) >= 1 },
-  { id: 'speed_demon',   icon: '&#9889;',   name: 'Pedal to the Metal',  desc: 'Hit the 200-position speed milestone on any asset.',              mult: 1.05,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 200) },
-  { id: 'staffed_up',    icon: '&#128188;', name: 'Fully Staffed',       desc: 'Hire all 10 Wall Street traders.',                                mult: 1.20,  check: () => ASSETS.filter(a => a.market === 'wallst').every(a => state.assets[a.id]?.hired) },
+  { id: 'first_trade',   icon: 'coins', name: 'First Trade',         desc: 'Execute your very first trade.',                                  mult: 1.005, check: () => state.totalTrades >= 1 },
+  { id: 'first_hire',    icon: 'person', name: 'Delegated',  desc: 'Hire your first trader.',                                            mult: 1.01,  check: () => Object.values(state.assets).some(a => a.hired) },
+  { id: 'penny_pincher', icon: 'dollar', name: 'Penny Pincher',       desc: 'Own 50 Penny Stock positions.',                                   mult: 1.05,  check: () => (state.assets.pnny?.owned || 0) >= 50 },
+  { id: 'meme_lord',     icon: 'rocket', name: 'Meme Lord',           desc: 'Own 25 Meme Coin positions.',                                     mult: 1.05,  check: () => (state.assets.meme?.owned || 0) >= 25 },
+  { id: 'diversified',   icon: 'chart', name: 'Diversified',         desc: 'Own at least 1 of every unlocked asset.',                         mult: 1.10,  check: () => ASSETS.filter(a => a.market !== 'blackmkt' && (a.market !== 'london' || state.londonUnlocked)).every(a => (state.assets[a.id]?.owned || 0) >= 1) },
+  { id: 'first_million', icon: 'star-glow', name: 'First Million',       desc: 'Earn $1M lifetime (this run or any).',                            mult: 1.05,  check: () => (state.allTimeEarnings || 0) >= 1e6 },
+  { id: 'wolf_st',       icon: 'wolf', name: 'Wolf of Wall St',     desc: 'Earn $1B lifetime.',                                              mult: 1.10,  check: () => (state.allTimeEarnings || 0) >= 1e9 },
+  { id: 'diamond_hands', icon: 'diamond', name: 'Diamond Hands',       desc: 'Survive a meme coin rug pull.',                                   mult: 1.15,  check: () => (state.rugPullsExperienced || 0) >= 1 },
+  { id: 'yacht_club',    icon: 'boat', name: 'Yacht Club Member',   desc: 'Buy your first Offshore Yacht Fund position.',                    mult: 1.10,  check: () => (state.assets.yact?.owned || 0) >= 1 },
+  { id: 'ipo_day',       icon: 'bell', name: 'IPO Day',             desc: 'Take your firm public for the first time.',                       mult: 1.10,  check: () => (state.influence || 0) >= 1 },
+  { id: 'speed_demon',   icon: 'lightning', name: 'Pedal to the Metal',  desc: 'Hit the 200-position speed milestone on any asset.',              mult: 1.05,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 200) },
+  { id: 'staffed_up',    icon: 'briefcase', name: 'Fully Staffed',       desc: 'Hire all 10 Wall Street traders.',                                mult: 1.20,  check: () => ASSETS.filter(a => a.market === 'wallst').every(a => state.assets[a.id]?.hired) },
   // Mid-game chain — plugs the hour 3-5 engagement gap
-  { id: 'century_club',  icon: '&#128176;', name: 'Century Club',         desc: 'Own 100 positions on any single asset.',                           mult: 1.07,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 100) },
-  { id: 'tokyo_tourist', icon: '&#127884;', name: 'Tokyo Tourist',        desc: 'Own at least 1 of every Tokyo asset.',                             mult: 1.08,  check: () => ASSETS.filter(a => a.market === 'tokyo').every(a => (state.assets[a.id]?.owned || 0) >= 1) },
-  { id: 'leverage_king', icon: '&#128640;', name: 'Leverage King',        desc: 'Activate a 10x or higher leverage.',                               mult: 1.06,  check: () => !!(state.highLeverageUsed) },
-  { id: 'ipo_veteran',   icon: '&#127974;', name: 'IPO Veteran',          desc: 'Take your firm public 3 times.',                                   mult: 1.10,  check: () => (state.totalIPOs || 0) >= 3 },
-  { id: 'hft_ready',     icon: '&#9889;',   name: 'HFT Ready',            desc: 'Purchase any HFT Speed Perk.',                                     mult: 1.05,  check: () => Object.keys(state.hftPerksOwned || {}).length >= 1 },
+  { id: 'century_club',  icon: 'coins', name: 'Century Club',         desc: 'Own 100 positions on any single asset.',                           mult: 1.07,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 100) },
+  { id: 'tokyo_tourist', icon: 'sparkle', name: 'Tokyo Tourist',        desc: 'Own at least 1 of every Tokyo asset.',                             mult: 1.08,  check: () => ASSETS.filter(a => a.market === 'tokyo').every(a => (state.assets[a.id]?.owned || 0) >= 1) },
+  { id: 'leverage_king', icon: 'rocket', name: 'Leverage King',        desc: 'Activate a 10x or higher leverage.',                               mult: 1.06,  check: () => !!(state.highLeverageUsed) },
+  { id: 'ipo_veteran',   icon: 'building-old', name: 'IPO Veteran',          desc: 'Take your firm public 3 times.',                                   mult: 1.10,  check: () => (state.totalIPOs || 0) >= 3 },
+  { id: 'hft_ready',     icon: 'lightning', name: 'HFT Ready',            desc: 'Purchase any HFT Speed Perk.',                                     mult: 1.05,  check: () => Object.keys(state.hftPerksOwned || {}).length >= 1 },
   // Endgame achievements
-  { id: 'quarter_k',     icon: '&#128200;', name: 'Quarter Millennial',   desc: 'Own 500 positions on any single asset.',                           mult: 1.08,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 500) },
-  { id: 'triple_digit',  icon: '&#127775;', name: 'Four-Figure Club',     desc: 'Own 1,000 positions on any single asset.',                         mult: 1.10,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 1000) },
-  { id: 'titan',         icon: '&#128081;', name: 'Market Titan',         desc: 'Own 2,000 positions on any single asset.',                         mult: 1.15,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 2000) },
-  { id: 'london_calling',icon: '&#127980;', name: 'London Calling',       desc: 'Earn £1B lifetime on London Exchange.',                            mult: 1.10,  check: () => (state.lifetimeGbp || 0) >= 1e9 },
-  { id: 'ipo_machine',   icon: '&#127974;', name: 'IPO Machine',          desc: 'Take your firm public 10 times.',                                  mult: 1.10,  check: () => (state.totalIPOs || 0) >= 10 },
-  { id: 'dynasty',       icon: '&#128081;', name: 'Dynasty',              desc: 'Make 10 Influence Investments.',                                   mult: 1.12,  check: () => (state.influenceInvested || 0) >= 10 },
-  { id: 'trillion_club', icon: '&#128176;', name: 'Trillion Club',        desc: 'Earn $1 Trillion USD lifetime on Wall Street.',                    mult: 1.20,  check: () => (state.allTimeEarnings || 0) >= 1e12 },
+  { id: 'quarter_k',     icon: 'chart-up', name: 'Quarter Millennial',   desc: 'Own 500 positions on any single asset.',                           mult: 1.08,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 500) },
+  { id: 'triple_digit',  icon: 'star-glow', name: 'Four-Figure Club',     desc: 'Own 1,000 positions on any single asset.',                         mult: 1.10,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 1000) },
+  { id: 'titan',         icon: 'crown', name: 'Market Titan',         desc: 'Own 2,000 positions on any single asset.',                         mult: 1.15,  check: () => ASSETS.some(a => (state.assets[a.id]?.owned || 0) >= 2000) },
+  { id: 'london_calling',icon: 'flag', name: 'London Calling',       desc: 'Earn £1B lifetime on London Exchange.',                            mult: 1.10,  check: () => (state.lifetimeGbp || 0) >= 1e9 },
+  { id: 'ipo_machine',   icon: 'building-old', name: 'IPO Machine',          desc: 'Take your firm public 10 times.',                                  mult: 1.10,  check: () => (state.totalIPOs || 0) >= 10 },
+  { id: 'dynasty',       icon: 'crown', name: 'Dynasty',              desc: 'Make 10 Influence Investments.',                                   mult: 1.12,  check: () => (state.influenceInvested || 0) >= 10 },
+  { id: 'trillion_club', icon: 'coins', name: 'Trillion Club',        desc: 'Earn $1 Trillion USD lifetime on Wall Street.',                    mult: 1.20,  check: () => (state.allTimeEarnings || 0) >= 1e12 },
 ];
 const NEWS_MAX = 15;
 
 // Quests — completable goals that grant gold. One-time per save.
 const QUESTS = [
-  { id: 'q_first_steps',   icon: '&#128181;', name: 'First Steps',         desc: 'Execute 10 trades.',                    target: () => 10,  progress: () => state.totalTrades || 0,                                                       reward: 2 },
-  { id: 'q_buying_in',     icon: '&#128722;', name: 'Buying In',           desc: 'Own 25 positions across all assets.',   target: () => 25,  progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),             reward: 5 },
-  { id: 'q_diversified',   icon: '&#128202;', name: 'Diversified Portfolio', desc: 'Own 1 of every unlocked asset.',      target: () => ASSETS.filter(a => a.market !== 'blackmkt' && (a.market !== 'london' || state.londonUnlocked)).length, progress: () => ASSETS.filter(a => a.market !== 'blackmkt' && (a.market !== 'london' || state.londonUnlocked) && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 10 },
-  { id: 'q_crypto_curious',icon: '&#127852;', name: 'Crypto Curious',      desc: 'Own 5 Candy Crypto positions.',         target: () => 5,   progress: () => state.assets.dogz?.owned || 0,                                                reward: 5 },
-  { id: 'q_first_million', icon: '&#127775;', name: 'First Million',       desc: 'Earn $1,000,000 lifetime.',             target: () => 1e6, progress: () => state.allTimeEarnings || 0,                                                   reward: 10 },
-  { id: 'q_hedge_mgr',     icon: '&#128188;', name: 'Hedge Fund Manager',  desc: 'Hire 4 traders.',                       target: () => 4,   progress: () => Object.values(state.assets).filter(a => a.hired).length,                      reward: 10 },
-  { id: 'q_first_ipo',     icon: '&#127970;', name: 'First IPO',           desc: 'Take your firm public for the first time.', target: () => 1, progress: () => state.influence >= 1 ? 1 : 0,                                                reward: 50 },
-  { id: 'q_yacht_bound',   icon: '&#128674;', name: 'Yacht Bound',         desc: 'Own 1 Offshore Yacht Fund position.',   target: () => 1,   progress: () => state.assets.yact?.owned || 0,                                                reward: 15 },
+  { id: 'q_first_steps',   icon: 'dollar', name: 'First Steps',         desc: 'Execute 10 trades.',                    target: () => 10,  progress: () => state.totalTrades || 0,                                                       reward: 2 },
+  { id: 'q_buying_in',     icon: 'cart', name: 'Buying In',           desc: 'Own 25 positions across all assets.',   target: () => 25,  progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),             reward: 5 },
+  { id: 'q_diversified',   icon: 'chart', name: 'Diversified Portfolio', desc: 'Own 1 of every unlocked asset.',      target: () => ASSETS.filter(a => a.market !== 'blackmkt' && (a.market !== 'london' || state.londonUnlocked)).length, progress: () => ASSETS.filter(a => a.market !== 'blackmkt' && (a.market !== 'london' || state.londonUnlocked) && (state.assets[a.id]?.owned || 0) >= 1).length, reward: 10 },
+  { id: 'q_crypto_curious',icon: 'candy', name: 'Crypto Curious',      desc: 'Own 5 Candy Crypto positions.',         target: () => 5,   progress: () => state.assets.dogz?.owned || 0,                                                reward: 5 },
+  { id: 'q_first_million', icon: 'star-glow', name: 'First Million',       desc: 'Earn $1,000,000 lifetime.',             target: () => 1e6, progress: () => state.allTimeEarnings || 0,                                                   reward: 10 },
+  { id: 'q_hedge_mgr',     icon: 'briefcase', name: 'Hedge Fund Manager',  desc: 'Hire 4 traders.',                       target: () => 4,   progress: () => Object.values(state.assets).filter(a => a.hired).length,                      reward: 10 },
+  { id: 'q_first_ipo',     icon: 'building', name: 'First IPO',           desc: 'Take your firm public for the first time.', target: () => 1, progress: () => state.influence >= 1 ? 1 : 0,                                                reward: 50 },
+  { id: 'q_yacht_bound',   icon: 'boat', name: 'Yacht Bound',         desc: 'Own 1 Offshore Yacht Fund position.',   target: () => 1,   progress: () => state.assets.yact?.owned || 0,                                                reward: 15 },
 
   // Mid-late progression
-  { id: 'q_click_trader',  icon: '&#128075;', name: 'Click Trader',        desc: 'Manually execute 100 trades.',           target: () => 100, progress: () => state.manualTrades || 0,                                                       reward: 5 },
-  { id: 'q_speed_demon',   icon: '&#9889;',   name: 'Speed Demon',         desc: 'Hit the 50-position speed milestone on any asset.', target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 8 },
-  { id: 'q_big_spender',   icon: '&#128181;', name: 'Big Spender',         desc: 'Hire any premium manager.',              target: () => 1,   progress: () => Object.keys(state.premiumOwned || {}).length >= 1 ? 1 : 0,                     reward: 8 },
-  { id: 'q_day_trader',    icon: '&#128184;', name: 'Day Trader',          desc: 'Hold $10M cash at one time.',           target: () => 1e7, progress: () => Math.min(state.cash, 1e7),                                                     reward: 10 },
-  { id: 'q_wall_st_tycoon',icon: '&#127970;', name: 'Wall Street Tycoon',  desc: 'Hold $1B cash at one time.',            target: () => 1e9, progress: () => Math.min(state.cash, 1e9),                                                     reward: 25 },
-  { id: 'q_goldsmith',     icon: '&#129689;', name: 'Goldsmith',           desc: 'Earn 100 gold lifetime.',                target: () => 100, progress: () => state.lifetimeGold || 0,                                                       reward: 10 },
-  { id: 'q_time_lord',     icon: '&#9203;',   name: 'Time Lord',           desc: 'Use 3 Time Warps.',                      target: () => 3,   progress: () => state.timeWarpsUsed || 0,                                                      reward: 10 },
-  { id: 'q_influencer',    icon: '&#128276;', name: 'Influencer',          desc: 'Own 2+ Influence Shop items.',           target: () => 2,   progress: () => Object.keys(state.influenceShopOwned || {}).length,                            reward: 30 },
-  { id: 'q_survivor',      icon: '&#129505;', name: 'Survivor',            desc: 'Survive a Black Swan event.',            target: () => 1,   progress: () => state.blackSwansExperienced || 0,                                              reward: 50 },
+  { id: 'q_click_trader',  icon: 'hand', name: 'Click Trader',        desc: 'Manually execute 100 trades.',           target: () => 100, progress: () => state.manualTrades || 0,                                                       reward: 5 },
+  { id: 'q_speed_demon',   icon: 'lightning', name: 'Speed Demon',         desc: 'Hit the 50-position speed milestone on any asset.', target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 8 },
+  { id: 'q_big_spender',   icon: 'dollar', name: 'Big Spender',         desc: 'Hire any premium manager.',              target: () => 1,   progress: () => Object.keys(state.premiumOwned || {}).length >= 1 ? 1 : 0,                     reward: 8 },
+  { id: 'q_day_trader',    icon: 'bill', name: 'Day Trader',          desc: 'Hold $10M cash at one time.',           target: () => 1e7, progress: () => Math.min(state.cash, 1e7),                                                     reward: 10 },
+  { id: 'q_wall_st_tycoon',icon: 'building', name: 'Wall Street Tycoon',  desc: 'Hold $1B cash at one time.',            target: () => 1e9, progress: () => Math.min(state.cash, 1e9),                                                     reward: 25 },
+  { id: 'q_goldsmith',     icon: 'medal', name: 'Goldsmith',           desc: 'Earn 100 gold lifetime.',                target: () => 100, progress: () => state.lifetimeGold || 0,                                                       reward: 10 },
+  { id: 'q_time_lord',     icon: 'hourglass', name: 'Time Lord',           desc: 'Use 3 Time Warps.',                      target: () => 3,   progress: () => state.timeWarpsUsed || 0,                                                      reward: 10 },
+  { id: 'q_influencer',    icon: 'bell', name: 'Influencer',          desc: 'Own 2+ Influence Shop items.',           target: () => 2,   progress: () => Object.keys(state.influenceShopOwned || {}).length,                            reward: 30 },
+  { id: 'q_survivor',      icon: 'heart', name: 'Survivor',            desc: 'Survive a Black Swan event.',            target: () => 1,   progress: () => state.blackSwansExperienced || 0,                                              reward: 50 },
 
   // Mid-game quests — targeted at the hour 3-5 dead zone
-  { id: 'q_power_trader',  icon: '&#128200;', name: 'Power Trader',        desc: 'Own 50+ positions on any single asset.',  target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),                reward: 8 },
-  { id: 'q_diversify_more',icon: '&#128202;', name: 'Going Wide',          desc: 'Own 10+ positions on 5 different assets.',target: () => 5,   progress: () => ASSETS.filter(a => a.market !== 'london' && (state.assets[a.id]?.owned || 0) >= 10).length, reward: 8 },
-  { id: 'q_yen_millionaire',icon: '&#165;',   name: 'Yen Millionaire',     desc: 'Earn ¥1,000,000 lifetime on Tokyo Floor.',target: () => 1e6, progress: () => state.lifetimeYen || 0,                                                        reward: 15 },
-  { id: 'q_mega_holder',   icon: '&#127929;', name: 'Mega Ticket Holder',  desc: 'Purchase any Mega Ticket.',               target: () => 1,   progress: () => Object.keys(state.megaTicketsOwned || {}).length,                              reward: 10 },
-  { id: 'q_speed_freak',   icon: '&#128421;', name: 'Speed Freak',         desc: 'Purchase any HFT Speed Perk.',            target: () => 1,   progress: () => Object.keys(state.hftPerksOwned || {}).length,                                 reward: 10 },
-  { id: 'q_leverage_rush', icon: '&#128640;', name: 'Leverage Rush',       desc: 'Activate a 5x or higher leverage.',       target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 5 ? 1 : 0,                                      reward: 8 },
+  { id: 'q_power_trader',  icon: 'chart-up', name: 'Power Trader',        desc: 'Own 50+ positions on any single asset.',  target: () => 50,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),                reward: 8 },
+  { id: 'q_diversify_more',icon: 'chart', name: 'Going Wide',          desc: 'Own 10+ positions on 5 different assets.',target: () => 5,   progress: () => ASSETS.filter(a => a.market !== 'london' && (state.assets[a.id]?.owned || 0) >= 10).length, reward: 8 },
+  { id: 'q_yen_millionaire',icon: 'yen-sign', name: 'Yen Millionaire',     desc: 'Earn ¥1,000,000 lifetime on Tokyo Floor.',target: () => 1e6, progress: () => state.lifetimeYen || 0,                                                        reward: 15 },
+  { id: 'q_mega_holder',   icon: 'guitar', name: 'Mega Ticket Holder',  desc: 'Purchase any Mega Ticket.',               target: () => 1,   progress: () => Object.keys(state.megaTicketsOwned || {}).length,                              reward: 10 },
+  { id: 'q_speed_freak',   icon: 'computer', name: 'Speed Freak',         desc: 'Purchase any HFT Speed Perk.',            target: () => 1,   progress: () => Object.keys(state.hftPerksOwned || {}).length,                                 reward: 10 },
+  { id: 'q_leverage_rush', icon: 'rocket', name: 'Leverage Rush',       desc: 'Activate a 5x or higher leverage.',       target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 5 ? 1 : 0,                                      reward: 8 },
 
   // Tokyo-specific quests
-  { id: 'q_neo_tokyo',     icon: '&#127884;', name: 'Neo-Tokyo Resident',  desc: 'Own 100 $ANIME positions.',              target: () => 100, progress: () => state.assets.t_anime?.owned || 0,                                              reward: 10 },
-  { id: 'q_last_samurai',  icon: '&#129686;', name: 'The Last Samurai',    desc: 'Hire all 6 Tokyo traders.',              target: () => 6,   progress: () => ASSETS.filter(a => a.market === 'tokyo' && state.assets[a.id]?.hired).length,  reward: 35 },
+  { id: 'q_neo_tokyo',     icon: 'sparkle', name: 'Neo-Tokyo Resident',  desc: 'Own 100 $ANIME positions.',              target: () => 100, progress: () => state.assets.t_anime?.owned || 0,                                              reward: 10 },
+  { id: 'q_last_samurai',  icon: 'castle', name: 'The Last Samurai',    desc: 'Hire all 6 Tokyo traders.',              target: () => 6,   progress: () => ASSETS.filter(a => a.market === 'tokyo' && state.assets[a.id]?.hired).length,  reward: 35 },
 
   // Endgame / prestige quests
-  { id: 'q_endgame_500',   icon: '&#128176;', name: 'Position Master',     desc: 'Own 500+ positions on any single asset.',  target: () => 500,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 40 },
-  { id: 'q_endgame_1k',    icon: '&#127775;', name: 'Four-Digit Holder',   desc: 'Own 1,000+ positions on any single asset.', target: () => 1000, progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),              reward: 100 },
-  { id: 'q_total_10k',     icon: '&#128200;', name: 'Portfolio Titan',     desc: 'Own 10,000 total positions across all assets.', target: () => 10000, progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),      reward: 60 },
-  { id: 'q_ipo_10',        icon: '&#127974;', name: 'Serial Founder',      desc: 'Take your firm public 10 times.',          target: () => 10,  progress: () => state.totalIPOs || 0,                                                           reward: 75 },
-  { id: 'q_gbp_billionaire',icon: '&#163;',  name: 'City of London',      desc: 'Earn £1,000,000,000 lifetime on London Exchange.',target: () => 1e9, progress: () => state.lifetimeGbp || 0,                                                 reward: 60 },
-  { id: 'q_click_1k',      icon: '&#128075;', name: 'Chronic Clicker',     desc: 'Manually execute 1,000 trades.',            target: () => 1000, progress: () => state.manualTrades || 0,                                                     reward: 25 },
-  { id: 'q_all_premium',   icon: '&#127881;', name: 'Full House',          desc: 'Hire all 5 Wall Street premium managers.',  target: () => 5,   progress: () => ['senator','quant','cfo','whistleblower','the_algorithm'].filter(id => state.premiumOwned?.[id]).length, reward: 75 },
-  { id: 'q_max_leverage',  icon: '&#128640;', name: 'Max Leverage',        desc: 'Activate 10x leverage.',                    target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 10 ? 1 : 0,                                   reward: 15 },
-  { id: 'q_ipo_25',        icon: '&#128276;', name: 'Dynasty Builder',     desc: 'Take your firm public 25 times.',           target: () => 25,  progress: () => state.totalIPOs || 0,                                                          reward: 200 },
-  { id: 'q_yen_trillion',  icon: '&#165;',    name: 'Tokyo Titan',         desc: 'Earn ¥1,000,000,000,000 lifetime.',         target: () => 1e12, progress: () => state.lifetimeYen || 0,                                                       reward: 80 },
-  { id: 'q_invest_10',     icon: '&#128081;', name: 'Influence Baron',     desc: 'Make 10 Influence Investments.',            target: () => 10,  progress: () => state.influenceInvested || 0,                                                   reward: 60 },
+  { id: 'q_endgame_500',   icon: 'coins', name: 'Position Master',     desc: 'Own 500+ positions on any single asset.',  target: () => 500,  progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),               reward: 40 },
+  { id: 'q_endgame_1k',    icon: 'star-glow', name: 'Four-Digit Holder',   desc: 'Own 1,000+ positions on any single asset.', target: () => 1000, progress: () => Math.max(...ASSETS.map(a => state.assets[a.id]?.owned || 0), 0),              reward: 100 },
+  { id: 'q_total_10k',     icon: 'chart-up', name: 'Portfolio Titan',     desc: 'Own 10,000 total positions across all assets.', target: () => 10000, progress: () => ASSETS.reduce((s, a) => s + (state.assets[a.id]?.owned || 0), 0),      reward: 60 },
+  { id: 'q_ipo_10',        icon: 'building-old', name: 'Serial Founder',      desc: 'Take your firm public 10 times.',          target: () => 10,  progress: () => state.totalIPOs || 0,                                                           reward: 75 },
+  { id: 'q_gbp_billionaire',icon: 'card',  name: 'City of London',      desc: 'Earn £1,000,000,000 lifetime on London Exchange.',target: () => 1e9, progress: () => state.lifetimeGbp || 0,                                                 reward: 60 },
+  { id: 'q_click_1k',      icon: 'hand', name: 'Chronic Clicker',     desc: 'Manually execute 1,000 trades.',            target: () => 1000, progress: () => state.manualTrades || 0,                                                     reward: 25 },
+  { id: 'q_all_premium',   icon: 'star-glow', name: 'Full House',          desc: 'Hire all 5 Wall Street premium managers.',  target: () => 5,   progress: () => ['senator','quant','cfo','whistleblower','the_algorithm'].filter(id => state.premiumOwned?.[id]).length, reward: 75 },
+  { id: 'q_max_leverage',  icon: 'rocket', name: 'Max Leverage',        desc: 'Activate 10x leverage.',                    target: () => 1,   progress: () => (state.maxLeverageUsed || 0) >= 10 ? 1 : 0,                                   reward: 15 },
+  { id: 'q_ipo_25',        icon: 'bell', name: 'Dynasty Builder',     desc: 'Take your firm public 25 times.',           target: () => 25,  progress: () => state.totalIPOs || 0,                                                          reward: 200 },
+  { id: 'q_yen_trillion',  icon: 'yen-sign', name: 'Tokyo Titan',         desc: 'Earn ¥1,000,000,000,000 lifetime.',         target: () => 1e12, progress: () => state.lifetimeYen || 0,                                                       reward: 80 },
+  { id: 'q_invest_10',     icon: 'crown', name: 'Influence Baron',     desc: 'Make 10 Influence Investments.',            target: () => 10,  progress: () => state.influenceInvested || 0,                                                   reward: 60 },
 ];
 
 // Premium managers — cost Influence (prestige currency).
@@ -2427,51 +2602,51 @@ const QUESTS = [
 // After enough IPOs this feels like AdCap angel-buy — early tiers drop fast, top tiers stay elite.
 const PREMIUM_MANAGERS = [
   // === Wall Street — global multipliers ===
-  { id: 'senator',       name: 'The Senator',       role: 'Inside Source',          icon: '&#127963;', influenceCost: 5000,
+  { id: 'senator',       name: 'The Senator',       role: 'Inside Source',          icon: 'columns', influenceCost: 5000,
     desc: '+10% all payouts, plus a 5-second heads-up before any market event fires.',
     bio: '"Old friend from college. Never asks where the campaign donations come from."',
     mult: 1.10 },
-  { id: 'quant',         name: 'The Quant',         role: 'Algorithmic Trader',     icon: '&#129302;', influenceCost: 75000,
+  { id: 'quant',         name: 'The Quant',         role: 'Algorithmic Trader',     icon: 'robot', influenceCost: 75000,
     desc: '+15% all payouts. Auto-trades execute 10% faster.',
     bio: '"PhD from MIT. Hasn\'t slept since 2019. Speaks only in Greek letters."',
     mult: 1.15 },
-  { id: 'cfo',           name: 'The CFO',           role: 'Chief Financial Officer',icon: '&#128188;', influenceCost: 2500000,
+  { id: 'cfo',           name: 'The CFO',           role: 'Chief Financial Officer',icon: 'briefcase', influenceCost: 2500000,
     desc: '+30% all payouts. Knows where every penny is.',
     bio: '"Former Goldman exec. Knows things about you that you don\'t know."',
     mult: 1.30 },
-  { id: 'whistleblower', name: 'The Whistleblower', role: 'Receipt Keeper',         icon: '&#128264;', influenceCost: 100000000,
+  { id: 'whistleblower', name: 'The Whistleblower', role: 'Receipt Keeper',         icon: 'speaker', influenceCost: 100000000,
     desc: '+20% all payouts. Once per IPO cycle, trigger a guaranteed 5x bullish event for 30s.',
     bio: '"Used to work for a big bank. Now works for you. Still has all the receipts."',
     mult: 1.20, hasAbility: true },
   // === Tokyo Trading Floor premium roster ===
-  { id: 'salaryman',  name: 'The Salaryman',  role: '12-Hour Loyalty',        icon: '&#128104;&#8205;&#128188;', influenceCost: 15000, market: 'tokyo',
+  { id: 'salaryman',  name: 'The Salaryman',  role: '12-Hour Loyalty',        icon: 'person', influenceCost: 15000, market: 'tokyo',
     desc: '+15% Tokyo payouts. Never sleeps. Never complains. Drinks too much sake on Fridays.',
     bio: '"Has worked here for 23 years. You\'ve seen him cry once. You will not bring it up."',
     mult: 1.15 },
-  { id: 'shogun',     name: 'The Shogun',     role: 'Tokyo Floor Boss',       icon: '&#128483;', influenceCost: 250000, market: 'tokyo',
+  { id: 'shogun',     name: 'The Shogun',     role: 'Tokyo Floor Boss',       icon: 'sword', influenceCost: 250000, market: 'tokyo',
     desc: '+25% Tokyo payouts. Demands respect. Runs the floor with quiet menace.',
     bio: '"Shows up in a perfectly tailored suit. Has never raised his voice. Everyone is terrified."',
     mult: 1.25 },
-  { id: 'sensei',     name: 'The Sensei',     role: 'Master of the Spread',   icon: '&#127891;', influenceCost: 5000000, market: 'tokyo',
+  { id: 'sensei',     name: 'The Sensei',     role: 'Master of the Spread',   icon: 'star-glow', influenceCost: 5000000, market: 'tokyo',
     desc: '+10% Tokyo payouts AND +10% faster Tokyo auto-trades. Decades of wisdom.',
     bio: '"Has been trading since before you were born. Drinks one cup of tea per market session. Always right."',
     mult: 1.10 },
-  { id: 'kaiju',      name: 'The Kaiju',      role: 'Volatility Beast',       icon: '&#129422;', influenceCost: 750000000, market: 'tokyo',
+  { id: 'kaiju',      name: 'The Kaiju',      role: 'Volatility Beast',       icon: 'paw', influenceCost: 750000000, market: 'tokyo',
     desc: '+30% Tokyo payouts. Tokyo events fire 50% more often. Embrace chaos.',
     bio: '"Eight feet tall and twice as wide. Cannot be reasoned with. The market moves when he enters the room."',
     mult: 1.30 },
   // === London premium managers — goldCost (rare, gold-gated) ===
-  { id: 'governor',   name: 'The Governor',   role: 'Central Bank Chief',     icon: '&#127981;', goldCost: 5, market: 'london',
+  { id: 'governor',   name: 'The Governor',   role: 'Central Bank Chief',     icon: 'flag', goldCost: 5, market: 'london',
     desc: '+40% London payouts. Controls interest rates personally. You are just borrowing his market.',
     bio: '"Speaks in compound sentences only. Has never said the word \'inflation\' out loud. Just gestures vaguely."',
     mult: 1.40 },
-  { id: 'knight',     name: 'The Knight',     role: 'HFT Floor Commander',    icon: '&#9876;',   goldCost: 8, market: 'london',
+  { id: 'knight',     name: 'The Knight',     role: 'HFT Floor Commander',    icon: 'sword', goldCost: 8, market: 'london',
     desc: '+20% London payouts. All London assets 20% faster. Was knighted for "services to velocity."',
     bio: '"Was a derivatives trader before derivatives existed. Invented three of the four instruments he uses."',
     mult: 1.20, speedMult: 0.80 },
   // === THE ALGORITHM — ultimate endgame manager. 50B influence. ===
   // Achievable only after dozens of IPOs, but once you get there it's transformative.
-  { id: 'the_algorithm', name: 'The Algorithm', role: 'Autonomous Trading Singularity', icon: '&#129504;', influenceCost: 50000000000,
+  { id: 'the_algorithm', name: 'The Algorithm', role: 'Autonomous Trading Singularity', icon: 'brain', influenceCost: 50000000000,
     desc: '+400% all payouts (×5) and all cycle times 40% faster. It doesn\'t sleep. It doesn\'t eat. It doesn\'t lose.',
     bio: '"No one knows who built it. It arrived in a pull request at 3:47am on a Sunday. The commit message was: done."',
     mult: 5.00, speedMult: 0.60 },
@@ -2482,21 +2657,21 @@ const PREMIUM_MANAGERS = [
 // mid items (10-25g) require several IPOs, top items (50g+) are endgame goals.
 // speedMult: reduces all cycle times (stacks with HFT perks, milestones, manager bonuses).
 const LIFESTYLE = [
-  { id: 'penthouse',   name: 'Penthouse Apartment',  icon: '&#127961;', cashCost: 1e9,  goldCost: 10,
+  { id: 'penthouse',   name: 'Penthouse Apartment',  icon: 'city', cashCost: 1e9,  goldCost: 10,
     desc: 'Skyline views and private elevator. +5% all payouts, -5% all cycle times.', mult: 1.05, speedMult: 0.95 },
-  { id: 'yacht',       name: 'The Yacht',            icon: '&#128674;', cashCost: 1e10,  goldCost: 25,
+  { id: 'yacht',       name: 'The Yacht',            icon: 'boat', cashCost: 1e10,  goldCost: 25,
     desc: '47 meters of teak deck and contempt. +15% all payouts, -10% all cycle times.', mult: 1.15, speedMult: 0.90 },
-  { id: 'jet',         name: 'Private Jet',          icon: '&#128747;', cashCost: 1e12, goldCost: 60,
+  { id: 'jet',         name: 'Private Jet',          icon: 'plane', cashCost: 1e12, goldCost: 60,
     desc: 'No more middle seats, ever. +25% all payouts, -15% all cycle times.', mult: 1.25, speedMult: 0.85 },
-  { id: 'art',         name: 'Modern Art Collection',icon: '&#127912;', cashCost: 1e14, goldCost: 85,
+  { id: 'art',         name: 'Modern Art Collection',icon: 'palette', cashCost: 1e14, goldCost: 85,
     desc: 'Tax-deductible scribbles by long-dead Europeans. +50% all payouts forever.', mult: 1.50 },
-  { id: 'island',      name: 'Private Island',       icon: '&#127965;', cashCost: 1e16, goldCost: 100,
+  { id: 'island',      name: 'Private Island',       icon: 'island', cashCost: 1e16, goldCost: 100,
     desc: 'Your own zip code in international waters. +100% all payouts forever.', mult: 2.00 },
-  { id: 'nfl_team',    name: 'NFL Franchise',        icon: '&#127944;', cashCost: 1e18, goldCost: 150,
+  { id: 'nfl_team',    name: 'NFL Franchise',        icon: 'medal-sport', cashCost: 1e18, goldCost: 150,
     desc: 'You sit in the owner\'s box now. The league hates you. +150% all payouts, -0.2s all cycle floors.', mult: 2.50 },
-  { id: 'moon_colony', name: 'Moon Colony',          icon: '&#127769;', cashCost: 1e20, megabucksCost: 10,
+  { id: 'moon_colony', name: 'Moon Colony',          icon: 'moon', cashCost: 1e20, megabucksCost: 10,
     desc: 'Low orbit, low taxes. +300% all payouts forever. Tax residency: space.', mult: 4.00 },
-  { id: 'fed_chair',   name: 'Federal Reserve Chair',icon: '&#127970;', cashCost: 1e23, megabucksCost: 25,
+  { id: 'fed_chair',   name: 'Federal Reserve Chair',icon: 'building', cashCost: 1e23, megabucksCost: 25,
     desc: 'You ARE the printer now. +500% all payouts forever. Jerome who?', mult: 6.00 },
 ];
 
@@ -2504,22 +2679,22 @@ const LIFESTYLE = [
 // Bought once per shop item; survives across IPO resets.
 // Costs rebalanced 2026-04-26 — should feel like genuine endgame purchases, not session-2 buys.
 const INFLUENCE_SHOP = [
-  { id: 'heavens_lottery',     icon: '&#128276;', name: "Heaven's Lottery",  cost: 1e4,
+  { id: 'heavens_lottery',     icon: 'bell', name: "Heaven's Lottery",  cost: 1e4,
     desc: 'Each Influence token is worth +8% (was +4%). Doubles your prestige power forever.' },
-  { id: 'fed_friend',          icon: '&#127970;', name: 'Federal Reserve Friend', cost: 5e4,
+  { id: 'fed_friend',          icon: 'building', name: 'Federal Reserve Friend', cost: 5e4,
     desc: '+33% all payouts forever. Bipartisan but expensive.', mult: 1.33 },
-  { id: 'senate_connections',  icon: '&#127963;', name: 'Senate Connections', cost: 1e5,
+  { id: 'senate_connections',  icon: 'columns', name: 'Senate Connections', cost: 1e5,
     desc: 'Market events fire ~25% more often. More chaos = more chances.' },
-  { id: 'plutocracy',          icon: '&#128737;', name: 'Plutocracy',         cost: 1e6,
+  { id: 'plutocracy',          icon: 'shield', name: 'Plutocracy',         cost: 1e6,
     desc: '+5% all payouts per hired trader (max +30%).' },
   // ── Synergy upgrades — cross-asset bonuses that reward portfolio thinking ──
-  { id: 'penny_pipeline',      icon: '&#128279;', name: 'Penny Pipeline',     cost: 5e6,
+  { id: 'penny_pipeline',      icon: 'link', name: 'Penny Pipeline',     cost: 5e6,
     desc: '$PNNY earns +1% for every 10 Hedge Fund positions you own. Blue chips backstop penny plays.',
     synergy: { sourceId: 'pnny', targetId: 'hedg', bonusPct: 0.01, per: 10 } },
-  { id: 'volatility_hedge',    icon: '&#127774;', name: 'Volatility Hedge',   cost: 1e7,
+  { id: 'volatility_hedge',    icon: 'cloud', name: 'Volatility Hedge',   cost: 1e7,
     desc: '$MEME earns +2% for every 50 AI Bubble positions you own. Chaos funds chaos.',
     synergy: { sourceId: 'meme', targetId: 'aibl', bonusPct: 0.02, per: 50 } },
-  { id: 'dark_pool',           icon: '&#128202;', name: 'Dark Pool Network',  cost: 5e7,
+  { id: 'dark_pool',           icon: 'chart', name: 'Dark Pool Network',  cost: 5e7,
     desc: 'All assets earn +0.5% for each asset type where you hold ≥25 positions. Go wide.',
     synergy: { sourceId: 'all', threshold: 25, bonusPct: 0.005 } },
 ];
@@ -2549,20 +2724,20 @@ const MEGA_TICKETS = [
 // Players get a starter gift of 1× [2x/5x/10x] at first boot.
 // Costs Megabucks (MB) — the ultra-premium currency earned at IPO milestones (3rd, 10th, 25th IPO).
 const LEVERAGE_TIERS = [
-  { id: 'lv_2x',   mult: 2,   name: '2x Leverage',   icon: '&#128640;', mbCost: 1,  minutes: 30 },
-  { id: 'lv_5x',   mult: 5,   name: '5x Leverage',   icon: '&#128640;', mbCost: 2,  minutes: 20 },
-  { id: 'lv_10x',  mult: 10,  name: '10x Leverage',  icon: '&#128640;', mbCost: 4,  minutes: 15 },
-  { id: 'lv_20x',  mult: 20,  name: '20x Leverage',  icon: '&#128640;', mbCost: 8,  minutes: 10 },
-  { id: 'lv_100x', mult: 100, name: '100x Leverage', icon: '&#128640;', mbCost: 20, minutes: 5  },
+  { id: 'lv_2x',   mult: 2,   name: '2x Leverage',   icon: 'rocket', mbCost: 1,  minutes: 30 },
+  { id: 'lv_5x',   mult: 5,   name: '5x Leverage',   icon: 'rocket', mbCost: 2,  minutes: 20 },
+  { id: 'lv_10x',  mult: 10,  name: '10x Leverage',  icon: 'rocket', mbCost: 4,  minutes: 15 },
+  { id: 'lv_20x',  mult: 20,  name: '20x Leverage',  icon: 'rocket', mbCost: 8,  minutes: 10 },
+  { id: 'lv_100x', mult: 100, name: '100x Leverage', icon: 'rocket', mbCost: 20, minutes: 5  },
 ];
 const LEVERAGE_STARTER = { lv_2x: 1, lv_5x: 1, lv_10x: 1 };
 
 // Time Warps — consumable, MB cost. Instant cash = passiveIncomePerSec * duration.
 // Pricing tiers down per hour as you buy bigger packages — bulk discount.
 const TIME_WARPS = [
-  { id: 'tw_1h',  name: '1-Hour Time Warp',  icon: '&#9203;', mbCost: 1, hours: 1 },
-  { id: 'tw_8h',  name: '8-Hour Time Warp',  icon: '&#9203;', mbCost: 3, hours: 8 },
-  { id: 'tw_24h', name: '24-Hour Time Warp', icon: '&#9203;', mbCost: 6, hours: 24 },
+  { id: 'tw_1h',  name: '1-Hour Time Warp',  icon: 'hourglass', mbCost: 1, hours: 1 },
+  { id: 'tw_8h',  name: '8-Hour Time Warp',  icon: 'hourglass', mbCost: 3, hours: 8 },
+  { id: 'tw_24h', name: '24-Hour Time Warp', icon: 'hourglass', mbCost: 6, hours: 24 },
 ];
 
 // Black Swan events — extremely rare, cataclysmic. Capped at MAX_BLACK_SWANS lifetime.
@@ -3010,7 +3185,7 @@ const Monetization = (() => {
         }
         const store    = window.CdvPurchase.store;
         const Platform = window.CdvPurchase.Platform;
-        const product  = store.get(productId, Platform.APPLE_APP_STORE);
+        const product  = store.get(productId, Platform.APPLE_APPSTORE);
         if (!product) {
           toast('Product not found. Try again shortly.');
           if (callback) callback(false);
@@ -3089,27 +3264,27 @@ const Monetization = (() => {
 function initIAP() {
   if (!window.Capacitor?.isNativePlatform()) return;
 
-  function _setup() {
+  // _iapInitCalled guard must come AFTER the store check so that an early deviceready
+  // (which can fire before store.js loads in Capacitor's Cordova bridge) does not
+  // permanently block the poll from initializing IAP once CdvPurchase becomes available.
+  function _setup(src) {
+    if (!window.CdvPurchase?.store) return;
     if (window._iapInitCalled) return;
     window._iapInitCalled = true;
-    if (!window.CdvPurchase?.store) {
-      console.warn('cordova-plugin-purchase not found — IAP disabled.');
-      return;
-    }
     _initIAPStore();
   }
 
-  // deviceready may have already fired before initIAP() runs — check immediately first.
-  // If CdvPurchase is already present, call setup now. Otherwise wait for the event
-  // AND poll as a belt-and-suspenders fallback for the race condition.
   if (window.CdvPurchase?.store) {
-    _setup();
+    _setup('immediate');
   } else {
-    document.addEventListener('deviceready', _setup, { once: true });
+    document.addEventListener('deviceready', () => _setup('deviceready'), { once: true });
     const poll = setInterval(() => {
-      if (window.CdvPurchase?.store) { clearInterval(poll); _setup(); }
+      if (window.CdvPurchase?.store) { clearInterval(poll); _setup('poll'); }
     }, 200);
-    setTimeout(() => clearInterval(poll), 15000);
+    setTimeout(() => {
+      clearInterval(poll);
+      // store never appeared — silent no-op
+    }, 15000);
   }
 }
 
@@ -3118,11 +3293,11 @@ function _initIAPStore() {
 
   // Register all products before calling initialize()
   store.register([
-    { id: 'starter_pack', type: ProductType.NON_CONSUMABLE, platform: Platform.APPLE_APP_STORE },
-    { id: 'mb_5',         type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APP_STORE },
-    { id: 'mb_15',        type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APP_STORE },
-    { id: 'mb_50',        type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APP_STORE },
-    { id: 'mb_150',       type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APP_STORE },
+    { id: 'starter_pack', type: ProductType.NON_CONSUMABLE, platform: Platform.APPLE_APPSTORE },
+    { id: 'mb_5',         type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APPSTORE },
+    { id: 'mb_15',        type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APPSTORE },
+    { id: 'mb_50',        type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APPSTORE },
+    { id: 'mb_150',       type: ProductType.CONSUMABLE,     platform: Platform.APPLE_APPSTORE },
   ]);
 
   // Purchase lifecycle: approved → verify → finish → deliver
@@ -3153,10 +3328,10 @@ function _initIAPStore() {
   });
 
   // Initialize the App Store platform
-  store.initialize([Platform.APPLE_APP_STORE]).then(() => {
+  store.initialize([Platform.APPLE_APPSTORE]).then(() => {
     window._iapReady = true;
-  }).catch(err => {
-    console.warn('IAP init failed:', err);
+  }).catch(() => {
+    window._iapReady = true;
   });
 }
 
@@ -3298,22 +3473,22 @@ function acceptLaunchAdOffer() {
 
 // ============ DAILY QUESTS ============
 const DAILY_QUEST_POOL = [
-  { id: 'dq_trades_100',  name: 'Day Trader',       icon: '&#128200;', desc: 'Execute 100 trades today.',          type: 'trades',    target: 100,  reward: 3 },
-  { id: 'dq_trades_500',  name: 'Market Maker',      icon: '&#9889;',   desc: 'Execute 500 trades today.',          type: 'trades',    target: 500,  reward: 8 },
-  { id: 'dq_trades_2k',   name: 'HFT Overlord',      icon: '&#129302;', desc: 'Execute 2,000 trades today.',        type: 'trades',    target: 2000, reward: 20 },
-  { id: 'dq_buy_25',      name: 'Accumulator',       icon: '&#128722;', desc: 'Buy 25 positions today.',            type: 'buys',      target: 25,   reward: 3 },
-  { id: 'dq_buy_100',     name: 'Position Builder',  icon: '&#127970;', desc: 'Buy 100 positions today.',           type: 'buys',      target: 100,  reward: 7 },
-  { id: 'dq_buy_500',     name: 'Bulk Buyer',        icon: '&#128184;', desc: 'Buy 500 positions today.',           type: 'buys',      target: 500,  reward: 18 },
-  { id: 'dq_earn_1m',     name: 'Million Dollar Day', icon: '&#128176;', desc: 'Earn $1M in a single session.',    type: 'earn_cash', target: 1e6,  reward: 4 },
-  { id: 'dq_earn_1b',     name: 'Billion Club',      icon: '&#129297;', desc: 'Earn $1B in a single session.',     type: 'earn_cash', target: 1e9,  reward: 10 },
-  { id: 'dq_earn_100b',   name: 'Legendary Earner',  icon: '&#127775;', desc: 'Earn $100B in a single session.',   type: 'earn_cash', target: 1e11, reward: 25 },
-  { id: 'dq_manual_50',   name: 'Hands On',          icon: '&#128075;', desc: 'Manually click 50 trade bars.',     type: 'manual',    target: 50,   reward: 3 },
-  { id: 'dq_manual_200',  name: 'The Grinder',       icon: '&#128170;', desc: 'Manually click 200 trade bars.',    type: 'manual',    target: 200,  reward: 9 },
-  { id: 'dq_event_1',     name: 'Opportunist',       icon: '&#128240;', desc: 'Trigger or survive 1 market event.',type: 'events',    target: 1,    reward: 3 },
-  { id: 'dq_pit_5',       name: 'Pit Regular',       icon: '&#127963;', desc: 'Fill 5 Chicago Pit orders.',        type: 'pit',       target: 5,    reward: 4 },
-  { id: 'dq_pit_20',      name: 'Pit Champion',      icon: '&#129354;', desc: 'Fill 20 Chicago Pit orders.',       type: 'pit',       target: 20,   reward: 12 },
-  { id: 'dq_yen_earn',    name: 'Tokyo Session',     icon: '&#165;',    desc: 'Earn ¥100M on Tokyo Floor today.',  type: 'earn_yen',  target: 1e8,  reward: 6 },
-  { id: 'dq_gbp_earn',    name: 'London Open',       icon: '&#163;',    desc: 'Earn £50M on London Exchange today.',type:'earn_gbp',  target: 5e7,  reward: 6 },
+  { id: 'dq_trades_100',  name: 'Day Trader',       icon: 'chart-up', desc: 'Execute 100 trades today.',          type: 'trades',    target: 100,  reward: 3 },
+  { id: 'dq_trades_500',  name: 'Market Maker',      icon: 'lightning', desc: 'Execute 500 trades today.',          type: 'trades',    target: 500,  reward: 8 },
+  { id: 'dq_trades_2k',   name: 'HFT Overlord',      icon: 'robot', desc: 'Execute 2,000 trades today.',        type: 'trades',    target: 2000, reward: 20 },
+  { id: 'dq_buy_25',      name: 'Accumulator',       icon: 'cart', desc: 'Buy 25 positions today.',            type: 'buys',      target: 25,   reward: 3 },
+  { id: 'dq_buy_100',     name: 'Position Builder',  icon: 'building', desc: 'Buy 100 positions today.',           type: 'buys',      target: 100,  reward: 7 },
+  { id: 'dq_buy_500',     name: 'Bulk Buyer',        icon: 'bill', desc: 'Buy 500 positions today.',           type: 'buys',      target: 500,  reward: 18 },
+  { id: 'dq_earn_1m',     name: 'Million Dollar Day', icon: 'coins', desc: 'Earn $1M in a single session.',    type: 'earn_cash', target: 1e6,  reward: 4 },
+  { id: 'dq_earn_1b',     name: 'Billion Club',      icon: 'person', desc: 'Earn $1B in a single session.',     type: 'earn_cash', target: 1e9,  reward: 10 },
+  { id: 'dq_earn_100b',   name: 'Legendary Earner',  icon: 'star-glow', desc: 'Earn $100B in a single session.',   type: 'earn_cash', target: 1e11, reward: 25 },
+  { id: 'dq_manual_50',   name: 'Hands On',          icon: 'hand', desc: 'Manually click 50 trade bars.',     type: 'manual',    target: 50,   reward: 3 },
+  { id: 'dq_manual_200',  name: 'The Grinder',       icon: 'muscle', desc: 'Manually click 200 trade bars.',    type: 'manual',    target: 200,  reward: 9 },
+  { id: 'dq_event_1',     name: 'Opportunist',       icon: 'newspaper', desc: 'Trigger or survive 1 market event.',type: 'events',    target: 1,    reward: 3 },
+  { id: 'dq_pit_5',       name: 'Pit Regular',       icon: 'columns', desc: 'Fill 5 Chicago Pit orders.',        type: 'pit',       target: 5,    reward: 4 },
+  { id: 'dq_pit_20',      name: 'Pit Champion',      icon: 'sword', desc: 'Fill 20 Chicago Pit orders.',       type: 'pit',       target: 20,   reward: 12 },
+  { id: 'dq_yen_earn',    name: 'Tokyo Session',     icon: 'yen-sign', desc: 'Earn ¥100M on Tokyo Floor today.',  type: 'earn_yen',  target: 1e8,  reward: 6 },
+  { id: 'dq_gbp_earn',    name: 'London Open',       icon: 'card', desc: 'Earn £50M on London Exchange today.',type:'earn_gbp',  target: 5e7,  reward: 6 },
 ];
 
 function getTodayDateKey() {
@@ -3419,7 +3594,7 @@ function renderDailyQuestsSection() {
     else btn = `<div style="text-align:right;"><div style="font-family:'Lilita One',sans-serif;color:var(--gold);font-size:12px;">+${q.reward}&#129689;</div></div>`;
     html += `
       <div class="daily-quest-card ${cls}">
-        <div class="dq-icon">${q.icon}</div>
+        <div class="dq-icon">${svgIcon(q.icon)}</div>
         <div>
           <div class="dq-name">${q.name}</div>
           <div class="dq-desc">${q.desc}</div>
@@ -4649,7 +4824,7 @@ function renderSkillTree() {
   let html = '<div class="skill-tree">';
   SKILL_TREE.forEach(branch => {
     html += `<div class="skill-branch">`;
-    html += `<div class="skill-branch-header" style="background:${branch.color}22;color:${branch.color};border:1px solid ${branch.color}44;">${branch.icon} ${branch.name}</div>`;
+    html += `<div class="skill-branch-header" style="background:${branch.color}22;color:${branch.color};border:1px solid ${branch.color}44;">${svgIcon(branch.icon)} ${branch.name}</div>`;
     branch.nodes.forEach((node, idx) => {
       const owned = !!state.skillsOwned?.[node.id];
       const prevOwned = idx === 0 || !!state.skillsOwned?.[branch.nodes[idx-1].id];
@@ -4664,7 +4839,7 @@ function renderSkillTree() {
       const chipLabel = owned ? '✓ Owned' : node.goldCost + ' 🥇';
       html += `
         <div class="skill-node ${cls}" onclick="showSkillDetail('${node.id}')">
-          <div class="skill-node-icon">${node.icon}</div>
+          <div class="skill-node-icon">${svgIcon(node.icon)}</div>
           <div class="skill-node-name">${node.name}</div>
           <div class="skill-cost-chip">${chipLabel}</div>
         </div>`;
@@ -5496,7 +5671,7 @@ function renderOptionsTab() {
 // startFrac = fraction of player's allTimeEarnings used to initialise wealth for existing saves.
 // freshStart = absolute $ wealth for brand-new games (gives new players real milestones to chase).
 const RIVALS = [
-  { id: 'r_bear', name: 'Bearish Capital LLC', icon: '🐻', strategy: 'Short Seller',
+  { id: 'r_bear', name: 'Bearish Capital LLC', icon: 'bear-face', strategy: 'Short Seller',
     incomeFrac: 0.04, startFrac: 0.06, freshStart: 1e4,
     desc: 'Shorting your positions since day one. You\'re still up.',
     tauntAhead:  'Your collapse is imminent. I\'m patient.',
@@ -5504,7 +5679,7 @@ const RIVALS = [
     defeatQuote: 'I\'ll be back. The market corrects everything.',
     reward: { gold: 30, label: '+30 Gold' } },
 
-  { id: 'r_bro', name: 'WallStBros Fund', icon: '🚀', strategy: 'Meme Momentum',
+  { id: 'r_bro', name: 'WallStBros Fund', icon: 'rocket', strategy: 'Meme Momentum',
     incomeFrac: 0.09, startFrac: 0.18, freshStart: 1e6,
     desc: '"To the moon!" — filed for bankruptcy twice. Still here.',
     tauntAhead:  'WAGMI. You\'re not invited.',
@@ -5512,7 +5687,7 @@ const RIVALS = [
     defeatQuote: 'It\'s a short squeeze. We planned this.',
     reward: { mult: 0.10, label: '+10% all payouts forever' } },
 
-  { id: 'r_algo', name: 'QuantMatrix Alpha', icon: '🤖', strategy: 'Algo Trader',
+  { id: 'r_algo', name: 'QuantMatrix Alpha', icon: 'robot', strategy: 'Algo Trader',
     incomeFrac: 0.20, startFrac: 0.35, freshStart: 1e9,
     desc: 'Their model has 4,000 parameters. Nobody knows what it does.',
     tauntAhead:  'Prediction: you lose. Confidence: 94.7%.',
@@ -5520,7 +5695,7 @@ const RIVALS = [
     defeatQuote: 'Error: unexpected human behaviour. Logging for retraining.',
     reward: { mult: 0.15, label: '+15% all payouts forever' } },
 
-  { id: 'r_old', name: 'Worthington & Sons', icon: '🎩', strategy: 'Old Money',
+  { id: 'r_old', name: 'Worthington & Sons', icon: 'hat', strategy: 'Old Money',
     incomeFrac: 0.38, startFrac: 0.58, freshStart: 1e12,
     desc: 'Founded 1887. The sons are in their 70s. The money is patient.',
     tauntAhead:  'Old money always wins. Eventually.',
@@ -5528,7 +5703,7 @@ const RIVALS = [
     defeatQuote: 'We\'ll recoup in the next generation. As always.',
     reward: { mult: 0.20, gold: 75, label: '+20% payouts + 75 Gold forever' } },
 
-  { id: 'r_dark', name: 'Dark Pool Partners', icon: '🌑', strategy: 'Invisible Execution',
+  { id: 'r_dark', name: 'Dark Pool Partners', icon: 'moon-dark', strategy: 'Invisible Execution',
     incomeFrac: 0.60, startFrac: 0.87, freshStart: 1e15,
     desc: 'You\'ve never seen their trades. Regulators haven\'t either.',
     tauntAhead:  '',
@@ -5638,9 +5813,17 @@ function renderRivalsTab() {
   if (!root) return;
   const playerVal = state.allTimeEarnings || 0;
   const now = Date.now();
+  const playerId = _lbPlayerId();
+  const selfName = (state.firmName || 'Wall St. Capital Partners LLC').slice(0, 64);
   const RANK_BADGES = ['🥇','🥈','🥉','4','5','6'];
 
-  // Build participant list: player + rivals with their current wealth
+  // ── Global Leaderboard section ──────────────────────────────────────────────
+  let html = `<div class="glb-section-title">${svgIcon('globe')} Global Leaderboard</div>`;
+  html += `<div class="panel-sub" style="margin-top:0;">Top 50 firms worldwide by all-time earnings.</div>`;
+  html += `<div id="glb-list" class="glb-loading">Loading...</div>`;
+  html += `<hr class="glb-divider">`;
+
+  // ── AI Rivals section ───────────────────────────────────────────────────────
   const participants = [
     { isPlayer: true, wealth: playerVal },
     ...RIVALS.map(r => ({
@@ -5654,13 +5837,13 @@ function renderRivalsTab() {
   const topWealth = Math.max(1, participants[0].wealth);
   const beatenCount = RIVALS.filter(r => state.rivalsBeaten?.[r.id]).length;
 
-  let html = `<div class="panel-title">🏆 Leaderboard</div>
-    <div class="panel-sub">Beat every rival to earn permanent bonuses. ${beatenCount}/5 rivals crushed.</div>`;
+  html += `<div class="glb-ai-title">${svgIcon('trophy')} Rival Firms — Local</div>`;
+  html += `<div class="panel-sub">Beat every rival to earn permanent bonuses. ${beatenCount}/5 rivals crushed.</div>`;
 
   // Champion banner
   if (state.rivalChampion) {
     html += `<div class="lb-champion-banner">
-      <div style="font-family:'Lilita One',sans-serif;font-size:16px;color:#ffd700;">🏆 LEADERBOARD DOMINATION</div>
+      <div style="font-family:'Lilita One',sans-serif;font-size:16px;color:#ffd700;">${svgIcon('trophy')} LEADERBOARD DOMINATION</div>
       <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px;">All rivals beaten · +20% global payouts · Wall Street is yours.</div>
     </div>`;
   }
@@ -5690,10 +5873,10 @@ function renderRivalsTab() {
       const yourRank = rank === 1 ? 'You\'re #1 — holding the top spot.' : `You\'re ranked #${rank} of 6.`;
       html += `<div class="lb-row lb-player">
         <div class="lb-rank">${badge}</div>
-        <div class="lb-icon">🏢</div>
+        <div class="lb-icon">${svgIcon('building')}</div>
         <div class="lb-body">
           <div class="lb-name lb-player-name">${state.firmName || 'Wall St. Capital Partners LLC'}</div>
-          <div class="lb-strategy">Wall St. Capital Partners</div>
+          <div class="lb-strategy">Your Firm</div>
           <div class="lb-wealth">${fmt(playerVal)} all-time</div>
           <div class="lb-gap" style="color:#4af;">${yourRank}</div>
           <div class="lb-bar-track"><div class="lb-bar-fill" style="width:${barPct}%;background:#4af;"></div></div>
@@ -5706,7 +5889,7 @@ function renderRivalsTab() {
       const defeatLine = p.defeatQuote ? `<div class="lb-taunt">"${p.defeatQuote}"</div>` : '';
       html += `<div class="lb-row lb-beaten">
         <div class="lb-rank">${badge}</div>
-        <div class="lb-icon">${p.icon}</div>
+        <div class="lb-icon">${svgIcon(p.icon)}</div>
         <div class="lb-body">
           <div class="lb-name">${p.name}</div>
           <div class="lb-strategy">${p.strategy}</div>
@@ -5735,7 +5918,7 @@ function renderRivalsTab() {
 
     html += `<div class="lb-row ${isAhead ? 'lb-ahead' : ''}">
       <div class="lb-rank">${badge}</div>
-      <div class="lb-icon">${p.icon}</div>
+      <div class="lb-icon">${svgIcon(p.icon)}</div>
       <div class="lb-body">
         <div class="lb-name">${p.name}</div>
         <div class="lb-strategy">${p.strategy} · <span style="font-size:10px;color:rgba(255,255,255,0.35);">${p.desc}</span></div>
@@ -5750,6 +5933,37 @@ function renderRivalsTab() {
   });
 
   root.innerHTML = html;
+
+  // Async: fetch and inject global leaderboard rows
+  fetchGlobalLeaderboard().then(rows => {
+    const el = document.getElementById('glb-list');
+    if (!el) return;
+    if (!rows || rows.length === 0) {
+      el.innerHTML = '<span style="color:var(--text-dim);font-size:11px;">No entries yet — play more to appear here!</span>';
+      return;
+    }
+    let lbHtml = '';
+    const selfIdx = rows.findIndex(r => r.player_id === playerId);
+    rows.forEach((r, i) => {
+      const isSelf = r.player_id === playerId;
+      const rankBadge = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1).toString();
+      lbHtml += `<div class="glb-row${isSelf ? ' glb-self' : ''}">
+        <div class="glb-rank">${rankBadge}</div>
+        <div class="glb-name" title="${r.firm_name}">${r.firm_name}${isSelf ? ' <span style="color:#4af;font-size:10px;">(you)</span>' : ''}</div>
+        <div class="glb-score">${fmt(r.score)}<div style="font-size:9px;color:var(--text-dim);">${r.prestige_count} IPO${r.prestige_count !== 1 ? 's' : ''}</div></div>
+      </div>`;
+    });
+    if (selfIdx === -1) {
+      lbHtml += `<div style="text-align:center;font-size:10px;color:var(--text-dim);padding:4px;">· · ·</div>`;
+      lbHtml += `<div class="glb-row glb-self">
+        <div class="glb-rank">?</div>
+        <div class="glb-name">${selfName} <span style="color:#4af;font-size:10px;">(you)</span></div>
+        <div class="glb-score">${fmt(playerVal)}<div style="font-size:9px;color:var(--text-dim);">${state.totalIPOs || 0} IPO${(state.totalIPOs || 0) !== 1 ? 's' : ''}</div></div>
+      </div>`;
+    }
+    el.className = '';
+    el.innerHTML = lbHtml;
+  });
 }
 
 function doPrestige() {
@@ -6109,7 +6323,7 @@ function renderAssets() {
 
     div.innerHTML = `
       <div class="asset-icon-col">
-        <div class="asset-icon">${asset.icon}</div>
+        <div class="asset-icon">${svgIcon(asset.icon)}</div>
         <div class="asset-count">${countDisplay}</div>
         ${unlocked && next ? `<div class="asset-mini-bar"><div class="asset-mini-fill" style="width:${(function(){ const prev = MILESTONES.filter(m => m <= s.owned).pop() || 0; return Math.min(100, ((s.owned - prev) / (next - prev)) * 100); })()}%;"></div></div>` : ''}
       </div>
@@ -6354,7 +6568,7 @@ function renderUnlocksTab() {
     const pct = pctRaw < 1 ? pctRaw.toFixed(1) : Math.round(pctRaw).toString();
     html += `
       <div class="unlock-card${done ? ' done' : ''}">
-        <div class="unlock-icon">${u.icon}</div>
+        <div class="unlock-icon">${svgIcon(u.icon)}</div>
         <div class="unlock-text">
           <div class="unlock-name">${u.name}</div>
           <div class="unlock-desc">${u.desc}</div>
@@ -6424,7 +6638,7 @@ function renderQuestsTab() {
                                : fmtNum(prog) + ' / ' + fmtNum(tgt);
     html += `
       <div class="quest-card ${cls}">
-        <div class="quest-icon">${q.icon}</div>
+        <div class="quest-icon">${svgIcon(q.icon)}</div>
         <div class="quest-text">
           <div class="quest-name">${q.name}</div>
           <div class="quest-desc">${q.desc}</div>
@@ -6468,7 +6682,7 @@ function renderManagersTab() {
     const canHire = moneyAvail >= a.hireCost && !hired && owned;
     html += `
       <div class="manager-card${hired ? '' : (canHire ? '' : ' unhired')}">
-        <div class="manager-portrait">${a.icon}</div>
+        <div class="manager-portrait">${svgIcon(a.icon)}</div>
         <div>
           <div class="manager-name">${bio.name}</div>
           <div class="manager-role">${bio.role}</div>
@@ -6500,7 +6714,7 @@ function renderManagersTab() {
         const btnClass = isGold ? 'gold-btn' : 'inf-btn';
         s += `
           <div class="manager-card${owned ? '' : ' unhired'}" style="border-color:${owned ? '#5a3f08' : 'var(--panel-dark)'};${owned ? 'background:linear-gradient(180deg, #2a2030, #1a1424);' : ''}">
-            <div class="manager-portrait" style="${owned ? 'background:radial-gradient(circle at 35% 30%, var(--gold), #6a4f0a);' : ''}">${p.icon}</div>
+            <div class="manager-portrait" style="${owned ? 'background:radial-gradient(circle at 35% 30%, var(--gold), #6a4f0a);' : ''}">${svgIcon(p.icon)}</div>
             <div>
               <div class="manager-name" style="color:var(--gold);">${p.name}</div>
               <div class="manager-role">${p.role} &middot; ${p.desc}</div>
@@ -6539,7 +6753,7 @@ function renderPerksTab() {
       const pct = Number.isInteger(pctRaw) ? pctRaw : parseFloat(pctRaw.toFixed(1));
       html += `
         <div class="perk-card${owned ? ' owned' : ''}">
-          <div class="perk-icon">${b.icon || '&#9889;'}</div>
+          <div class="perk-icon">${svgIcon(b.icon || 'lightning')}</div>
           <div>
             <div class="perk-name">${b.name}</div>
             <div class="perk-desc">+${pct}% all payouts &middot; permanent</div>
@@ -6562,7 +6776,7 @@ function renderPerksTab() {
       const pct = Math.round((1 - p.speedMult) * 100);
       html += `
         <div class="perk-card${owned ? ' owned' : ''}">
-          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--blue), var(--blue-dark));'}">${p.icon}</div>
+          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--blue), var(--blue-dark));'}">${svgIcon(p.icon)}</div>
           <div>
             <div class="perk-name">${p.name}</div>
             <div class="perk-desc">-${pct}% all cycle times &middot; permanent</div>
@@ -6591,7 +6805,7 @@ function renderPerksTab() {
         : `${fmt(l.cashCost)} + ${l.goldCost}&#129689;`;
       html += `
         <div class="perk-card${owned ? ' owned' : ''}">
-          <div class="perk-icon" style="${owned ? '' : isMBItem ? 'background:linear-gradient(180deg, #b574d8, #6a1a8a);' : 'background:linear-gradient(180deg, var(--gold), #6a4f0a);'}">${l.icon || '&#127961;'}</div>
+          <div class="perk-icon" style="${owned ? '' : isMBItem ? 'background:linear-gradient(180deg, #b574d8, #6a1a8a);' : 'background:linear-gradient(180deg, var(--gold), #6a4f0a);'}">${svgIcon(l.icon || 'city')}</div>
           <div>
             <div class="perk-name" style="${isMBItem ? 'color:#d49aff;' : ''}">${l.name}${isMBItem ? ' <span style="font-size:9px;color:#d49aff;">MEGABUCKS</span>' : ''}</div>
             <div class="perk-desc">${l.desc}</div>
@@ -6637,7 +6851,7 @@ function renderPerksTab() {
       const costStr = t.yenCost ? fmt(t.yenCost, 'yen') : fmt(t.cashCost, 'cash');
       html += `
         <div class="perk-card${owned ? ' owned' : ''}" style="${unlocked ? '' : 'opacity:0.45;'}">
-          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--green), #1a5c2a);'}">${asset.icon}</div>
+          <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--green), #1a5c2a);'}">${svgIcon(asset.icon)}</div>
           <div>
             <div class="perk-name">${t.ticker} Mega Ticket</div>
             <div class="perk-desc">+${MEGA_TICKET_MULT}x ${t.ticker} payouts + Instant Reset &middot; permanent &middot; one-time</div>
@@ -6692,7 +6906,7 @@ function renderPerksTab() {
         const isActive = !!(state.activeLeverage && Date.now() < state.activeLeverage.until);
         html += `
           <div class="perk-card">
-            <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${t.icon}</div>
+            <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${svgIcon(t.icon)}</div>
             <div>
               <div class="perk-name">${t.name} <span style="color:var(--gold);">&times;${owned}</span></div>
               <div class="perk-desc">${t.mult}x all income for ${t.minutes} min</div>
@@ -6730,7 +6944,7 @@ function renderPerksTab() {
         const projected = rate * w.hours * 3600;
         html += `
           <div class="perk-card">
-            <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${w.icon}</div>
+            <div class="perk-icon" style="background:linear-gradient(180deg, var(--blue), var(--blue-dark));">${svgIcon(w.icon)}</div>
             <div>
               <div class="perk-name">${w.name}</div>
               <div class="perk-desc">Instant: <b style="color:var(--green);">${fmt(projected)}</b> at current rate</div>
@@ -6831,7 +7045,7 @@ function renderInfluenceShop() {
     const can = (state.influence || 0) >= s.cost;
     html += `
       <div class="perk-card${owned ? ' owned' : ''}" style="margin: 6px 0;">
-        <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--blue), var(--blue-dark));'}">${s.icon}</div>
+        <div class="perk-icon" style="${owned ? '' : 'background:linear-gradient(180deg, var(--blue), var(--blue-dark));'}">${svgIcon(s.icon)}</div>
         <div>
           <div class="perk-name">${s.name}</div>
           <div class="perk-desc">${s.desc}</div>
@@ -6920,9 +7134,9 @@ function showSkillDetail(id) {
   var canAfford = (state.gold || 0) >= node.goldCost;
   var costLabel = node.goldCost + ' Gold 🥇';
   var costNote = canAfford ? '' : 'You have ' + fmtNum(state.gold || 0) + ' 🥇';
-  document.getElementById('skillDetailIcon').innerHTML = node.icon;
+  document.getElementById('skillDetailIcon').innerHTML = svgIcon(node.icon);
   document.getElementById('skillDetailName').textContent = node.name;
-  document.getElementById('skillDetailBranch').innerHTML = branch.icon + ' ' + branch.name + ' Branch';
+  document.getElementById('skillDetailBranch').innerHTML = svgIcon(branch.icon) + ' ' + branch.name + ' Branch';
   document.getElementById('skillDetailDesc').textContent = node.desc;
   var buyBtn = document.getElementById('skillDetailBuyBtn');
   var statusEl = document.getElementById('skillDetailStatus');
@@ -6953,12 +7167,12 @@ function confirmSkillBuy() {
 
 // ============ WELCOME TUTORIAL SLIDES ============
 var WELCOME_SLIDES = [
-  { icon: '&#128176;', title: 'Welcome to Wall Street.', body: 'You start with <b>$4 and a dream</b>. Buy positions in assets, execute trades, and grow your firm into a global financial empire.<br><br>This quick intro covers the basics. After this, a guided tutorial walks you through your first trade.' },
-  { icon: '&#128200;', title: 'Buy Positions &amp; Trade', body: 'Tap <b>BUY</b> on any asset to take a position. A green bar fills up &mdash; when full, <b>tap it</b> to collect cash.<br><br>More positions = bigger payout per trade. Stack them up.' },
-  { icon: '&#129309;', title: 'Hire Traders to Automate', body: 'Go to the <b>Staff tab</b> and hire a trader. They auto-execute trades &mdash; no tapping needed.<br><br>Goal: automate everything, then unlock new assets and markets.' },
-  { icon: '&#128240;', title: 'Watch the Market', body: 'Market events fire randomly. A <b>Rate Cut</b> or <b>Bull Run</b> multiplies income &mdash; trade hard. A <b>Crash</b> cuts payouts.<br><br>The banner at the top tells you what&#39;s happening.' },
-  { icon: '&#11088;', title: 'Goals Earn You Gold', body: 'The <b>Goals tab</b> gives you 3 fresh quests daily. Complete them to earn <b>Gold</b> &mdash; a rare currency that <b>survives every IPO</b>.<br><br>Gold unlocks the most powerful skills. Tap the Gold chip in the header to learn more.' },
-  { icon: '&#127963;', title: 'IPO Your Firm', body: 'When ready, take your firm public. You lose cash and assets &mdash; but gain permanent <b>Influence multipliers</b> that make every future run faster.<br><br>The more you IPO, the stronger you get.' }
+  { icon: 'coins', title: 'Welcome to Wall Street.', body: 'You start with <b>$4 and a dream</b>. Buy positions in assets, execute trades, and grow your firm into a global financial empire.<br><br>This quick intro covers the basics. After this, a guided tutorial walks you through your first trade.' },
+  { icon: 'chart-up', title: 'Buy Positions &amp; Trade', body: 'Tap <b>BUY</b> on any asset to take a position. A green bar fills up &mdash; when full, <b>tap it</b> to collect cash.<br><br>More positions = bigger payout per trade. Stack them up.' },
+  { icon: 'person', title: 'Hire Traders to Automate', body: 'Go to the <b>Staff tab</b> and hire a trader. They auto-execute trades &mdash; no tapping needed.<br><br>Goal: automate everything, then unlock new assets and markets.' },
+  { icon: 'newspaper', title: 'Watch the Market', body: 'Market events fire randomly. A <b>Rate Cut</b> or <b>Bull Run</b> multiplies income &mdash; trade hard. A <b>Crash</b> cuts payouts.<br><br>The banner at the top tells you what&#39;s happening.' },
+  { icon: 'star', title: 'Goals Earn You Gold', body: 'The <b>Goals tab</b> gives you 3 fresh quests daily. Complete them to earn <b>Gold</b> &mdash; a rare currency that <b>survives every IPO</b>.<br><br>Gold unlocks the most powerful skills. Tap the Gold chip in the header to learn more.' },
+  { icon: 'columns', title: 'IPO Your Firm', body: 'When ready, take your firm public. You lose cash and assets &mdash; but gain permanent <b>Influence multipliers</b> that make every future run faster.<br><br>The more you IPO, the stronger you get.' }
 ];
 var _welcomeStep = 0;
 function renderWelcomeSlide() {
@@ -6974,7 +7188,7 @@ function renderWelcomeSlide() {
   }
   var slides = document.getElementById('tutorialSlides');
   if (slides) {
-    slides.innerHTML = '<div style="font-size:48px;margin-bottom:10px;">' + step.icon + '</div>'
+    slides.innerHTML = '<div style="font-size:48px;margin-bottom:10px;">' + svgIcon(step.icon) + '</div>'
       + '<h2 style="margin:0 0 12px;font-size:18px;">' + step.title + '</h2>'
       + '<p style="font-size:13px;line-height:1.75;text-align:left;color:var(--text);margin-bottom:10px;">' + step.body + '</p>'
       + '<div style="font-size:11px;color:var(--text-dim);">Step ' + (_welcomeStep+1) + ' of ' + total + '</div>';
@@ -7364,6 +7578,7 @@ function save() {
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(out));
   } catch (e) { /* private mode etc. */ }
+  submitLeaderboardScore(); // async fire-and-forget — non-blocking
 }
 function load() {
   try {
