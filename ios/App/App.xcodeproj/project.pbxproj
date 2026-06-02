@@ -17,6 +17,7 @@
 		7F43AA1C2FCC016D00648A0B /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F43AA1B2FCC016D00648A0B /* StoreKit.framework */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		B7E9F2A20016851F00ABCDEF /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E9F2A10016851F00ABCDEF /* SceneDelegate.swift */; };
+		C9D4E5F70016851F00ABCDEF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D4E5F60016851F00ABCDEF /* ViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		7F43AA1B2FCC016D00648A0B /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B7E9F2A10016851F00ABCDEF /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		C9D4E5F60016851F00ABCDEF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -82,6 +84,7 @@
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				B7E9F2A10016851F00ABCDEF /* SceneDelegate.swift */,
+				C9D4E5F60016851F00ABCDEF /* ViewController.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -233,6 +236,7 @@
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				B7E9F2A20016851F00ABCDEF /* SceneDelegate.swift in Sources */,
+				C9D4E5F70016851F00ABCDEF /* ViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
