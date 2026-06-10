@@ -2024,7 +2024,7 @@ function svgIcon(name, cls) {
     <svg class="svg-icon" aria-hidden="true"><use href="#menu"/></svg>NAVIGATE
   </button>
   <button class="bb-btn" onclick="openModal('settingsModal')">
-    <svg class="svg-icon" aria-hidden="true"><use href="#gear"/></svg>MENU
+    <svg class="svg-icon" aria-hidden="true"><use href="#cart"/></svg>SHOP
   </button>
 </div>
 
@@ -2032,6 +2032,21 @@ function svgIcon(name, cls) {
 <div class="modal-bg" id="prestigeModal" onclick="if(event.target===this)closeModal('prestigeModal')">
   <div class="modal">
     <h2>Take Your Firm Public</h2>
+    <!-- Quick stats row -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
+      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:var(--gold);" id="menuStatCash">$0</div>
+        <div style="font-size:9px;color:var(--text-dim);letter-spacing:.5px;margin-top:2px;">NET WORTH</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:#a78bfa;" id="menuStatIpos">0</div>
+        <div style="font-size:9px;color:var(--text-dim);letter-spacing:.5px;margin-top:2px;">TOTAL IPOs</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;color:#2ecc71;" id="menuStatInfluence">0</div>
+        <div style="font-size:9px;color:var(--text-dim);letter-spacing:.5px;margin-top:2px;">INFLUENCE</div>
+      </div>
+    </div>
     <p>IPO your trading firm. You lose all cash, assets, traders, and speed boosts. In exchange, you gain <b>Influence</b> tokens, each granting +2% to all payouts permanently.</p>
     <div class="big-num" id="prestigeGain">+0 Influence</div>
     <p style="font-size:11px;text-align:center;">You need at least <b>$1M lifetime earnings</b> per Influence token. The market giveth.</p>
@@ -2054,27 +2069,7 @@ function svgIcon(name, cls) {
 
 <div class="modal-bg" id="settingsModal" onclick="if(event.target===this)closeModal('settingsModal')">
   <div class="modal">
-    <h2>Menu</h2>
-    <!-- Quick stats row -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
-      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;">
-        <div style="font-size:15px;font-weight:900;color:var(--gold);" id="menuStatCash">$0</div>
-        <div style="font-size:9px;color:var(--text-dim);letter-spacing:.5px;margin-top:2px;">NET WORTH</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;">
-        <div style="font-size:15px;font-weight:900;color:#a78bfa;" id="menuStatIpos">0</div>
-        <div style="font-size:9px;color:var(--text-dim);letter-spacing:.5px;margin-top:2px;">TOTAL IPOs</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;text-align:center;">
-        <div style="font-size:15px;font-weight:900;color:#2ecc71;" id="menuStatInfluence">0</div>
-        <div style="font-size:9px;color:var(--text-dim);letter-spacing:.5px;margin-top:2px;">INFLUENCE</div>
-      </div>
-    </div>
-    <p style="font-size:11px;color:var(--text-dim);text-align:center;margin:-4px 0 10px;">The SEC is always watching.</p>
-    <button class="modal-btn secondary" onclick="manualSave()">Save Now</button>
-    <button class="modal-btn secondary" onclick="openExportSaveModal()">Export Save Code</button>
-    <button class="modal-btn secondary" onclick="openImportSaveModal()">Import Save Code</button>
-    <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
+    <h2>Shop</h2>
     <div style="font-family:'Lilita One',sans-serif;color:var(--gold);font-size:14px;margin-bottom:6px;">💎 Support the Game</div>
     <button id="starterPackBtn" class="modal-btn" style="background:linear-gradient(180deg,#f8d860,#c89a18);border-color:#6a4f0a;color:#0a0e1a;margin-bottom:6px;" onclick="Monetization.purchaseIAP('starter_pack', onStarterPackPurchased)">
       Starter Pack — 50 Gold + No Ads &middot; <span style="color:#0a0e1a;">$2.99</span>
@@ -2224,39 +2219,13 @@ function svgIcon(name, cls) {
   <button class="ad-skip-btn" onclick="Monetization.skipAd()">✕ Skip (forfeit reward)</button>
 </div>
 
-<!-- Export Save modal -->
-<div class="modal-bg" id="exportSaveModal" onclick="if(event.target===this)closeModal('exportSaveModal')">
-  <div class="modal" style="text-align:center;">
-    <div style="font-size:32px;margin-bottom:6px;">💾</div>
-    <h2 style="margin:0 0 8px;">Export Save</h2>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Copy this code and keep it somewhere safe. Use Import Save to restore it on any device.</p>
-    <textarea id="exportSaveCode" readonly onclick="this.select()"
-      style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px;font-size:11px;color:var(--text-dim);font-family:monospace;height:100px;resize:none;outline:none;margin-bottom:10px;"></textarea>
-    <button class="modal-btn" onclick="copyExportCode()" id="exportCopyBtn">📋 Copy to Clipboard</button>
-    <button class="modal-btn secondary" style="margin-top:6px;" onclick="closeModal('exportSaveModal')">Close</button>
-  </div>
-</div>
-
-<!-- Import Save modal -->
-<div class="modal-bg" id="importSaveModal" onclick="if(event.target===this)closeModal('importSaveModal')">
-  <div class="modal" style="text-align:center;">
-    <div style="font-size:32px;margin-bottom:6px;">📂</div>
-    <h2 style="margin:0 0 8px;">Import Save</h2>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Paste your save code below. This will overwrite your current save immediately.</p>
-    <textarea id="importSaveCode" placeholder="Paste save code here…"
-      style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px;font-size:11px;color:#fff;font-family:monospace;height:100px;resize:none;outline:none;margin-bottom:10px;"></textarea>
-    <button class="modal-btn" onclick="confirmImportSave()">Load Save</button>
-    <button class="modal-btn secondary" style="margin-top:6px;" onclick="closeModal('importSaveModal')">Cancel</button>
-  </div>
-</div>
-
 <!-- Hard Reset confirmation modal -->
 <div class="modal-bg" id="hardResetModal" onclick="if(event.target===this)closeModal('hardResetModal')">
   <div class="modal" style="text-align:center;">
     <div style="font-size:40px;margin-bottom:6px;">💀</div>
     <h2 style="color:var(--red);margin:0 0 8px;">Liquidate Everything?</h2>
     <p style="font-size:13px;line-height:1.6;">This will permanently erase <b>all</b> progress — cash, assets, Influence, Gold, Megabucks. Everything. Gone.</p>
-    <p style="font-size:11px;color:var(--text-dim);">Export your save first if you want a backup.</p>
+    <p style="font-size:11px;color:var(--text-dim);">There is no undo. The SEC keeps no backups.</p>
     <button class="modal-btn" style="background:linear-gradient(180deg,#e74c3c,#a83025);border-color:#7a1a14;margin-top:4px;" onclick="confirmHardReset()">Yes, Liquidate Everything</button>
     <button class="modal-btn secondary" style="margin-top:6px;" onclick="closeModal('hardResetModal')">Cancel — Keep Playing</button>
   </div>
@@ -2304,6 +2273,13 @@ const SUPABASE_URL      = 'https://YOUR_PROJECT_REF.supabase.co';
 const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
 const LB_SUBMIT_DEBOUNCE_MS = 30000;
 let   _lbLastSubmit = 0;
+
+// Firm names come from untrusted sources (other players via Supabase, imported
+// saves) — must be escaped before any innerHTML interpolation.
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
 
 function _lbPlayerId() {
   let id = localStorage.getItem('dtt_player_id');
@@ -5875,7 +5851,7 @@ function renderRivalsTab() {
         <div class="lb-rank">${badge}</div>
         <div class="lb-icon">${svgIcon('building')}</div>
         <div class="lb-body">
-          <div class="lb-name lb-player-name">${state.firmName || 'Wall St. Capital Partners LLC'}</div>
+          <div class="lb-name lb-player-name">${escapeHtml(state.firmName || 'Wall St. Capital Partners LLC')}</div>
           <div class="lb-strategy">Your Firm</div>
           <div class="lb-wealth">${fmt(playerVal)} all-time</div>
           <div class="lb-gap" style="color:#4af;">${yourRank}</div>
@@ -5949,7 +5925,7 @@ function renderRivalsTab() {
       const rankBadge = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1).toString();
       lbHtml += `<div class="glb-row${isSelf ? ' glb-self' : ''}">
         <div class="glb-rank">${rankBadge}</div>
-        <div class="glb-name" title="${r.firm_name}">${r.firm_name}${isSelf ? ' <span style="color:#4af;font-size:10px;">(you)</span>' : ''}</div>
+        <div class="glb-name" title="${escapeHtml(r.firm_name)}">${escapeHtml(r.firm_name)}${isSelf ? ' <span style="color:#4af;font-size:10px;">(you)</span>' : ''}</div>
         <div class="glb-score">${fmt(r.score)}<div style="font-size:9px;color:var(--text-dim);">${r.prestige_count} IPO${r.prestige_count !== 1 ? 's' : ''}</div></div>
       </div>`;
     });
@@ -5957,7 +5933,7 @@ function renderRivalsTab() {
       lbHtml += `<div style="text-align:center;font-size:10px;color:var(--text-dim);padding:4px;">· · ·</div>`;
       lbHtml += `<div class="glb-row glb-self">
         <div class="glb-rank">?</div>
-        <div class="glb-name">${selfName} <span style="color:#4af;font-size:10px;">(you)</span></div>
+        <div class="glb-name">${escapeHtml(selfName)} <span style="color:#4af;font-size:10px;">(you)</span></div>
         <div class="glb-score">${fmt(playerVal)}<div style="font-size:9px;color:var(--text-dim);">${state.totalIPOs || 0} IPO${(state.totalIPOs || 0) !== 1 ? 's' : ''}</div></div>
       </div>`;
     }
@@ -7216,13 +7192,15 @@ function openWelcomeModal() {
 
 // ============ MODAL HELPERS ============
 function openModal(id) {
-  if (id === 'settingsModal') {
+  if (id === 'prestigeModal') {
     const mc = document.getElementById('menuStatCash');
     const mi = document.getElementById('menuStatIpos');
     const mf = document.getElementById('menuStatInfluence');
     if (mc) mc.textContent = fmt(state.allTimeEarnings || state.lifetimeEarnings || 0);
     if (mi) mi.textContent = fmtNum(state.totalIPOs || 0);
     if (mf) mf.textContent = fmtNum(state.influence || 0);
+  }
+  if (id === 'settingsModal') {
     // Update Starter Pack button to reflect ownership (Apple requires purchased state to be visible)
     const spBtn = document.getElementById('starterPackBtn');
     if (spBtn) {
@@ -7745,61 +7723,6 @@ function load() {
     }
     return true;
   } catch (e) { return false; }
-}
-function manualSave() { save(); toast('Saved.'); }
-// Unicode-safe base64 helpers — btoa/atob only handle Latin-1, so we
-// round-trip through TextEncoder/TextDecoder to avoid DOMException on any
-// emoji or non-ASCII characters that end up in the save (e.g. ⚡ in newsLog).
-function _b64Encode(str) {
-  const bytes = new TextEncoder().encode(str);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
-function _b64Decode(str) {
-  const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
-function openExportSaveModal() {
-  save();
-  const raw = localStorage.getItem(SAVE_KEY) || '';
-  const code = _b64Encode(raw);
-  const ta = document.getElementById('exportSaveCode');
-  if (ta) ta.value = code;
-  const btn = document.getElementById('exportCopyBtn');
-  if (btn) btn.textContent = '📋 Copy to Clipboard';
-  closeModal('settingsModal');
-  openModal('exportSaveModal');
-}
-function copyExportCode() {
-  const ta = document.getElementById('exportSaveCode');
-  if (!ta) return;
-  ta.select();
-  navigator.clipboard?.writeText(ta.value).then(() => {
-    const btn = document.getElementById('exportCopyBtn');
-    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy to Clipboard'; }, 2000); }
-  }).catch(() => {
-    // Fallback for older WebViews
-    document.execCommand('copy');
-    const btn = document.getElementById('exportCopyBtn');
-    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy to Clipboard'; }, 2000); }
-  });
-}
-function openImportSaveModal() {
-  const ta = document.getElementById('importSaveCode');
-  if (ta) ta.value = '';
-  closeModal('settingsModal');
-  openModal('importSaveModal');
-}
-function confirmImportSave() {
-  const ta = document.getElementById('importSaveCode');
-  const code = ta ? ta.value.trim() : '';
-  if (!code) { toast('Paste a save code first.'); return; }
-  try {
-    const raw = _b64Decode(code);
-    localStorage.setItem(SAVE_KEY, raw);
-    location.reload();
-  } catch (e) { toast('Invalid save code — check for typos.'); }
 }
 function hardReset() {
   openModal('hardResetModal');
