@@ -2295,9 +2295,16 @@ let   _lbLastSubmit = 0;
 
 // Firm names come from untrusted sources (other players via Supabase, imported
 // saves) — must be escaped before any innerHTML interpolation.
+const _ESCAPE_MAP = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
 function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c =>
-    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  return String(s ?? '').replace(/[&<>"']/g, c => _ESCAPE_MAP[c]);
+}
+
+// Single readiness predicate for all network leaderboard paths.
+function _lbReady() {
+  return LEADERBOARD_ENABLED
+    && SUPABASE_URL.startsWith('https://')
+    && !SUPABASE_URL.includes('YOUR_PROJECT');
 }
 
 function _lbPlayerId() {
@@ -2310,8 +2317,7 @@ function _lbPlayerId() {
 }
 
 async function submitLeaderboardScore() {
-  if (!LEADERBOARD_ENABLED) return;
-  if (!SUPABASE_URL.startsWith('https://') || SUPABASE_URL.includes('YOUR_PROJECT')) return;
+  if (!_lbReady()) return;
   const now = Date.now();
   if (now - _lbLastSubmit < LB_SUBMIT_DEBOUNCE_MS) return;
   _lbLastSubmit = now;
@@ -2339,16 +2345,22 @@ async function submitLeaderboardScore() {
   } catch(_) { /* silent fail — leaderboard is non-critical */ }
 }
 
+let _lbFetchAt = 0, _lbFetchRows = null;
 async function fetchGlobalLeaderboard() {
-  if (!LEADERBOARD_ENABLED) return null;
-  if (!SUPABASE_URL.startsWith('https://') || SUPABASE_URL.includes('YOUR_PROJECT')) return null;
+  if (!_lbReady()) return null;
+  // 30s cache — the tab re-renders every second while open; don't hit
+  // Supabase more often than scores can actually change (server rate limit).
+  const now = Date.now();
+  if (now - _lbFetchAt < LB_SUBMIT_DEBOUNCE_MS && _lbFetchRows) return _lbFetchRows;
+  _lbFetchAt = now; // set before await so overlapping renders don't stack requests
   try {
     const res = await fetch(
       SUPABASE_URL + '/rest/v1/leaderboard?select=firm_name,score,prestige_count,player_id&order=score.desc&limit=50',
       { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY } }
     );
     if (!res.ok) return null;
-    return await res.json();
+    _lbFetchRows = await res.json();
+    return _lbFetchRows;
   } catch(_) { return null; }
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -5744,6 +5756,7 @@ function tickRivals(dt) {
 }
 
 function beatRival(rival) {
+  if (!LEADERBOARD_ENABLED) return; // no reward grants while the system is halted
   if (state.rivalsBeaten[rival.id]) return;
   state.rivalsBeaten[rival.id] = Date.now();
   // Grant rewards
@@ -5772,7 +5785,7 @@ function checkRivalChampion() {
 }
 
 function maybeStartRivalRaid() {
-  if (!LEADERBOARD_ENABLED) { state.rivalRaid = null; return; } // no raids while halted (also clears any raid lingering in an old save)
+  if (!LEADERBOARD_ENABLED) return; // halted (stale saved raids are cleared in load())
   const now = Date.now();
   if (state.rivalRaid && now < state.rivalRaid.until) return; // raid already active
   if (now < (state.rivalRaidSuppressedUntil || 0)) return;   // suppressed by recent SEC complaint
@@ -5787,6 +5800,7 @@ function maybeStartRivalRaid() {
 }
 
 function fileSecComplaint(rivalId) {
+  if (!LEADERBOARD_ENABLED) return; // halted — don't let players spend gold on a no-op
   if ((state.gold || 0) < SEC_COMPLAINT_COST) { toast('Not enough gold.'); return; }
   if (state.secComplaints?.[rivalId] && Date.now() < state.secComplaints[rivalId]) { toast('Already under investigation.'); return; }
   state.gold -= SEC_COMPLAINT_COST;
@@ -6063,7 +6077,7 @@ function tick() {
   const _crashLive = state.optionsCrash && state.optionsCrash.direction && !state.optionsCrash.result;
   const _shaking   = state.optionsCrash?.result === 'crashed' && (Date.now() - (state.optionsCrash?.crashedAt || 0)) < 450;
   if (state.activeTab === 'options' && !_crashLive && !_shaking && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderOptionsTab();
-  if (state.activeTab === 'rivals'  && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderRivalsTab();
+  if (state.activeTab === 'rivals'  && LEADERBOARD_ENABLED && Math.floor(now / 1000) !== Math.floor((now - dt * 1000) / 1000)) renderRivalsTab();
   // Pit arena: RAF animation handles bouncing; only refresh shell (credits/squeeze) every 2s
   if (state.activeTab === 'pit' && Math.floor(now / 2000) !== Math.floor((now - dt * 1000) / 2000)) updatePitShell();
 
@@ -7672,7 +7686,8 @@ function load() {
     state._rushHourLastAt = data._rushHourLastAt || 0;
     state.secComplaints = data.secComplaints || {};
     state.rivalBuff = data.rivalBuff || null;
-    state.rivalRaid = data.rivalRaid || null;
+    // Drop any raid saved before the system was halted — there's no UI to end it
+    state.rivalRaid = LEADERBOARD_ENABLED ? (data.rivalRaid || null) : null;
     state.rivalRaidSuppressedUntil = data.rivalRaidSuppressedUntil || 0;
     state.rivalsBeaten  = data.rivalsBeaten  || {};
     // Restore active event — needed so a Black Swan event that was live when the app closed
@@ -7694,6 +7709,13 @@ function load() {
     // Initialise rival wealth — new field for existing saves
     if (data.rivalWealth && Object.keys(data.rivalWealth).length > 0) {
       state.rivalWealth = data.rivalWealth;
+    } else if (!LEADERBOARD_ENABLED) {
+      // System halted — defer seeding until it goes live, so rivals seed
+      // relative to the player's progress at that time. Seeding now would
+      // freeze them while the player keeps earning, and the eventual flag
+      // flip would fire beatRival() for all of them in one tick (free
+      // gold/megabucks + instant champion, bypassing the silent legacy path).
+      state.rivalWealth = {};
     } else {
       // First load with this system — seed rivals relative to player progress
       const base = state.allTimeEarnings || 0;

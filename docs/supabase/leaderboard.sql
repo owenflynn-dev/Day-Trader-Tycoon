@@ -16,9 +16,14 @@
 -- Anonymous Auth (see "Upgrade path" at the bottom).
 -- ─────────────────────────────────────────────────────────────────────────────
 
+-- Validation lives ONLY in these CHECK constraints (single source of truth —
+-- the RLS policies below deliberately don't repeat them, so a bounds change
+-- is a one-place edit).
 create table public.leaderboard (
+  -- min 8: the client builds 'p_' + Math.random().toString(36).slice(2) +
+  -- Date.now().toString(36); the random part can be short, the date part is 8.
   player_id      text primary key
-                 check (player_id ~ '^p_[a-z0-9]{10,40}$'),
+                 check (player_id ~ '^p_[a-z0-9]{8,40}$'),
   firm_name      text not null default 'Anonymous Firm'
                  check (char_length(firm_name) between 1 and 64),
   -- numeric (not bigint): late-game earnings exceed int8 range.
@@ -76,28 +81,17 @@ alter table public.leaderboard enable row level security;
 create policy "leaderboard_select" on public.leaderboard
   for select using (true);
 
--- Anon may insert rows that pass the sanity checks (CHECK constraints also
--- apply; duplicated here so policy violations fail before constraint errors).
+-- Anon may insert/update (the app upserts with Prefer: resolution=merge-duplicates,
+-- which needs both). Row validation is enforced by the table CHECK constraints;
+-- monotonicity + rate limiting by the guard trigger.
 create policy "leaderboard_insert" on public.leaderboard
   for insert to anon
-  with check (
-    player_id ~ '^p_[a-z0-9]{10,40}$'
-    and char_length(firm_name) between 1 and 64
-    and score >= 0 and score <= 1e24
-    and prestige_count between 0 and 100000
-  );
+  with check (true);
 
--- Anon may update (the app upserts with Prefer: resolution=merge-duplicates,
--- which needs both INSERT and UPDATE). The guard trigger enforces
--- monotonicity + rate limiting.
 create policy "leaderboard_update" on public.leaderboard
   for update to anon
   using (true)
-  with check (
-    char_length(firm_name) between 1 and 64
-    and score >= 0 and score <= 1e24
-    and prestige_count between 0 and 100000
-  );
+  with check (true);
 
 -- No DELETE/TRUNCATE policy → anon cannot remove rows. Use the service role
 -- (dashboard / server-side only) for moderation and cleanup.
