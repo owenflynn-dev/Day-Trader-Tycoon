@@ -7862,7 +7862,7 @@ async function initAdMob() {
   const AdMob = window.Capacitor?.Plugins?.AdMob;
   if (!AdMob) return;
   try {
-    // ATT is requested natively in AppDelegate.swift before AdMob touches any data.
+    // ATT is requested natively in SceneDelegate.swift before AdMob touches any data.
     // Pass false here to avoid a double-prompt and timing issues on iPadOS 14+.
     await AdMob.initialize({ requestTrackingAuthorization: false });
     window._adMobReady = true;
@@ -7901,6 +7901,17 @@ async function initAdMob() {
       }
     });
 
+    // Hold the first ad request until the ATT prompt (requested natively in
+    // SceneDelegate ~1s after launch) is answered — Apple requires the prompt
+    // before any data that could track the user is collected. Falls through
+    // after ~10s so ads still work if the status never resolves.
+    try {
+      for (let i = 0; i < 20; i++) {
+        const s = await AdMob.trackingAuthorizationStatus();
+        if (s.status !== 'notDetermined') break;
+        await new Promise(r => setTimeout(r, 500));
+      }
+    } catch(_) {}
     // Kick off a silent pre-load so the first tap is instant
     _preloadAd('income_boost');
   } catch(e) {
