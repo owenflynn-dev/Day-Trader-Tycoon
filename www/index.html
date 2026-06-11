@@ -745,6 +745,20 @@
     padding: 8px 14px 2px; letter-spacing: 0.5px; text-transform: uppercase;
     display: flex; align-items: center; gap: 6px;
   }
+  /* Leaderboard "coming soon" placeholder (shown while LEADERBOARD_ENABLED is false) */
+  .lb-coming-soon { text-align: center; padding: 70px 28px; }
+  .lb-coming-soon .svg-icon { width: 52px; height: 52px; color: var(--gold); opacity: 0.85; }
+  .lb-cs-title {
+    font-family: 'Lilita One', sans-serif; font-size: 22px; color: #fff;
+    margin-top: 14px; letter-spacing: 0.5px;
+  }
+  .lb-cs-badge {
+    display: inline-block; margin-top: 12px; padding: 5px 14px;
+    font-family: 'Lilita One', sans-serif; font-size: 13px; letter-spacing: 2px;
+    color: var(--gold); border: 2px solid var(--gold); border-radius: 999px;
+    background: linear-gradient(180deg, rgba(243,199,75,0.12), rgba(243,199,75,0.03));
+  }
+  .lb-cs-sub { margin-top: 14px; font-size: 13px; color: var(--text-dim); line-height: 1.6; }
 
   .gold-chip {
     display: inline-flex;
@@ -2271,6 +2285,11 @@ function svgIcon(name, cls) {
 // See docs/superpowers/plans/2026-06-01-svg-icons-and-leaderboard.md for setup steps.
 const SUPABASE_URL      = 'https://YOUR_PROJECT_REF.supabase.co';
 const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+// Leaderboard kill switch — while false, the LEADERS tab shows "Coming soon",
+// no scores are submitted/fetched, and the rival firm simulation is halted.
+// Flip to true post-App-Store-release once the Supabase project is live
+// (apply docs/supabase/leaderboard.sql first).
+const LEADERBOARD_ENABLED = false;
 const LB_SUBMIT_DEBOUNCE_MS = 30000;
 let   _lbLastSubmit = 0;
 
@@ -2291,6 +2310,7 @@ function _lbPlayerId() {
 }
 
 async function submitLeaderboardScore() {
+  if (!LEADERBOARD_ENABLED) return;
   if (!SUPABASE_URL.startsWith('https://') || SUPABASE_URL.includes('YOUR_PROJECT')) return;
   const now = Date.now();
   if (now - _lbLastSubmit < LB_SUBMIT_DEBOUNCE_MS) return;
@@ -2320,6 +2340,7 @@ async function submitLeaderboardScore() {
 }
 
 async function fetchGlobalLeaderboard() {
+  if (!LEADERBOARD_ENABLED) return null;
   if (!SUPABASE_URL.startsWith('https://') || SUPABASE_URL.includes('YOUR_PROJECT')) return null;
   try {
     const res = await fetch(
@@ -5700,6 +5721,7 @@ const RIVAL_RAID_SUPPRESS = 30 * 60 * 1000; // 30-min suppression after filing S
 // Rivals grow at incomeFrac × player's measured passive income rate.
 // We sample the player's real earnings delta every 3 seconds for the rate.
 function tickRivals(dt) {
+  if (!LEADERBOARD_ENABLED) return; // halted until leaderboard goes public
   const now = Date.now();
   // Sample passive income rate every 3 s
   if (now - (state._rivalRateTs || 0) > 3000) {
@@ -5750,6 +5772,7 @@ function checkRivalChampion() {
 }
 
 function maybeStartRivalRaid() {
+  if (!LEADERBOARD_ENABLED) { state.rivalRaid = null; return; } // no raids while halted (also clears any raid lingering in an old save)
   const now = Date.now();
   if (state.rivalRaid && now < state.rivalRaid.until) return; // raid already active
   if (now < (state.rivalRaidSuppressedUntil || 0)) return;   // suppressed by recent SEC complaint
@@ -5787,6 +5810,15 @@ function fileSecComplaint(rivalId) {
 function renderRivalsTab() {
   const root = document.getElementById('tab-rivals');
   if (!root) return;
+  if (!LEADERBOARD_ENABLED) {
+    root.innerHTML = `<div class="lb-coming-soon">
+      ${svgIcon('trophy')}
+      <div class="lb-cs-title">Global Leaderboard</div>
+      <div class="lb-cs-badge">COMING SOON</div>
+      <div class="lb-cs-sub">Compete against firms worldwide for the top spot.<br>Launching in a future update.</div>
+    </div>`;
+    return;
+  }
   const playerVal = state.allTimeEarnings || 0;
   const now = Date.now();
   const playerId = _lbPlayerId();
