@@ -58,6 +58,18 @@ If they reject anyway:
 - "IAP could not be purchased in review": usually the product wasn't attached or
   the Paid Apps agreement/banking isn't fully active — check
   Business → Agreements before replying.
+- **Solved 2026-06-11 (build 9):** cause was invalid IAP review screenshots.
+  Lessons learned:
+  - IAP review screenshots must be **640×920** — raw device screenshots
+    (1170×2532) and store-screenshot sizes (1290×2796) are both rejected by the
+    uploader. Working file: one Shop-modal screenshot scaled to fit and
+    letterboxed with dark navy via `sips` (`~/Desktop/DTT-IAP-640x920.png`),
+    reused for all 5 products.
+  - "Submit for Review" on an IAP product page stays disabled for first-time
+    IAPs — they're submitted with the app version, not standalone.
+  - Screenshot uploads auto-save (a greyed Save button means already saved).
+  - The "Developer Action Needed" badge doesn't clear on save — it clears when
+    the app version is resubmitted with the products attached.
 
 ## Scenario 4 — "Ad button does nothing"
 
