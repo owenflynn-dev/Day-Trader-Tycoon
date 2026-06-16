@@ -2106,6 +2106,10 @@ function svgIcon(name, cls) {
       📺 Watch Ad — 2× Income for 2 hours
     </button>
     <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
+    <!-- Hidden while LEADERBOARD_ENABLED is false; updateLbConsentRow() manages it -->
+    <div id="lbConsentRow" style="display:none;">
+      <button id="lbConsentToggleBtn" class="modal-btn secondary" style="font-size:11px;color:var(--text-dim);margin-bottom:4px;" onclick="toggleLbConsent()">🌐 Leaderboard</button>
+    </div>
     <button class="modal-btn secondary" style="font-size:11px;color:var(--text-dim);margin-bottom:4px;" onclick="Monetization.restorePurchases()">Restore Purchases</button>
     <div style="border-top:2px solid rgba(255,255,255,0.06);margin:10px 0;"></div>
     <button class="modal-btn secondary" style="color:var(--red);border-color:var(--red);" onclick="closeModal('settingsModal');openModal('hardResetModal')">Liquidate Everything</button>
@@ -2178,6 +2182,27 @@ function svgIcon(name, cls) {
     <button class="modal-btn" onclick="confirmFirmName()">Open for Business 🚀</button>
     <div style="margin-top:10px;">
       <button onclick="closeModal('firmNameModal')" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboard consent (opt-in) — shown once when LEADERS opens post-launch -->
+<div class="modal-bg" id="lbConsentModal">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:36px;margin-bottom:6px;">🌐</div>
+    <h2 style="color:#4af;">Join the Global Leaderboard?</h2>
+    <p style="color:rgba(255,255,255,0.7);font-size:13px;line-height:1.6;text-align:left;">
+      Compete against firms worldwide. If you join, this is shared publicly:
+    </p>
+    <p style="color:rgba(255,255,255,0.85);font-size:13px;line-height:1.8;text-align:left;background:rgba(255,255,255,0.05);border-radius:8px;padding:10px 12px;">
+      🏢 Your firm name<br>💰 Your all-time earnings<br>🚀 Your IPO count
+    </p>
+    <p style="color:rgba(255,255,255,0.5);font-size:11px;line-height:1.6;text-align:left;">
+      No account, email, or personal info — just an anonymous player ID. You can change this anytime in the Shop. Heads up: your firm name will be visible to everyone, and scores already posted stay on the board if you later opt out.
+    </p>
+    <button class="modal-btn" onclick="setLbConsent(true)">Join Leaderboard 🚀</button>
+    <div style="margin-top:10px;">
+      <button onclick="setLbConsent(false)" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;">No thanks, stay private</button>
     </div>
   </div>
 </div>
@@ -2318,6 +2343,9 @@ function _lbPlayerId() {
 
 async function submitLeaderboardScore() {
   if (!_lbReady()) return;
+  // Opt-in only: nothing is ever posted until the player explicitly joins
+  // via the consent prompt (lbConsent: null = never asked, false = declined).
+  if (state.lbConsent !== true) return;
   const now = Date.now();
   if (now - _lbLastSubmit < LB_SUBMIT_DEBOUNCE_MS) return;
   _lbLastSubmit = now;
@@ -2362,6 +2390,45 @@ async function fetchGlobalLeaderboard() {
     _lbFetchRows = await res.json();
     return _lbFetchRows;
   } catch(_) { return null; }
+}
+
+// ── Leaderboard consent (opt-in) ─────────────────────────────────────────────
+// Firm names are free text (players may use real names) and the schema has no
+// anon DELETE, so consent must be collected BEFORE the first submit — a later
+// opt-out can stop future posts but can't remove an already-public row.
+let _lbConsentPromptShown = false; // once per session — rivals tab re-renders every second
+
+function openLbConsentModal() {
+  openModal('lbConsentModal');
+}
+
+function setLbConsent(v) {
+  state.lbConsent = v;
+  closeModal('lbConsentModal');
+  updateLbConsentRow();
+  save(); // save() also fires submitLeaderboardScore, so opting in posts immediately
+  if (state.activeTab === 'rivals') renderRivalsTab();
+}
+
+// Shows/updates the Shop row that lets players change their mind later.
+// Row is hidden entirely while the leaderboard system is off.
+function updateLbConsentRow() {
+  const row = document.getElementById('lbConsentRow');
+  if (!row) return;
+  if (!LEADERBOARD_ENABLED) { row.style.display = 'none'; return; }
+  row.style.display = 'block';
+  const btn = document.getElementById('lbConsentToggleBtn');
+  if (btn) {
+    btn.textContent = state.lbConsent === true
+      ? '🌐 Leaderboard: Public — tap to hide'
+      : '🌐 Leaderboard: Hidden — tap to join';
+  }
+}
+
+function toggleLbConsent() {
+  // Note: opting out stops future submissions; the last posted score remains
+  // on the public board (no anon delete). Removal = manual service-role job.
+  setLbConsent(state.lbConsent !== true);
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2966,6 +3033,7 @@ let state = {
   hasUnseenUnlock: false,
   hasUnseenNews: false,
   hideClaimedQuests: false,
+  lbConsent: null,     // global leaderboard opt-in: null = never asked, true = joined, false = declined
   // Income doubler (rewarded ad)
   incomeDoublerUntil: 0,
   starterPackOwned: false,
@@ -3388,7 +3456,7 @@ function _deliverIAPProduct(productId) {
 // ============ INCOME DOUBLER ============
 // Active when state.incomeDoublerUntil > Date.now()
 function onIncomeBoostRewarded(rewarded) {
-  if (!rewarded) { toast('Ad skipped — no reward.'); return; }
+  if (!rewarded) { toast('No ads available right now — try again soon.'); return; }
   state.incomeDoublerUntil = Date.now() + 2 * 3600 * 1000; // 2 hours
   toast('🎉 2× income active for 2 hours!');
   addNews('AD REWARD: 2× INCOME', 'All passive earnings doubled for 2 hours.', 'milestone');
@@ -3697,7 +3765,7 @@ function showWelcomeBackModal(earningsData) {
 
 function doubleOfflineEarnings() {
   Monetization.showRewardedAd('offline_double', (rewarded) => {
-    if (!rewarded) { toast('Ad skipped — reward not earned.'); return; }
+    if (!rewarded) { toast('No ads available right now — try again soon.'); return; }
     if (!_pendingOfflineModal) return;
     const { cashGain, yenGain, gbpGain } = _pendingOfflineModal;
     if (cashGain > 0) { state.cash += cashGain; state.lifetimeEarnings += cashGain; state.allTimeEarnings += cashGain; }
@@ -5840,8 +5908,19 @@ function renderRivalsTab() {
   const RANK_BADGES = ['🥇','🥈','🥉','4','5','6'];
 
   // ── Global Leaderboard section ──────────────────────────────────────────────
+  // First visit after launch: ask once per session until the player decides.
+  if (state.lbConsent === null && !_lbConsentPromptShown) {
+    _lbConsentPromptShown = true;
+    openLbConsentModal();
+  }
   let html = `<div class="glb-section-title">${svgIcon('globe')} Global Leaderboard</div>`;
   html += `<div class="panel-sub" style="margin-top:0;">Top 50 firms worldwide by all-time earnings.</div>`;
+  if (state.lbConsent !== true) {
+    html += `<div style="background:rgba(68,170,255,0.1);border:1px solid rgba(68,170,255,0.35);border-radius:8px;padding:10px 12px;margin:5px 6px;font-size:12px;color:#4af;text-align:center;">
+      You're not on the board yet.<br>
+      <button class="modal-btn" style="margin-top:8px;font-size:12px;padding:8px 14px;" onclick="openLbConsentModal()">Join the Leaderboard 🚀</button>
+    </div>`;
+  }
   html += `<div id="glb-list" class="glb-loading">Loading...</div>`;
   html += `<hr class="glb-divider">`;
 
@@ -7557,6 +7636,7 @@ function save() {
       tutorialStep: state.tutorialStep ?? null,
       optionsTutorialShown: !!state.optionsTutorialShown,
       firmName: state.firmName || '',
+      lbConsent: (typeof state.lbConsent === 'boolean') ? state.lbConsent : null,
       // Income doubler + IAP
       incomeDoublerUntil: state.incomeDoublerUntil || 0,
       starterPackOwned: !!state.starterPackOwned,
@@ -7655,6 +7735,7 @@ function load() {
     state.tutorialStep = data.tutorialStep ?? null;
     state.optionsTutorialShown = !!data.optionsTutorialShown;
     state.firmName = data.firmName || '';
+    state.lbConsent = (typeof data.lbConsent === 'boolean') ? data.lbConsent : null;
     state.incomeDoublerUntil = data.incomeDoublerUntil || 0;
     state.starterPackOwned   = !!data.starterPackOwned;
     state.buyQty             = data.buyQty ?? 1;
@@ -7809,13 +7890,21 @@ function boot() {
   // Set mute button to match persisted pref
   const muteBtn = document.getElementById('muteBtn');
   if (muteBtn) muteBtn.textContent = SFX.isMuted() ? '🔇' : '🔊';
+  // Show the leaderboard privacy toggle in the Shop (no-op while LEADERBOARD_ENABLED is false)
+  updateLbConsentRow();
   state.lastTick = Date.now();
   // Interval guards — prevent duplicates if boot() is ever called more than once
   if (!window._tickInterval)    window._tickInterval    = setInterval(tick, 100);
   if (!window._saveInterval)    window._saveInterval    = setInterval(save, 5000);
   // 30fps render loop — capped to save memory/CPU on mobile; pauses when tab is hidden
   let _rafPaused = false, _lastRaf = 0;
-  document.addEventListener('visibilitychange', () => { _rafPaused = document.hidden; });
+  document.addEventListener('visibilitychange', () => {
+    _rafPaused = document.hidden;
+    // iOS/WKWebView doesn't reliably fire beforeunload when the OS suspends or
+    // kills a backgrounded app, so persist on hide — this is the dependable
+    // mobile signal and also refreshes lastSavedAt for the offline-earnings calc.
+    if (document.hidden) save();
+  });
   (function rafLoop(ts) { if (!_rafPaused && ts - _lastRaf >= 33) { _lastRaf = ts; renderProgressBars(); } requestAnimationFrame(rafLoop); })();
   window.addEventListener('beforeunload', save);
   // Re-show event banner if an active event was restored from save
