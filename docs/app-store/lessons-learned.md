@@ -100,5 +100,53 @@ Web-wrapped apps (Capacitor, etc.) get extra scrutiny because the JS is right th
 9. `ITSAppUsesNonExemptEncryption` set in Info.plist; scene manifest + arm64 present (Capacitor).
 10. User-controlled strings escaped before rendering; no raw save import/export.
 
+## 11. AdMob ads showing nothing after a fresh launch (NOT a code bug)
+
+Post-launch, DTT's rewarded ads served nothing — every tap toasted "Ad skipped." Spent the investigation proving it was **account/serving setup, not code.** On a freshly launched app this is almost always the case: if the integration ever worked in testing, don't rewrite ad code.
+
+**Diagnose from the AdMob dashboard (App overview), read two numbers:**
+- **Requests > 0** → your app's ad code is firing correctly. ✅
+- **Match rate = 0%** → AdMob has no ad to serve (no-fill) → the blocker is account/review, not code.
+  (DTT showed 24 requests, 0% match → integration perfect, serving blocked.)
+
+**Prove the integration (optional):** flip an `ADMOB_TEST_MODE` flag to Google's official test ad unit IDs, run **on-device via Xcode (`Run`, not Archive)**. Test ads always fill → confirms code/plugin/ATT/native config are all fine.
+⚠️ **NEVER Archive/submit with test mode on, and never click your own real ads** — either = AdMob account ban. Flip back to `false` + re-sync immediately after testing.
+
+**The three gates for real ads to actually serve:**
+1. **Payments account** — payment method + **tax info** completed. (Identity verification is earnings-gated, not an upfront blocker.)
+2. **App linked + reviewed** — link the AdMob app to its App Store listing (App settings → App store details). Then **"Approval status: Requires review" clears automatically over a few days**; real ads serve once it's **"Ready."**
+3. **app-ads.txt verified** — see below.
+
+**app-ads.txt — the #1 gotcha:**
+- Content is one line AdMob gives you: `google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`
+- Must live at the **DOMAIN ROOT** of the developer URL on your store listing: `https://yourdomain.com/app-ads.txt` — **never a subfolder.**
+- **GitHub Pages trick:** create a repo named **exactly** `username.github.io` (user-site), put `app-ads.txt` at its root, enable Pages (main / root). Serves at `https://username.github.io/app-ads.txt`. A *project* repo (`/repo-name/`) will **NOT** work — AdMob strips the path to the root domain.
+- Verify with `curl https://username.github.io/app-ads.txt` → must return **200** + the exact line (a 404 returns GitHub's HTML error page).
+- Then in AdMob → App settings → App verification → **click "Verify app"** (it does NOT auto-verify instantly; the button triggers the crawl).
+- **Reusable across all your apps:** the same `app-ads.txt` (same publisher line) covers every app under one AdMob account. Only the per-app **App ID** and ad **unit IDs** differ.
+
+**Auto vs. manual:**
+| Item | Automatic? |
+|------|-----------|
+| Approval status ("Requires review" → "Ready") | ✅ Auto (a few days) |
+| App verification (app-ads.txt) | ⚠️ Click **"Verify app"** |
+| Match rate rising above 0% | ✅ Auto once Ready + verified |
+
+**Applies to:** any app monetizing via AdMob (Summit, future games). Tie-in with #1 (ATT must fire before the first ad request).
+
+## 12. iOS background save (data-loss gap in WKWebView games)
+
+`window.addEventListener('beforeunload', save)` is **unreliable on iOS/WKWebView** — it often doesn't fire when the OS suspends or kills a backgrounded app. A periodic autosave (e.g. every 5s) still loses up to that interval of progress, plus the `lastSavedAt` timestamp that offline-earnings math depends on.
+
+**Fix:** also save on `visibilitychange` when `document.hidden` — the dependable mobile signal:
+```js
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) save();
+});
+```
+Keep `beforeunload` too (fine on desktop/web).
+
+**Applies to:** any Capacitor/WKWebView app that persists state to localStorage.
+
 ---
-*Written 2026-06-13 after DTT build 9 passed review. Update this file as new apps surface new gotchas.*
+*Written 2026-06-13 after DTT build 9 passed review. Updated 2026-06-15 with AdMob serving + iOS background-save lessons after going live. Update this file as new apps surface new gotchas.*
