@@ -446,7 +446,10 @@
     background: #0a0e1a;
     border-bottom: 3px solid #050810;
     overflow: hidden;
-    height: 28px;
+    /* Extend under the notch / Dynamic Island so the ticker and the header logo
+       below it clear the safe area (contentInset is "never", viewport-fit=cover). */
+    height: calc(28px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
     position: sticky;
     top: 0;
     z-index: 100;
