@@ -124,12 +124,17 @@ Post-launch, DTT's rewarded ads served nothing — every tap toasted "Ad skipped
 - Verify with `curl https://username.github.io/app-ads.txt` → must return **200** + the exact line (a 404 returns GitHub's HTML error page).
 - Then in AdMob → App settings → App verification → **click "Verify app"** (it does NOT auto-verify instantly; the button triggers the crawl).
 - **Reusable across all your apps:** the same `app-ads.txt` (same publisher line) covers every app under one AdMob account. Only the per-app **App ID** and ad **unit IDs** differ.
+- **⚠️ The listing MUST have a developer website, or verification can't even start.** AdMob's exact error is *"We didn't find a developer website in your app listing on App Store."* AdMob reads the **Marketing URL** off your App Store product page → derives the domain → crawls `<domain>/app-ads.txt`. No Marketing URL = no domain to crawl = the file is never even checked (the file being correct is irrelevant). DTT v1.0 shipped with **no Marketing URL**, so verification kept failing despite a perfect, 200-OK app-ads.txt.
+  - **Fix:** App Store Connect → version → **General Information → Marketing URL** = the domain hosting app-ads.txt (e.g. `https://username.github.io`). Then in AdMob click **"Check for updates" / "Verify app."**
+  - **⏱️ Do this BEFORE your first submission.** Marketing URL is **version-locked metadata** — once a version is live you can only change it via a *new* version/metadata update (build can be reused). The "Developer Website" link also only appears on the public product page once that version is **live**, so verification can't complete until then. Set it on v1.0 to avoid an extra metadata-only release.
+  - Not required for Apple **approval** and does **not** stop ads serving — it only gates AdMob's ownership *verification*. So never pull a version from review just to add it; add it now if the field is still editable, else in the next metadata update.
 
 **Auto vs. manual:**
 | Item | Automatic? |
 |------|-----------|
 | Approval status ("Requires review" → "Ready") | ✅ Auto (a few days) |
-| App verification (app-ads.txt) | ⚠️ Click **"Verify app"** |
+| Developer website (Marketing URL) on listing | ⚠️ Must set manually — verification can't start without it |
+| App verification (app-ads.txt) | ⚠️ Click **"Verify app"** (needs Marketing URL live first) |
 | Match rate rising above 0% | ✅ Auto once Ready + verified |
 
 **Applies to:** any app monetizing via AdMob (Summit, future games). Tie-in with #1 (ATT must fire before the first ad request).
@@ -149,4 +154,4 @@ Keep `beforeunload` too (fine on desktop/web).
 **Applies to:** any Capacitor/WKWebView app that persists state to localStorage.
 
 ---
-*Written 2026-06-13 after DTT build 9 passed review. Updated 2026-06-15 with AdMob serving + iOS background-save lessons after going live. Update this file as new apps surface new gotchas.*
+*Written 2026-06-13 after DTT build 9 passed review. Updated 2026-06-15 with AdMob serving + iOS background-save lessons after going live. Updated 2026-06-17 with the app-ads.txt "no developer website / Marketing URL on listing" verification gotcha. Update this file as new apps surface new gotchas.*
