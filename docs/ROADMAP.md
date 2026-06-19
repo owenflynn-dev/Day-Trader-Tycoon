@@ -21,7 +21,7 @@ The game is **feature-complete and live on the App Store**. **v1.0 / build 9** w
 - Juice: confetti on milestones/prestige, float text on payouts, animated count-up modals
 
 **Monetization & store**
-- AdMob rewarded ads — production unit IDs, `ADMOB_TEST_MODE = false`, `app-ads.txt` deployed at the GitHub Pages root. **Verification pending**: AdMob needs the App Store **Marketing URL** pointing at the app-ads.txt domain (added 2026-06-18 — will verify once v1.0.1 is live). See [`app-store/lessons-learned.md`](app-store/lessons-learned.md).
+- AdMob rewarded ads — production unit IDs, `ADMOB_TEST_MODE = false`, ads serving. `app-ads.txt` deployed at the GitHub Pages root and **verified ✅ (2026-06-18, 100% queries authorized)** — the fix was setting the App Store **Marketing URL** to the app-ads.txt domain so AdMob could find it. See [`app-store/lessons-learned.md`](app-store/lessons-learned.md).
 - IAP: Starter Pack (non-consumable) + Megabucks consumable packs; full register→initialize→approved→verified→finished flow, restore purchases, idempotent delivery (audited clean 2026-05-29)
 - "No Ads" gating — all five ad surfaces suppressed for Starter Pack owners
 - ATT consent (`requestTrackingAuthorization` before AdMob), in-app privacy policy link
