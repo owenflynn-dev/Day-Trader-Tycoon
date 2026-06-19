@@ -7,21 +7,21 @@
 
 ## Status
 
-The game is **feature-complete and in App Store submission**. Build 9 was approved (2026-06-17); **v1.0.1 / build 10** was submitted (2026-06-18) with a redesigned app icon. The web build is wrapped with Capacitor for iOS, AdMob and IAP are live in production, and the Supabase global leaderboard is shipped behind an opt-in consent flow.
+The game is **feature-complete and live on the App Store**. **v1.0 / build 9** went live 2026-06-15; **v1.0.1 / build 10** (notch / Dynamic Island safe-area fix + redesigned rocket app icon) was approved and is **Ready for Distribution** as of 2026-06-18. The web build is wrapped with Capacitor for iOS; AdMob and IAP are live in production. The Supabase global leaderboard is **staged but inert** — the consent UI ships disabled, blocked on a Supabase Pro purchase + go-live runbook.
 
 ---
 
 ## ✅ Shipped
 
 **Core game**
-- Four markets: Wall Street, Tokyo, London, Black Market — each with assets, managers, and currency
+- Three markets shipped: Wall Street, Tokyo, London — each with assets, managers, and currency (a fourth, Black Market, is designed but **disabled in code** — "coming in a future update")
 - Options Desk, AI Rivals (with SEC-complaint counter to raids), Chicago Open Outcry Pit
 - Prestige / IPO loop, milestones, perks, skills
 - Economy rebalance (2026-05-22): `MILESTONE_MULT` 2.0→1.5, `COST_GROWTH` 1.12→1.14, payouts −20%, `prestigeGain()` coefficient 8→5
 - Juice: confetti on milestones/prestige, float text on payouts, animated count-up modals
 
 **Monetization & store**
-- AdMob rewarded ads — production unit IDs, `ADMOB_TEST_MODE = false`, `app-ads.txt` deployed & verified
+- AdMob rewarded ads — production unit IDs, `ADMOB_TEST_MODE = false`, `app-ads.txt` deployed at the GitHub Pages root. **Verification pending**: AdMob needs the App Store **Marketing URL** pointing at the app-ads.txt domain (added 2026-06-18 — will verify once v1.0.1 is live). See [`app-store/lessons-learned.md`](app-store/lessons-learned.md).
 - IAP: Starter Pack (non-consumable) + Megabucks consumable packs; full register→initialize→approved→verified→finished flow, restore purchases, idempotent delivery (audited clean 2026-05-29)
 - "No Ads" gating — all five ad surfaces suppressed for Starter Pack owners
 - ATT consent (`requestTrackingAuthorization` before AdMob), in-app privacy policy link
@@ -42,7 +42,9 @@ The game is **feature-complete and in App Store submission**. Build 9 was approv
 
 ## 🔜 Open / verify before next release
 
-- **Strip IAP debug logs** — 47 `[IAP]` `console.log`/`console.warn` lines were added to diagnose a `store.initialize()` hang. Find with `grep -n '\[IAP\]' index.html`. Keep only the error-path `console.warn`s. *(Flagged in the 2026-05-29 final audit; confirm whether already removed in build 10.)*
+- ✅ **Strip IAP debug logs** — DONE. `grep -c '\[IAP\]' index.html` → 0 remaining (verified 2026-06-18).
+- **Confirm v1.0.1 release** — it's "Ready for Distribution"; if release was set to manual, click **Release** in App Store Connect to push it live.
+- **AdMob app-ads.txt verification** — once v1.0.1 is live (Marketing URL visible on the listing), go to AdMob → "Check for updates" to clear verification.
 - **Post-launch monitoring** — once live, watch D1/D7 retention and drop-off at: tutorial completion, first prestige, Tokyo unlock. Plan v1.1 from real data, not assumptions.
 
 ---
@@ -55,8 +57,8 @@ Sets DTT apart from pure idle clickers. Live candlestick chart (20 candles, 3s u
 ### Ticker / emoji art system
 Replace every emoji with purpose-built inline SVG icons: 28 asset tickers (40×40 badges), all tab + bottom-bar icons, toast/achievement/button chrome, manager avatar badges. No external files needed for the App Store build. Polish item — not a submission blocker.
 
-### Game Center cloud saves
-Replace manual Export/Import Save Code with automatic iCloud saves via `GKLocalPlayer.local.saveGameData()` / `fetchSavedGames()`. Needs a Capacitor bridge plugin to pass the save string between JS and Swift; on success, remove the Save/Export/Import buttons from the Menu. Fixes localStorage being wiped on reinstall.
+### Game Center (leaderboard + cloud saves)
+A proven Game Center **leaderboard** integration blueprint (from the Summit game) is captured in [`gamecenter-integration-pattern.md`](gamecenter-integration-pattern.md) — reuse it for a global net-worth / all-time-earnings board (decide whether it supplements or replaces the staged Supabase board). Separately, **cloud saves**: replace manual Export/Import Save Code with automatic iCloud saves via `GKLocalPlayer.local.saveGameData()` / `fetchSavedGames()`. Needs a Capacitor bridge plugin to pass the save string between JS and Swift; on success, remove the Save/Export/Import buttons from the Menu. Fixes localStorage being wiped on reinstall.
 
 ### Push / local notifications
 `@capacitor/push-notifications` (or Local Notifications, no server) for "vault full" (passive cap reached, ~4h) and "bull market" event alerts.

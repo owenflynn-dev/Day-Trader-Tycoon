@@ -1,0 +1,5 @@
+# macOS
+.DS_Store
+
+# Playwright MCP scratch output (icon renders, etc.)
+.playwright-mcp/
