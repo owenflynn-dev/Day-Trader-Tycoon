@@ -61,9 +61,9 @@ and forget to sync, the app won't reflect your change. (The CSS/logic both live 
 - **Version bumps** live in `ios/App/App.xcodeproj/project.pbxproj` — update **both** the Debug AND
   Release configs: `MARKETING_VERSION` (e.g. 1.0.1) and `CURRENT_PROJECT_VERSION` (build number,
   must increase). A live version is locked; ship changes via a NEW version.
-- **App icon**: single 1024×1024, no alpha. Source `app-icon-1024.png` (root) is mirrored into
-  `ios/App/App/Assets.xcassets/AppIcon.appiconset/app-icon-1024.png`. It's a native asset — ships in
-  the build, NOT uploaded to App Store Connect separately.
+- **App icon**: single 1024×1024, no alpha. Source `assets/app-icon-1024.png` is mirrored into
+  `ios/App/App/Assets.xcassets/AppIcon.appiconset/app-icon-1024.png` (that copy is what actually
+  ships — it's a native asset, NOT uploaded to App Store Connect separately).
 - **Screenshots**: `dtt-app-store-screenshots/` (6.5" display, 1284×2778). Uploaded by hand in ASC.
   First 3 are what show on the search/installation sheet.
 - **ATT (App Tracking Transparency)**: the prompt fires in `SceneDelegate` ~1s after launch and MUST
@@ -88,7 +88,10 @@ and forget to sync, the app won't reflect your change. (The CSS/logic both live 
   app-ads.txt, encryption compliance, etc.). **Read before any submission work.**
 - `docs/app-store/rejection-playbook.md`, `docs/launch/` (Supabase leaderboard go-live runbook +
   privacy policy section), `docs/gamecenter-integration-pattern.md` (blueprint for adding Game
-  Center), `docs/planning/` (roadmap/TODO), `docs/audits/` (security/IAP/code review).
+  Center), `docs/archive/` (older roadmap/TODO/PLAN + security/IAP/code-review audits),
+  `docs/supabase/` (leaderboard SQL).
+- Other top-level files: `index.html`, `app-ads.txt`, `capacitor.config.json`, `privacy-policy.html`;
+  marketing/icon source art lives in `assets/`; App Store screenshots in `dtt-app-store-screenshots/`.
 - Leaderboard: a Supabase global leaderboard is **staged but inert** (consent UI shipped disabled);
   see `docs/launch/leaderboard-go-live-runbook.md`.
 
