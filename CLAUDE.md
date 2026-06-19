@@ -53,8 +53,9 @@ and forget to sync, the app won't reflect your change. (The CSS/logic both live 
 - **`app-ads.txt`** (root of repo + hosted at `https://owenflynn-dev.github.io/app-ads.txt`) — single
   publisher line. AdMob verification needs a **Marketing URL on the App Store listing** pointing at
   that domain (see `docs/app-store/lessons-learned.md`).
-- **IAP**: one product, `starter_pack` (via `cordova-plugin-purchase`). Rewarded ad gives a temporary
-  2× income boost. (`gold` is the in-game premium currency, not an IAP.)
+- **IAP** (via `cordova-plugin-purchase`): `starter_pack` (non-consumable; also acts as "No Ads")
+  plus Megabucks consumable packs `mb_5` / `mb_15` / `mb_50` / `mb_150`. Rewarded ad gives a temporary
+  2× income boost. (`gold` is an in-game currency, not an IAP.)
 
 ## iOS / App Store essentials
 
