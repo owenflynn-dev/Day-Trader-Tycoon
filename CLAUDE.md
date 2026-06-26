@@ -3,6 +3,13 @@
 Wall Street satire **idle / incremental clicker game**, shipped on the iOS App Store
 (App ID 6769673373, bundle `com.owenflynndev.daytradertycoon`). Solo dev: Owen Flynn.
 
+> **Audit pass (2026-06-25, Claude) — full report in `docs/AUDIT.md`.** Headline: monetization
+> code is careful and correct (IAP lifecycle, AdMob ships real units, leaderboard SQL well-designed).
+> Applied this pass: **hardened `.gitignore` + untracked `node_modules`** (1,892 files were committed;
+> removed from the index, working files intact — change is **staged, not committed**, since `main` had
+> other uncommitted work). Open: resolve the `index.html`↔`www/index.html` duplication into one source
+> of truth; add the planned boot/economy tests.
+
 ## Architecture (read this first)
 
 This is a **single-file web game wrapped in Capacitor for iOS**. There is no framework, no

@@ -3,3 +3,16 @@
 
 # Playwright MCP scratch output (icon renders, etc.)
 .playwright-mcp/
+
+# Node / dependencies (never commit these)
+node_modules/
+npm-debug.log*
+
+# Capacitor / iOS build artifacts
+ios/App/Pods/
+ios/App/build/
+ios/App/DerivedData/
+
+# Editor / misc
+*.log
+.vercel
